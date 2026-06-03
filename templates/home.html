@@ -16,12 +16,18 @@
                     Welcome to the Expense Tracker application. Monitor your spending, set budgets, and achieve your financial goals with ease.
                 </p>
                 <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
-                    <button class="btn btn-primary-gradient btn-lg px-5 py-3 rounded-pill fw-semibold shadow-lg" disabled>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'income-list' %}" class="btn btn-primary-gradient btn-lg px-5 py-3 rounded-pill fw-semibold shadow-lg">
+                        Go to Incomes <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'signup' %}" class="btn btn-primary-gradient btn-lg px-5 py-3 rounded-pill fw-semibold shadow-lg">
                         Get Started <i class="fa-solid fa-arrow-right ms-2"></i>
-                    </button>
-                    <button class="btn btn-outline-custom btn-lg px-5 py-3 rounded-pill fw-semibold" disabled>
-                        Learn More
-                    </button>
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-custom btn-lg px-5 py-3 rounded-pill fw-semibold">
+                        Log In
+                    </a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -38,13 +44,19 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card-feature p-4 h-100 rounded-4">
-                        <div class="feature-icon mb-3 color-2">
-                            <i class="fa-solid fa-piggy-bank"></i>
+                    <div class="card-feature p-4 h-100 rounded-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="feature-icon mb-3 color-2">
+                                <i class="fa-solid fa-piggy-bank"></i>
+                            </div>
+                            <h4 class="h5 fw-bold mb-2">Income Sources</h4>
+                            <p class="text-muted mb-0 small">Monitor your multiple revenue streams and salary inflows seamlessly.</p>
                         </div>
-                        <h4 class="h5 fw-bold mb-2">Income Sources</h4>
-                        <p class="text-muted mb-0 small">Monitor your multiple revenue streams and salary inflows seamlessly.</p>
-                        <span class="badge badge-coming mt-3">Coming Soon</span>
+                        <div>
+                            <a href="{% if user.is_authenticated %}{% url 'income-list' %}{% else %}{% url 'login' %}{% endif %}" class="btn btn-outline-custom btn-sm mt-3 px-3 py-1.5 rounded-pill w-100 text-center font-outfit fw-medium">
+                                Manage Incomes <i class="fa-solid fa-arrow-up-right-from-square ms-1 small"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">

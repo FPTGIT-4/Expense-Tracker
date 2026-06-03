@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'transactions.apps.TransactionsConfig',
 ]
 
 MIDDLEWARE = [
@@ -122,3 +123,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Authentication Settings
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'income-list'
+LOGOUT_REDIRECT_URL = 'home'
+
