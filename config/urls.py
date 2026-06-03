@@ -19,14 +19,13 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
-from transactions.views import SignUpView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
-    path('accounts/signup/', SignUpView.as_view(), name='signup'),
-    path('accounts/', include('django.contrib.auth.urls')),
-    path('incomes/', include('transactions.urls')),
+    path('accounts/', include('accounts.urls')),
+    path('', include('income.urls')),
+    path('', include('expenses.urls')),
 ]
 
 if settings.DEBUG:

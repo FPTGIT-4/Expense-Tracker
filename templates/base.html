@@ -40,16 +40,7 @@
                         <a class="nav-link {% if '/incomes/' in request.path %}active{% endif %}" href="{% url 'income-list' %}"><i class="fa-solid fa-wallet me-1"></i> Incomes</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true"><i class="fa-solid fa-list-check me-1"></i> Transactions</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true"><i class="fa-solid fa-tags me-1"></i> Categories</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true"><i class="fa-solid fa-file-invoice-dollar me-1"></i> Reports</a>
+                        <a class="nav-link {% if '/expenses/' in request.path %}active{% endif %}" href="{% url 'expense-list' %}"><i class="fa-solid fa-receipt me-1"></i> Expenses</a>
                     </li>
                     <li class="nav-item ms-lg-3">
                         <span class="navbar-text text-muted-custom me-2"><i class="fa-regular fa-circle-user me-1"></i> {{ user.username }}</span>
