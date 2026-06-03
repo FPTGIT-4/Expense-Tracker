@@ -1,0 +1,204 @@
+/* Expense Tracker - Global Styles */
+
+/* --- Design Tokens / Theme Variables --- */
+:root {
+    --bg-primary: #0b0f19;
+    --bg-secondary: #111827;
+    --accent-indigo: #6366f1;
+    --accent-violet: #8b5cf6;
+    --accent-pink: #ec4899;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --glass-bg: rgba(17, 24, 39, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: rgba(0, 0, 0, 0.3);
+    
+    /* Fonts */
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-heading: 'Outfit', sans-serif;
+}
+
+/* --- Base Reset --- */
+body {
+    background-color: var(--bg-primary);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.12) 0px, transparent 50%);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+    min-height: 100vh;
+    display: flex;
+    flex-column: column;
+}
+
+h1, h2, h3, h4, h5, h6, .font-outfit {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+}
+
+/* --- Gradient Texts --- */
+.text-gradient {
+    background: linear-gradient(135deg, var(--accent-indigo), var(--accent-violet));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.text-gradient-alt {
+    background: linear-gradient(135deg, var(--accent-violet), var(--accent-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.text-muted-custom {
+    color: var(--text-muted) !important;
+}
+
+/* --- Glassmorphism Navbar --- */
+.bg-glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: 0 4px 30px var(--glass-shadow);
+}
+
+.navbar-brand {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.brand-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 12px;
+}
+
+.brand-icon-wrapper i {
+    font-size: 1.2rem;
+}
+
+.navbar-nav .nav-link {
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    transition: color 0.25s ease;
+}
+
+.navbar-nav .nav-link:hover:not(.disabled) {
+    color: var(--accent-indigo) !important;
+}
+
+/* --- Hero Card (Glass Jumbotron) --- */
+.card-hero {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.4));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 20px 40px var(--glass-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-icon-glow {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--accent-indigo), var(--accent-violet));
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+}
+
+/* --- Buttons --- */
+.btn-primary-gradient {
+    background: linear-gradient(135deg, var(--accent-indigo), var(--accent-violet));
+    border: none;
+    color: white;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary-gradient:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5) !important;
+    color: white;
+}
+
+.btn-outline-custom {
+    background: transparent;
+    color: var(--text-main);
+    border: 1px solid var(--glass-border);
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.btn-outline-custom:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--text-muted);
+    color: #fff;
+}
+
+/* --- Feature Cards --- */
+.card-feature {
+    background: rgba(17, 24, 39, 0.4);
+    border: 1px solid var(--glass-border);
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-feature:hover {
+    transform: translateY(-5px);
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.feature-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+
+.feature-icon.color-1 {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--accent-indigo);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.feature-icon.color-2 {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--accent-violet);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.feature-icon.color-3 {
+    background: rgba(236, 72, 153, 0.15);
+    color: var(--accent-pink);
+    border: 1px solid rgba(236, 72, 153, 0.25);
+}
+
+.badge-coming {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    font-weight: 500;
+    padding: 0.4em 0.8em;
+    border: 1px solid var(--glass-border);
+}
+
+/* --- Footer --- */
+.footer {
+    background: rgba(11, 15, 25, 0.9);
+    border-color: var(--glass-border) !important;
+}
