@@ -10,7 +10,8 @@
             <p class="text-muted-custom mb-0">Analyze and review your financial transactions and cash flows</p>
         </div>
         <div class="col-md-4 text-md-end mt-2 mt-md-0">
-            <span class="badge bg-glass border border-glass text-muted-custom px-3 py-2 rounded-pill font-outfit fw-medium">
+            <span
+                class="badge bg-glass border border-glass text-muted-custom px-3 py-2 rounded-pill font-outfit fw-medium">
                 Active Range: {{ start_date|date:"M d, Y" }} - {{ end_date|date:"M d, Y" }}
             </span>
         </div>
@@ -20,13 +21,23 @@
     <div class="card-hero p-4 rounded-4 text-white mb-4">
         <div class="row align-items-center">
             <div class="col-lg-6">
-                <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-filter me-2 text-gradient"></i>Date Filter</h5>
+                <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-filter me-2 text-gradient"></i>Date Filter
+                </h5>
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="?date_filter=today" class="btn {% if date_filter == 'today' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">Today</a>
-                    <a href="?date_filter=this_week" class="btn {% if date_filter == 'this_week' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">This Week</a>
-                    <a href="?date_filter=this_month" class="btn {% if date_filter == 'this_month' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">This Month</a>
-                    <a href="?date_filter=this_year" class="btn {% if date_filter == 'this_year' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">This Year</a>
-                    <a href="?date_filter=custom" class="btn {% if date_filter == 'custom' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">Custom Range</a>
+                    <a href="?date_filter=today"
+                        class="btn {% if date_filter == 'today' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">Today</a>
+                    <a href="?date_filter=this_week"
+                        class="btn {% if date_filter == 'this_week' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">This
+                        Week</a>
+                    <a href="?date_filter=this_month"
+                        class="btn {% if date_filter == 'this_month' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">This
+                        Month</a>
+                    <a href="?date_filter=this_year"
+                        class="btn {% if date_filter == 'this_year' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">This
+                        Year</a>
+                    <a href="?date_filter=custom"
+                        class="btn {% if date_filter == 'custom' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">Custom
+                        Range</a>
                 </div>
             </div>
             {% if date_filter == 'custom' %}
@@ -35,14 +46,17 @@
                     <input type="hidden" name="date_filter" value="custom">
                     <div class="col-sm-5">
                         <label class="form-label text-muted-custom small fw-medium">Start Date</label>
-                        <input type="date" name="start_date" value="{{ start_date_val }}" class="form-control bg-dark-custom text-white border-glass" required>
+                        <input type="date" name="start_date" value="{{ start_date_val }}"
+                            class="form-control bg-dark-custom text-white border-glass" required>
                     </div>
                     <div class="col-sm-5">
                         <label class="form-label text-muted-custom small fw-medium">End Date</label>
-                        <input type="date" name="end_date" value="{{ end_date_val }}" class="form-control bg-dark-custom text-white border-glass" required>
+                        <input type="date" name="end_date" value="{{ end_date_val }}"
+                            class="form-control bg-dark-custom text-white border-glass" required>
                     </div>
                     <div class="col-sm-2 d-grid">
-                        <button type="submit" class="btn btn-primary-gradient rounded-pill py-2"><i class="fa-solid fa-check"></i></button>
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill py-2"><i
+                                class="fa-solid fa-check"></i></button>
                     </div>
                 </form>
             </div>
@@ -53,7 +67,8 @@
     {% if not recent_transactions and not monthly_summary %}
     <div class="card-hero p-5 rounded-5 text-white text-center mb-5">
         <h3 class="fw-bold font-outfit">No Transaction Records Found</h3>
-        <p class="text-muted-custom mb-0 px-md-5 small">Start adding your income streams and expense logs to unlock dynamic reporting insights.</p>
+        <p class="text-muted-custom mb-0 px-md-5 small">Start adding your income streams and expense logs to unlock
+            dynamic reporting insights.</p>
     </div>
     {% else %}
 
@@ -76,7 +91,8 @@
                     <div class="feature-icon mb-0 color-3 me-3"><i class="fa-solid fa-circle-arrow-up"></i></div>
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Expenses</p>
-                        <h3 class="fw-bold mb-0 font-outfit text-gradient-alt">&#8377;{{ total_expenses|floatformat:2 }}</h3>
+                        <h3 class="fw-bold mb-0 font-outfit text-gradient-alt">&#8377;{{ total_expenses|floatformat:2 }}
+                        </h3>
                     </div>
                 </div>
             </div>
@@ -87,7 +103,9 @@
                     <div class="feature-icon mb-0 color-2 me-3"><i class="fa-solid fa-wallet"></i></div>
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold">Net Balance</p>
-                        <h3 class="fw-bold mb-0 font-outfit {% if current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">&#8377;{{ current_balance|floatformat:2 }}</h3>
+                        <h3
+                            class="fw-bold mb-0 font-outfit {% if current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
+                            &#8377;{{ current_balance|floatformat:2 }}</h3>
                     </div>
                 </div>
             </div>
@@ -109,7 +127,8 @@
     <div class="row g-4 mb-5">
         <div class="col-lg-6">
             <div class="card-hero p-4 rounded-4 text-white h-100">
-                <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-tags me-2 text-gradient-alt"></i>Expense by Category</h5>
+                <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-tags me-2 text-gradient-alt"></i>Expense by
+                    Category</h5>
                 {% if category_report %}
                 <div class="table-responsive">
                     <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent;">
@@ -127,12 +146,15 @@
                                 <td class="py-3 fw-bold text-gradient-alt">&#8377;{{ item.amount|floatformat:2 }}</td>
                                 <td class="py-3">
                                     <div class="d-flex align-items-center">
-                                        <div class="progress flex-grow-1 bg-secondary bg-opacity-25" style="height:6px;border-radius:3px;">
+                                        <div class="progress flex-grow-1 bg-secondary bg-opacity-25"
+                                            style="height:6px;border-radius:3px;">
                                             <div class="progress-bar" role="progressbar"
                                                 style="width:{{ item.percentage|floatformat:1 }}%;border-radius:3px;background:linear-gradient(135deg,#a855f7,#ec4899);"
-                                                aria-valuenow="{{ item.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                aria-valuenow="{{ item.percentage }}" aria-valuemin="0"
+                                                aria-valuemax="100"></div>
                                         </div>
-                                        <span class="ms-2 small text-muted-custom">{{ item.percentage|floatformat:1 }}%</span>
+                                        <span class="ms-2 small text-muted-custom">{{ item.percentage|floatformat:1
+                                            }}%</span>
                                     </div>
                                 </td>
                             </tr>
@@ -150,7 +172,8 @@
 
         <div class="col-lg-6">
             <div class="card-hero p-4 rounded-4 text-white h-100">
-                <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-piggy-bank me-2 text-gradient"></i>Income by Source</h5>
+                <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-piggy-bank me-2 text-gradient"></i>Income by
+                    Source</h5>
                 {% if source_report %}
                 <div class="table-responsive">
                     <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent;">
@@ -181,7 +204,8 @@
 
     <!-- Monthly Summary -->
     <div class="card-hero p-4 rounded-4 text-white mb-5">
-        <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-calendar-days me-2 text-gradient"></i>Monthly Summary Ledger</h5>
+        <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-calendar-days me-2 text-gradient"></i>Monthly Summary
+            Ledger</h5>
         {% if monthly_summary %}
         <div class="table-responsive">
             <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent;">
@@ -199,7 +223,9 @@
                         <td class="py-3 fw-semibold">{{ month.month_date|date:"F Y" }}</td>
                         <td class="py-3 text-success fw-medium">&#8377;{{ month.income|floatformat:2 }}</td>
                         <td class="py-3 text-danger fw-medium">&#8377;{{ month.expense|floatformat:2 }}</td>
-                        <td class="py-3 fw-bold {% if month.balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">&#8377;{{ month.balance|floatformat:2 }}</td>
+                        <td
+                            class="py-3 fw-bold {% if month.balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
+                            &#8377;{{ month.balance|floatformat:2 }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -214,7 +240,8 @@
 
     <!-- Recent Transactions -->
     <div class="card-hero p-4 rounded-4 text-white mb-4">
-        <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-list me-2 text-gradient"></i>Transactions in Selected Range</h5>
+        <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-list me-2 text-gradient"></i>Transactions in Selected
+            Range</h5>
         {% if recent_transactions %}
         <div class="table-responsive">
             <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent;">
@@ -232,7 +259,9 @@
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                         <td class="py-3 fw-medium">{{ tx.date|date:"M d, Y" }}</td>
                         <td class="py-3 fw-medium">{{ tx.type }}</td>
-                        <td class="py-3 fw-bold {% if tx.type == 'Income' %}text-gradient{% else %}text-gradient-alt{% endif %}">&#8377;{{ tx.amount|floatformat:2 }}</td>
+                        <td
+                            class="py-3 fw-bold {% if tx.type == 'Income' %}text-gradient{% else %}text-gradient-alt{% endif %}">
+                            &#8377;{{ tx.amount|floatformat:2 }}</td>
                         <td class="py-3 text-muted-custom">{{ tx.category_or_source }}</td>
                         <td class="py-3 text-muted-custom small">{{ tx.description|default:"-"|truncatechars:50 }}</td>
                     </tr>

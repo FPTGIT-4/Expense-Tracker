@@ -9,7 +9,6 @@ from decimal import Decimal
 from income.models import Income
 from expenses.models import Expense
 from categories.models import Category
-from .forms import DashboardIncomeForm, DashboardExpenseForm
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'dashboard/dashboard.html'
@@ -69,51 +68,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'recent_transactions': recent_transactions,
         })
 
-        # Forms (if not already added in post)
-        if 'income_form' not in context:
-            context['income_form'] = DashboardIncomeForm()
-        if 'expense_form' not in context:
-            context['expense_form'] = DashboardExpenseForm(user=user)
-
         return context
 
     def post(self, request, *args, **kwargs):
-        action = request.POST.get('action')
-        user = request.user
-        today = timezone.localdate()
-
-        if action == 'add_income':
-            income_form = DashboardIncomeForm(request.POST)
-            if income_form.is_valid():
-                income = income_form.save(commit=False)
-                income.user = user
-                income.date = today
-                income.save()
-                messages.success(request, "Income record added successfully!")
-                return redirect('dashboard')
-            else:
-                messages.error(request, "Please correct the errors in the Quick Add Income form.")
-                # Return the invalid form to display errors
-                return self.render_to_response(self.get_context_data(
-                    income_form=income_form,
-                    expense_form=DashboardExpenseForm(user=user)
-                ))
-
-        elif action == 'add_expense':
-            expense_form = DashboardExpenseForm(request.POST, user=user)
-            if expense_form.is_valid():
-                expense = expense_form.save(commit=False)
-                expense.user = user
-                expense.date = today
-                expense.save()
-                messages.success(request, "Expense record added successfully!")
-                return redirect('dashboard')
-            else:
-                messages.error(request, "Please correct the errors in the Quick Add Expense form.")
-                # Return the invalid form to display errors
-                return self.render_to_response(self.get_context_data(
-                    income_form=DashboardIncomeForm(),
-                    expense_form=expense_form
-                ))
-
         return redirect('dashboard')

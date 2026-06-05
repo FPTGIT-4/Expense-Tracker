@@ -8,8 +8,7 @@
     <div class="row align-items-center mb-4">
         <div class="col-md-8">
             <h1 class="fw-bold font-outfit text-gradient mb-1">Expense Tracker Dashboard</h1>
-            <p class="text-muted-custom mb-0">Welcome back, <span class="text-white fw-semibold">{{ user.username
-                    }}</span>!</p>
+            <p class="text-muted-custom mb-0">Welcome back, <span class="text-white fw-semibold">{{ user.username }}</span>!</p>
         </div>
         <div class="col-md-4 text-md-end mt-2 mt-md-0">
             <span
@@ -32,7 +31,7 @@
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold">Current Balance</p>
                         <h3
                             class="fw-bold mb-0 font-outfit {% if current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
-                            ${{ current_balance|floatformat:2 }}
+                            ₹{{ current_balance|floatformat:2 }}
                         </h3>
                     </div>
                 </div>
@@ -48,11 +47,11 @@
                     </div>
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Income</p>
-                        <h3 class="fw-bold mb-0 font-outfit">${{ total_income|floatformat:2 }}</h3>
+                        <h3 class="fw-bold mb-0 font-outfit">₹{{ total_income|floatformat:2 }}</h3>
                     </div>
                 </div>
                 <div class="ps-5 text-success small font-outfit">
-                    <i class="fa-solid fa-caret-up me-1"></i>Today: +${{ income_today|floatformat:2 }}
+                    <i class="fa-solid fa-caret-up me-1"></i>Today: +₹{{ income_today|floatformat:2 }}
                 </div>
             </div>
         </div>
@@ -66,11 +65,11 @@
                     </div>
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Expenses</p>
-                        <h3 class="fw-bold mb-0 font-outfit">${{ total_expenses|floatformat:2 }}</h3>
+                        <h3 class="fw-bold mb-0 font-outfit">₹{{ total_expenses|floatformat:2 }}</h3>
                     </div>
                 </div>
                 <div class="ps-5 text-danger small font-outfit">
-                    <i class="fa-solid fa-caret-down me-1"></i>Today: -${{ expenses_today|floatformat:2 }}
+                    <i class="fa-solid fa-caret-down me-1"></i>Today: -₹{{ expenses_today|floatformat:2 }}
                 </div>
             </div>
         </div>
@@ -93,143 +92,61 @@
 
     <!-- Main Workspace Layout -->
     <div class="row g-4">
-        <!-- Forms Column -->
-        <div class="col-lg-4">
-            <!-- Quick Add Income -->
-            <div class="card-hero p-4 rounded-4 text-white mb-4">
-                <h4 class="fw-bold font-outfit text-gradient mb-3">
-                    <i class="fa-solid fa-circle-plus me-2 text-success"></i>Quick Add Income
-                </h4>
-                <form method="post" action="{% url 'dashboard' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="add_income">
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted-custom small uppercase fw-semibold">Amount</label>
-                        {{ income_form.amount }}
-                        {% if income_form.amount.errors %}
-                        <div class="text-danger small mt-1">{{ income_form.amount.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted-custom small uppercase fw-semibold">Source</label>
-                        {{ income_form.source }}
-                        {% if income_form.source.errors %}
-                        <div class="text-danger small mt-1">{{ income_form.source.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted-custom small uppercase fw-semibold">Description</label>
-                        {{ income_form.description }}
-                        {% if income_form.description.errors %}
-                        <div class="text-danger small mt-1">{{ income_form.description.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <button type="submit" class="btn btn-primary-gradient w-100 rounded-pill fw-semibold py-2">
-                        <i class="fa-solid fa-plus me-1"></i> Save Income
-                    </button>
-                </form>
-            </div>
-
-            <!-- Quick Add Expense -->
-            <div class="card-hero p-4 rounded-4 text-white">
-                <h4 class="fw-bold font-outfit text-gradient-alt mb-3">
-                    <i class="fa-solid fa-circle-plus me-2 text-danger"></i>Quick Add Expense
-                </h4>
-                <form method="post" action="{% url 'dashboard' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="add_expense">
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted-custom small uppercase fw-semibold">Expense Name</label>
-                        {{ expense_form.name }}
-                        {% if expense_form.name.errors %}
-                        <div class="text-danger small mt-1">{{ expense_form.name.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted-custom small uppercase fw-semibold">Amount</label>
-                        {{ expense_form.amount }}
-                        {% if expense_form.amount.errors %}
-                        <div class="text-danger small mt-1">{{ expense_form.amount.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted-custom small uppercase fw-semibold">Category</label>
-                        {{ expense_form.category }}
-                        {% if expense_form.category.errors %}
-                        <div class="text-danger small mt-1">{{ expense_form.category.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted-custom small uppercase fw-semibold">Description</label>
-                        {{ expense_form.description }}
-                        {% if expense_form.description.errors %}
-                        <div class="text-danger small mt-1">{{ expense_form.description.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <button type="submit" class="btn btn-primary-gradient w-100 rounded-pill fw-semibold py-2">
-                        <i class="fa-solid fa-plus me-1"></i> Save Expense
-                    </button>
-                </form>
+        <!-- Unified Quick Add Card -->
+        <div class="col-lg-8">
+            <div class="rounded-4 text-white p-4" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);">
+                <div class="mb-4">
+                    <h5 class="fw-bold font-outfit text-gradient mb-1" style="font-size: 1.5rem;">
+                        <i class="fa-solid fa-bolt me-2"></i>Add Transaction
+                    </h5>
+                    <p class="text-muted-custom mb-0 small">Enter multiple income or expense records for a single date, then save at once.</p>
+                </div>
+                {% include 'transactions/_txn_widget.html' with post_save="stay" %}
             </div>
         </div>
 
         <!-- Transactions Column -->
-        <div class="col-lg-8">
+        <div class="col-lg-4" id="dashboard-recent-activity">
             <div class="card-hero p-4 rounded-4 text-white h-100">
                 <div class="d-flex align-items-center justify-content-between mb-4">
-                    <h4 class="fw-bold font-outfit mb-0"><i class="fa-solid fa-list-check me-2"></i>Recent Transactions
-                    </h4>
+                    <h5 class="fw-bold font-outfit mb-0">
+                        <i class="fa-solid fa-list-check me-2"></i>Recent Activity
+                    </h5>
                     <div class="d-flex gap-2">
-                        <a href="{% url 'income-list' %}"
-                            class="btn btn-outline-custom btn-sm rounded-pill px-3">Incomes</a>
-                        <a href="{% url 'expense-list' %}"
-                            class="btn btn-outline-custom btn-sm rounded-pill px-3">Expenses</a>
+                        <a href="{% url 'income-list' %}" class="btn btn-outline-custom btn-sm rounded-pill px-2 py-1" style="font-size:0.75rem;">Incomes</a>
+                        <a href="{% url 'expense-list' %}" class="btn btn-outline-custom btn-sm rounded-pill px-2 py-1" style="font-size:0.75rem;">Expenses</a>
                     </div>
                 </div>
 
                 {% if recent_transactions %}
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0"
-                        style="--bs-table-bg: transparent; --bs-table-border-color: var(--glass-border);">
-                        <thead>
-                            <tr class="text-muted-custom" style="border-bottom: 2px solid var(--glass-border);">
-                                <th scope="col" class="py-3">Date</th>
-                                <th scope="col" class="py-3">Type</th>
-                                <th scope="col" class="py-3">Amount</th>
-                                <th scope="col" class="py-3">Category/Source</th>
-                                <th scope="col" class="py-3">Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for tx in recent_transactions %}
-                            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                                <td class="py-3 fw-medium">{{ tx.date|date:"M d, Y" }}</td>
-                                <td class="py-3 fw-medium">
-                                    {{ tx.type }}
-                                </td>
-                                <td
-                                    class="py-3 fw-bold {% if tx.type == 'Income' %}text-gradient{% else %}text-gradient-alt{% endif %}">
-                                    ${{ tx.amount }}
-                                </td>
-                                <td class="py-3 text-muted-custom">
-                                    {{ tx.category_or_source }}
-                                </td>
-                                <td class="py-3 text-muted-custom small">
-                                    {{ tx.description|default:"-"|truncatechars:40 }}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="d-flex flex-column gap-3">
+                    {% for tx in recent_transactions %}
+                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="feature-icon mb-0 {% if tx.type == 'Income' %}color-1{% else %}color-3{% endif %}" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
+                                {% if tx.type == 'Income' %}
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                                {% else %}
+                                <i class="fa-solid fa-arrow-trend-down"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-semibold text-white font-outfit">{{ tx.category_or_source }}</h6>
+                                <span class="text-muted-custom small" style="font-size: 0.75rem;">{{ tx.date|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold {% if tx.type == 'Income' %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.05rem;">
+                                {% if tx.type == 'Income' %}+{% else %}-{% endif %}₹{{ tx.amount|floatformat:2 }}
+                            </span>
+                            {% if tx.description %}
+                            <div class="text-muted-custom small" style="font-size: 0.75rem; max-width: 120px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                {{ tx.description }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
                 {% else %}
                 <div class="text-center py-5">
@@ -237,8 +154,7 @@
                         <i class="fa-solid fa-receipt"></i>
                     </div>
                     <h5 class="fw-bold font-outfit">No transactions yet</h5>
-                    <p class="text-muted-custom mb-0 small">Use the Quick Add forms to log your first income or expense.
-                    </p>
+                    <p class="text-muted-custom mb-0 small">Use the Quick Add form to log your first income or expense.</p>
                 </div>
                 {% endif %}
             </div>

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'categories.apps.CategoriesConfig',
     'dashboard.apps.DashboardConfig',
     'reports.apps.ReportsConfig',
+    'transactions.apps.TransactionsConfig',
 ]
 
 MIDDLEWARE = [
