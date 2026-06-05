@@ -8,246 +8,500 @@
     <!-- Header -->
     <div class="row align-items-center mb-4">
         <div class="col-md-6">
-            <h1 class="fw-bold font-outfit text-gradient mb-1">My Expenses</h1>
-            <p class="text-muted-custom mb-0">Track and monitor your outbound spending</p>
+            <h1 class="fw-bold font-outfit text-gradient mb-1">Expense Analytics</h1>
+            <p class="text-muted-custom mb-0">Track and monitor your outbound spending categories and trends</p>
         </div>
-        <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <div class="col-md-6 text-md-end mt-3 mt-md-0">
             <a href="{% url 'expense-add' %}" class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
                 <i class="fa-solid fa-plus me-2"></i>Add Expense
             </a>
         </div>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- Date Filters Presets -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div class="btn-group rounded-pill p-1 bg-dark-custom border-glass" role="group" aria-label="Date Filter Preset">
+            <a href="?date_filter=today" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'today' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">Today</a>
+            <a href="?date_filter=this_week" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'this_week' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">This Week</a>
+            <a href="?date_filter=this_month" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'this_month' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">This Month</a>
+            <a href="?date_filter=custom" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'custom' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">Custom Range</a>
+        </div>
+        
+        {% if date_filter == 'custom' %}
+        <form method="get" class="d-flex align-items-center gap-2" id="customDateForm">
+            <input type="hidden" name="date_filter" value="custom">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-dark-custom border-glass text-muted-custom">From</span>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control bg-dark-custom text-white border-glass" required>
+            </div>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-dark-custom border-glass text-muted-custom">To</span>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control bg-dark-custom text-white border-glass" required>
+            </div>
+            <button type="submit" class="btn btn-primary-gradient btn-sm rounded-pill px-3">Apply</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Stats Summary Cards -->
     <div class="row g-4 mb-4">
+        <!-- Card 1: Total Expenses -->
         <div class="col-md-4">
             <div class="card-feature p-4 rounded-4 text-white">
                 <div class="d-flex align-items-center">
                     <div class="feature-icon mb-0 color-3 me-3"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                     <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">{% if has_filters %}Filtered{% else %}Total{% endif %} Expense</p>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Expenses (Range)</p>
                         <h3 class="fw-bold mb-0 font-outfit text-gradient-alt">&#8377;{{ total_expense|floatformat:2 }}</h3>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Card 2: Transactions Count -->
         <div class="col-md-4">
             <div class="card-feature p-4 rounded-4 text-white">
                 <div class="d-flex align-items-center">
                     <div class="feature-icon mb-0 color-2 me-3"><i class="fa-solid fa-calculator"></i></div>
                     <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Transactions</p>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Expenses Count</p>
                         <h3 class="fw-bold mb-0 font-outfit">{{ total_count }}</h3>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Card 3: Highest Expense Category -->
         <div class="col-md-4">
             <div class="card-feature p-4 rounded-4 text-white">
                 <div class="d-flex align-items-center">
-                    <div class="feature-icon mb-0 color-1 me-3"><i class="fa-solid fa-filter"></i></div>
+                    <div class="feature-icon mb-0 color-1 me-3"><i class="fa-solid fa-arrow-trend-up"></i></div>
                     <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Filters Active</p>
-                        <h3 class="fw-bold mb-0 font-outfit">{{ active_filters|length }}</h3>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Highest Spending Category</p>
+                        {% if highest_category %}
+                        <h4 class="fw-bold mb-0 font-outfit text-gradient text-truncate" style="max-width: 180px;" title="{{ highest_category.category__name|default:'Uncategorized' }}">&#8377;{{ highest_category.total|floatformat:0 }} ({{ highest_category.category__name|default:"Uncategorized" }})</h4>
+                        {% else %}
+                        <h4 class="fw-bold mb-0 font-outfit text-muted-custom">None</h4>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Filter Panel -->
-    <div class="card-hero p-4 rounded-4 text-white mb-4">
-        <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-sliders me-2 text-gradient"></i>Filters &amp; Search</h6>
-        <form method="get" action="{% url 'expense-list' %}" id="filterForm">
-            <div class="row g-3">
-                <!-- Search -->
-                <div class="col-md-4">
-                    <label class="form-label text-muted-custom small fw-semibold uppercase">Search Name / Description</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-dark-custom border-glass text-muted-custom">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                        </span>
-                        <input type="text" name="search" value="{{ search }}"
-                            class="form-control bg-dark-custom text-white border-glass"
-                            placeholder="Search expenses...">
+    <!-- Main Workspace (2-Column Split) -->
+    <div class="row g-4">
+        <!-- Left Column: Search Filters & CRUD List Table -->
+        <div class="col-lg-7">
+            <!-- Filter Panel -->
+            <div class="card-hero p-4 rounded-4 text-white mb-4">
+                <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-sliders me-2 text-gradient"></i>Filters &amp; Search</h6>
+                <form method="get" action="{% url 'expense-list' %}" id="filterForm">
+                    <input type="hidden" name="date_filter" value="{{ date_filter }}">
+                    <input type="hidden" name="date_from" value="{{ date_from }}">
+                    <input type="hidden" name="date_to" value="{{ date_to }}">
+                    
+                    <div class="row g-3">
+                        <!-- Search -->
+                        <div class="col-md-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Search Name / Description</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-dark-custom border-glass text-muted-custom">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </span>
+                                <input type="text" name="search" value="{{ search }}"
+                                    class="form-control bg-dark-custom text-white border-glass"
+                                    placeholder="Search expenses...">
+                            </div>
+                        </div>
+
+                        <!-- Category filter -->
+                        <div class="col-md-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Category</label>
+                            <select name="category" class="form-select form-select-sm bg-dark-custom text-white border-glass">
+                                <option value="">All Categories</option>
+                                <option value="__none__" {% if category_id == '__none__' %}selected{% endif %}>Uncategorized</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.pk }}" {% if category_id == cat.pk|stringformat:'s' %}selected{% endif %}>
+                                    {{ cat.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Amount range -->
+                        <div class="col-md-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Min Amount (&#8377;)</label>
+                            <input type="number" name="amount_min" value="{{ amount_min }}" min="0" step="1"
+                                class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Max Amount (&#8377;)</label>
+                            <input type="number" name="amount_max" value="{{ amount_max }}" min="0" step="1"
+                                class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="Any">
+                        </div>
                     </div>
-                </div>
 
-                <!-- Category filter -->
-                <div class="col-md-2">
-                    <label class="form-label text-muted-custom small fw-semibold uppercase">Category</label>
-                    <select name="category" class="form-select bg-dark-custom text-white border-glass">
-                        <option value="">All Categories</option>
-                        <option value="__none__" {% if category_id == '__none__' %}selected{% endif %}>Uncategorized</option>
-                        {% for cat in categories %}
-                        <option value="{{ cat.pk }}" {% if category_id == cat.pk|stringformat:'s' %}selected{% endif %}>
-                            {{ cat.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <!-- Date range -->
-                <div class="col-md-2">
-                    <label class="form-label text-muted-custom small fw-semibold uppercase">From Date</label>
-                    <input type="date" name="date_from" value="{{ date_from }}"
-                        class="form-control bg-dark-custom text-white border-glass">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label text-muted-custom small fw-semibold uppercase">To Date</label>
-                    <input type="date" name="date_to" value="{{ date_to }}"
-                        class="form-control bg-dark-custom text-white border-glass">
-                </div>
-
-                <!-- Amount range -->
-                <div class="col-md-1">
-                    <label class="form-label text-muted-custom small fw-semibold uppercase">Min &#8377;</label>
-                    <input type="number" name="amount_min" value="{{ amount_min }}" min="0" step="1"
-                        class="form-control bg-dark-custom text-white border-glass" placeholder="0">
-                </div>
-                <div class="col-md-1">
-                    <label class="form-label text-muted-custom small fw-semibold uppercase">Max &#8377;</label>
-                    <input type="number" name="amount_max" value="{{ amount_max }}" min="0" step="1"
-                        class="form-control bg-dark-custom text-white border-glass" placeholder="Any">
-                </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 py-1 fw-semibold btn-sm">
+                            <i class="fa-solid fa-filter me-1"></i>Apply Filters
+                        </button>
+                        <a href="?date_filter={{ date_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-outline-custom rounded-pill px-4 py-1 fw-semibold btn-sm">
+                            <i class="fa-solid fa-xmark me-1"></i>Clear Search
+                        </a>
+                    </div>
+                </form>
             </div>
 
-            <div class="d-flex gap-2 mt-3">
-                <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 py-1 fw-semibold">
-                    <i class="fa-solid fa-filter me-1"></i>Apply
-                </button>
-                <a href="{% url 'expense-list' %}" class="btn btn-outline-custom rounded-pill px-4 py-1 fw-semibold">
-                    <i class="fa-solid fa-xmark me-1"></i>Clear
+            <!-- Active Filter Summary -->
+            {% if has_filters %}
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <span class="text-muted-custom small fw-semibold">Active filters:</span>
+                {% for f in active_filters %}
+                <span class="badge rounded-pill px-3 py-2 fw-medium"
+                    style="background:rgba(236,72,153,0.15);border:1px solid rgba(236,72,153,0.35);color:#f9a8d4;font-size:0.75rem;">
+                    {{ f|safe }}
+                </span>
+                {% endfor %}
+                <a href="?date_filter={{ date_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-sm btn-outline-custom rounded-pill px-2 py-0 small ms-1">
+                    Clear all
                 </a>
             </div>
-        </form>
-    </div>
-
-    <!-- Active Filter Summary -->
-    {% if has_filters %}
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <span class="text-muted-custom small fw-semibold">Active filters:</span>
-        {% for f in active_filters %}
-        <span class="badge rounded-pill px-3 py-2 fw-medium"
-            style="background:rgba(236,72,153,0.15);border:1px solid rgba(236,72,153,0.35);color:#f9a8d4;font-size:0.78rem;">
-            {{ f }}
-        </span>
-        {% endfor %}
-        <a href="{% url 'expense-list' %}" class="btn btn-sm btn-outline-custom rounded-pill px-2 py-0 small ms-1">
-            Clear all
-        </a>
-    </div>
-    {% endif %}
-
-    <!-- Table Card -->
-    <div class="card-hero p-4 rounded-4 text-white">
-        {% if expenses %}
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <span class="text-muted-custom small">
-                Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ total_count }} records
-            </span>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle mb-0"
-                style="--bs-table-bg: transparent; --bs-table-border-color: var(--glass-border);">
-                <thead>
-                    <tr class="text-muted-custom" style="border-bottom: 2px solid var(--glass-border);">
-                        <th class="py-3">Date</th>
-                        <th class="py-3">Expense Name</th>
-                        <th class="py-3">Category</th>
-                        <th class="py-3">Amount</th>
-                        <th class="py-3">Description</th>
-                        <th class="py-3 text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for expense in expenses %}
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <td class="py-3 fw-medium">{{ expense.date|date:"M d, Y" }}</td>
-                        <td class="py-3 fw-semibold">{{ expense.name }}</td>
-                        <td class="py-3">
-                            {% if expense.category %}
-                            <span class="badge rounded-pill px-3 py-2 fw-medium"
-                                style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#a5b4fc;font-size:0.78rem;">
-                                {{ expense.category.name }}
-                            </span>
-                            {% else %}
-                            <span class="text-muted-custom small">Uncategorized</span>
-                            {% endif %}
-                        </td>
-                        <td class="py-3 fw-bold text-gradient-alt">&#8377;{{ expense.amount|floatformat:2 }}</td>
-                        <td class="py-3 text-muted-custom small">{{ expense.description|default:"-"|truncatechars:45 }}</td>
-                        <td class="py-3 text-end">
-                            <a href="{% url 'expense-edit' expense.pk %}" class="btn btn-outline-custom btn-sm rounded-pill me-1 px-3">
-                                <i class="fa-solid fa-pen-to-square me-1"></i>Edit
-                            </a>
-                            <a href="{% url 'expense-delete' expense.pk %}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                                <i class="fa-solid fa-trash me-1"></i>Delete
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination -->
-        {% if page_obj.has_other_pages %}
-        <nav class="mt-4 d-flex justify-content-center" aria-label="Page navigation">
-            <ul class="pagination pagination-sm mb-0 gap-1">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link bg-dark-custom border-glass text-white rounded-3"
-                        href="?{{ query_string }}&page={{ page_obj.previous_page_number }}">
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </a>
-                </li>
-                {% endif %}
-                {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                    <li class="page-item active">
-                        <span class="page-link rounded-3 fw-bold" style="background:linear-gradient(135deg,#6366f1,#a855f7);border:none;">{{ num }}</span>
-                    </li>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <li class="page-item">
-                        <a class="page-link bg-dark-custom border-glass text-white rounded-3"
-                            href="?{{ query_string }}&page={{ num }}">{{ num }}</a>
-                    </li>
-                    {% endif %}
-                {% endfor %}
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link bg-dark-custom border-glass text-white rounded-3"
-                        href="?{{ query_string }}&page={{ page_obj.next_page_number }}">
-                        <i class="fa-solid fa-chevron-right"></i>
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
-
-        {% else %}
-        <div class="text-center py-5">
-            <div class="hero-icon-glow mx-auto mb-4"
-                style="width:60px;height:60px;font-size:1.5rem;background:linear-gradient(135deg,var(--accent-pink),var(--accent-violet));box-shadow:0 10px 30px rgba(236,72,153,0.4);">
-                <i class="fa-solid fa-receipt"></i>
-            </div>
-            {% if has_filters %}
-            <h4 class="fw-bold font-outfit">No results match your filters</h4>
-            <p class="text-muted-custom mb-4 small">Try adjusting or clearing your filters.</p>
-            <a href="{% url 'expense-list' %}" class="btn btn-outline-custom px-4 py-2 rounded-pill fw-semibold me-2">
-                Clear Filters
-            </a>
-            {% else %}
-            <h4 class="fw-bold font-outfit">No expense records found</h4>
-            <p class="text-muted-custom mb-4 small">Start adding your expense logs to monitor your cash outflow.</p>
             {% endif %}
-            <a href="{% url 'expense-add' %}" class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
-                Add Expense
-            </a>
+
+            <!-- Table Card -->
+            <div class="card-hero p-4 rounded-4 text-white">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <h5 class="fw-bold font-outfit mb-0">Expense Records</h5>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- Sort Options Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-custom dropdown-toggle rounded-pill px-3 py-1.5 small fw-semibold" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.8rem;">
+                                <i class="fa-solid fa-sort me-1"></i> Sort: 
+                                {% if sort_by == 'date_asc' %}Date (Oldest First)
+                                {% elif sort_by == 'amount_desc' %}Amount (High-Low)
+                                {% elif sort_by == 'amount_asc' %}Amount (Low-High)
+                                {% elif sort_by == 'name_asc' %}Name (A-Z)
+                                {% elif sort_by == 'name_desc' %}Name (Z-A)
+                                {% elif sort_by == 'category_asc' %}Category (A-Z)
+                                {% elif sort_by == 'category_desc' %}Category (Z-A)
+                                {% elif sort_by == 'description_asc' %}Description (A-Z)
+                                {% elif sort_by == 'description_desc' %}Description (Z-A)
+                                {% else %}Date (Newest First){% endif %}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end bg-dark-custom border-glass shadow-lg" aria-labelledby="sortDropdown" style="min-width: 170px;">
+                                <li><a class="dropdown-item py-2 {% if sort_by == 'date_desc' or not sort_by %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=date_desc"><i class="fa-solid fa-calendar-days me-2 text-muted-custom"></i>Date (Newest First)</a></li>
+                                <li><a class="dropdown-item py-2 {% if sort_by == 'date_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=date_asc"><i class="fa-solid fa-calendar-days me-2 text-muted-custom"></i>Date (Oldest First)</a></li>
+                                <li><hr class="dropdown-divider border-glass m-1"></li>
+                                <li><a class="dropdown-item py-2 {% if sort_by == 'amount_desc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=amount_desc"><i class="fa-solid fa-arrow-down-9-1 me-2 text-muted-custom"></i>Amount (High-Low)</a></li>
+                                <li><a class="dropdown-item py-2 {% if sort_by == 'amount_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=amount_asc"><i class="fa-solid fa-arrow-up-1-9 me-2 text-muted-custom"></i>Amount (Low-High)</a></li>
+                                <li><hr class="dropdown-divider border-glass m-1"></li>
+                                <li><a class="dropdown-item py-2 {% if sort_by == 'name_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=name_asc"><i class="fa-solid fa-arrow-down-a-z me-2 text-muted-custom"></i>Name (A-Z)</a></li>
+                                <li><a class="dropdown-item py-2 {% if sort_by == 'name_desc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=name_desc"><i class="fa-solid fa-arrow-up-z-a me-2 text-muted-custom"></i>Name (Z-A)</a></li>
+                                <li><hr class="dropdown-divider border-glass m-1"></li>
+                                <li><a class="dropdown-item py-2 {% if sort_by == 'category_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=category_asc"><i class="fa-solid fa-tag me-2 text-muted-custom"></i>Category (A-Z)</a></li>
+                                <li><a class="dropdown-item py-2 {% if sort_by == 'category_desc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=category_desc"><i class="fa-solid fa-tag me-2 text-muted-custom"></i>Category (Z-A)</a></li>
+                                <li><hr class="dropdown-divider border-glass m-1"></li>
+                                <li><a class="dropdown-item py-2 {% if sort_by == 'description_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=description_asc"><i class="fa-solid fa-font me-2 text-muted-custom"></i>Description (A-Z)</a></li>
+                                <li><a class="dropdown-item py-2 {% if sort_by == 'description_desc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=description_desc"><i class="fa-solid fa-font me-2 text-muted-custom"></i>Description (Z-A)</a></li>
+                            </ul>
+                        </div>
+
+                        {% if expenses %}
+                        <span class="text-muted-custom small">
+                            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ list_count }} records
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if expenses %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0"
+                        style="--bs-table-bg: transparent; --bs-table-border-color: var(--glass-border);">
+                        <thead>
+                            <tr class="text-muted-custom" style="border-bottom: 2px solid var(--glass-border);">
+                                <th class="py-3">Date</th>
+                                <th class="py-3">Expense Name</th>
+                                <th class="py-3">Category</th>
+                                <th class="py-3">Amount</th>
+                                <th class="py-3">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses %}
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td class="py-3 fw-medium">{{ expense.date|date:"M d, Y" }}</td>
+                                <td class="py-3 fw-semibold">{{ expense.name }}</td>
+                                <td class="py-3">
+                                    {% if expense.category %}
+                                    <span class="badge rounded-pill px-3 py-1 fw-semibold"
+                                        style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);color:#a5b4fc;font-size:0.75rem;">
+                                        {{ expense.category.name }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted-custom small">Uncategorized</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 fw-bold text-gradient-alt">&#8377;{{ expense.amount|floatformat:2 }}</td>
+                                <td class="py-3 text-muted-custom small">{{ expense.description|default:"-"|truncatechars:40 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <nav class="mt-4 d-flex justify-content-center" aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0 gap-1">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link bg-dark-custom border-glass text-white rounded-3"
+                                href="?{{ query_string }}&page={{ page_obj.previous_page_number }}">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link rounded-3 fw-bold" style="background:linear-gradient(135deg,#6366f1,#a855f7);border:none;">{{ num }}</span>
+                            </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link bg-dark-custom border-glass text-white rounded-3"
+                                    href="?{{ query_string }}&page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link bg-dark-custom border-glass text-white rounded-3"
+                                href="?{{ query_string }}&page={{ page_obj.next_page_number }}">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="hero-icon-glow mx-auto mb-4" style="width:60px;height:60px;font-size:1.5rem;">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <h5 class="fw-bold font-outfit">No expense records found</h5>
+                    <p class="text-muted-custom mb-0 small">No transactions match your filtering constraints for this period.</p>
+                </div>
+                {% endif %}
+            </div>
         </div>
-        {% endif %}
+
+        <!-- Right Column: Visual Charts & Category Share Breakdown -->
+        <div class="col-lg-5">
+            <div class="d-flex flex-column gap-4 h-100">
+                <!-- Expense Share Pie Chart -->
+                <div class="card-hero p-4 rounded-4 text-white flex-grow-1">
+                    <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-chart-pie me-2 text-gradient"></i>Expense Distribution</h5>
+                    <div class="chart-container position-relative" style="height: 220px;">
+                        <canvas id="expensePieChart"></canvas>
+                        <div id="noExpensePieData" class="position-absolute top-50 start-50 translate-middle text-muted-custom text-center d-none">
+                            <i class="fa-solid fa-circle-exclamation mb-2 d-block" style="font-size: 1.5rem;"></i>
+                            <span class="small">No expenses in this range</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spending Trends Line Chart -->
+                <div class="card-hero p-4 rounded-4 text-white flex-grow-1">
+                    <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-chart-line me-2 text-gradient-alt"></i>Spending Trend</h5>
+                    <div class="chart-container position-relative" style="height: 220px;">
+                        <canvas id="expenseTrendChart"></canvas>
+                        <div id="noExpenseTrendData" class="position-absolute top-50 start-50 translate-middle text-muted-custom text-center d-none">
+                            <i class="fa-solid fa-circle-exclamation mb-2 d-block" style="font-size: 1.5rem;"></i>
+                            <span class="small">No trend data in this range</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Spending Detail Table -->
+                <div class="card-hero p-4 rounded-4 text-white">
+                    <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-table me-2 text-gradient"></i>Category Breakdown Detail</h6>
+                    {% if categories_data %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-sm table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-border-color: var(--glass-border); font-size: 0.85rem;">
+                            <thead>
+                                <tr class="text-muted-custom">
+                                    <th>Category</th>
+                                    <th>Total (&#8377;)</th>
+                                    <th class="text-center">Count</th>
+                                    <th class="text-end">Share</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in categories_data %}
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <td class="py-2 fw-semibold">{{ item.name }}</td>
+                                    <td class="py-2 fw-bold text-gradient-alt">&#8377;{{ item.total_spent|floatformat:0 }}</td>
+                                    <td class="py-2 text-center text-muted-custom">{{ item.txn_count }}</td>
+                                    <td class="py-2 text-end text-danger">{{ item.percentage|floatformat:1 }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted-custom small mb-0">No records found to analyze category distribution.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const rawPie = '{{ category_chart_json|escapejs }}';
+        const rawTrend = '{{ trend_chart_json|escapejs }}';
+
+        const pieData = rawPie ? JSON.parse(rawPie) : { labels: [], data: [] };
+        const trendData = rawTrend ? JSON.parse(rawTrend) : { labels: [], data: [] };
+
+        const colors = [
+            '#6366f1', // Indigo
+            '#ec4899', // Pink
+            '#8b5cf6', // Violet
+            '#f59e0b', // Amber
+            '#10b981', // Emerald
+            '#3b82f6', // Blue
+            '#ef4444', // Red
+            '#06b6d4'  // Cyan
+        ];
+
+        // Pie Chart
+        if (pieData.labels.length === 0 || pieData.data.length === 0) {
+            document.getElementById('noExpensePieData').classList.remove('d-none');
+            document.getElementById('expensePieChart').style.display = 'none';
+        } else {
+            const ctxPie = document.getElementById('expensePieChart').getContext('2d');
+            new Chart(ctxPie, {
+                type: 'pie',
+                data: {
+                    labels: pieData.labels,
+                    datasets: [{
+                        data: pieData.data,
+                        backgroundColor: colors.slice(0, pieData.labels.length),
+                        borderColor: 'rgba(17, 24, 39, 0.8)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#9ca3af',
+                                font: {
+                                    family: 'Inter',
+                                    size: 11
+                                },
+                                boxWidth: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let val = context.raw || 0;
+                                    return ' ' + context.label + ': ₹' + val.toLocaleString('en-IN', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Trend Line Chart
+        if (trendData.labels.length === 0 || trendData.data.length === 0) {
+            document.getElementById('noExpenseTrendData').classList.remove('d-none');
+            document.getElementById('expenseTrendChart').style.display = 'none';
+        } else {
+            const ctxTrend = document.getElementById('expenseTrendChart').getContext('2d');
+            new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: trendData.labels,
+                    datasets: [{
+                        label: 'Spending Dynamics',
+                        data: trendData.data,
+                        fill: true,
+                        backgroundColor: 'rgba(236, 72, 153, 0.08)',
+                        borderColor: '#ec4899',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointBackgroundColor: '#ec4899',
+                        pointBorderColor: '#fff',
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let val = context.raw || 0;
+                                    return ' ₹' + val.toLocaleString('en-IN', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#9ca3af',
+                                font: {
+                                    family: 'Inter',
+                                    size: 9
+                                },
+                                maxRotation: 45,
+                                autoSkip: true,
+                                maxTicksLimit: 10
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#9ca3af',
+                                font: {
+                                    family: 'Inter',
+                                    size: 9
+                                },
+                                callback: function(value) {
+                                    return '₹' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}
