@@ -92,7 +92,7 @@
     <!-- Main Workspace (2-Column Split) -->
     <div class="row g-4">
         <!-- Left Column: Search Filters & CRUD List Table -->
-        <div class="col-lg-7">
+        <div class="col-lg-8">
             <!-- Filter Panel -->
             <div class="card-hero p-4 rounded-4 text-white mb-4">
                 <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-sliders me-2 text-gradient"></i>Filters &amp; Search</h6>
@@ -300,63 +300,37 @@
             </div>
         </div>
 
-        <!-- Right Column: Visual Charts & Category Share Breakdown -->
-        <div class="col-lg-5">
-            <div class="d-flex flex-column gap-4 h-100">
-                <!-- Expense Share Pie Chart -->
-                <div class="card-hero p-4 rounded-4 text-white flex-grow-1">
-                    <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-chart-pie me-2 text-gradient"></i>Expense Distribution</h5>
-                    <div class="chart-container position-relative" style="height: 220px;">
-                        <canvas id="expensePieChart"></canvas>
-                        <div id="noExpensePieData" class="position-absolute top-50 start-50 translate-middle text-muted-custom text-center d-none">
-                            <i class="fa-solid fa-circle-exclamation mb-2 d-block" style="font-size: 1.5rem;"></i>
-                            <span class="small">No expenses in this range</span>
-                        </div>
-                    </div>
+        <!-- Right Column: Category Spending Share Breakdown -->
+        <div class="col-lg-4">
+            <!-- Category Spending Detail Table -->
+            <div class="card-hero p-4 rounded-4 text-white">
+                <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-table me-2 text-gradient"></i>Category Breakdown Detail</h6>
+                {% if categories_data %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-border-color: var(--glass-border); font-size: 0.85rem;">
+                        <thead>
+                            <tr class="text-muted-custom">
+                                <th>Category</th>
+                                <th>Total (&#8377;)</th>
+                                <th class="text-center">Count</th>
+                                <th class="text-end">Share</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in categories_data %}
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td class="py-2 fw-semibold">{{ item.name }}</td>
+                                <td class="py-2 fw-bold text-gradient-alt">&#8377;{{ item.total_spent|floatformat:0 }}</td>
+                                <td class="py-2 text-center text-muted-custom">{{ item.txn_count }}</td>
+                                <td class="py-2 text-end text-danger">{{ item.percentage|floatformat:1 }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- Spending Trends Line Chart -->
-                <div class="card-hero p-4 rounded-4 text-white flex-grow-1">
-                    <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-chart-line me-2 text-gradient-alt"></i>Spending Trend</h5>
-                    <div class="chart-container position-relative" style="height: 220px;">
-                        <canvas id="expenseTrendChart"></canvas>
-                        <div id="noExpenseTrendData" class="position-absolute top-50 start-50 translate-middle text-muted-custom text-center d-none">
-                            <i class="fa-solid fa-circle-exclamation mb-2 d-block" style="font-size: 1.5rem;"></i>
-                            <span class="small">No trend data in this range</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Category Spending Detail Table -->
-                <div class="card-hero p-4 rounded-4 text-white">
-                    <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-table me-2 text-gradient"></i>Category Breakdown Detail</h6>
-                    {% if categories_data %}
-                    <div class="table-responsive">
-                        <table class="table table-dark table-sm table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-border-color: var(--glass-border); font-size: 0.85rem;">
-                            <thead>
-                                <tr class="text-muted-custom">
-                                    <th>Category</th>
-                                    <th>Total (&#8377;)</th>
-                                    <th class="text-center">Count</th>
-                                    <th class="text-end">Share</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in categories_data %}
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                    <td class="py-2 fw-semibold">{{ item.name }}</td>
-                                    <td class="py-2 fw-bold text-gradient-alt">&#8377;{{ item.total_spent|floatformat:0 }}</td>
-                                    <td class="py-2 text-center text-muted-custom">{{ item.txn_count }}</td>
-                                    <td class="py-2 text-end text-danger">{{ item.percentage|floatformat:1 }}%</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <p class="text-muted-custom small mb-0">No records found to analyze category distribution.</p>
-                    {% endif %}
-                </div>
+                {% else %}
+                <p class="text-muted-custom small mb-0">No records found to analyze category distribution.</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -364,144 +338,4 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const rawPie = '{{ category_chart_json|escapejs }}';
-        const rawTrend = '{{ trend_chart_json|escapejs }}';
-
-        const pieData = rawPie ? JSON.parse(rawPie) : { labels: [], data: [] };
-        const trendData = rawTrend ? JSON.parse(rawTrend) : { labels: [], data: [] };
-
-        const colors = [
-            '#6366f1', // Indigo
-            '#ec4899', // Pink
-            '#8b5cf6', // Violet
-            '#f59e0b', // Amber
-            '#10b981', // Emerald
-            '#3b82f6', // Blue
-            '#ef4444', // Red
-            '#06b6d4'  // Cyan
-        ];
-
-        // Pie Chart
-        if (pieData.labels.length === 0 || pieData.data.length === 0) {
-            document.getElementById('noExpensePieData').classList.remove('d-none');
-            document.getElementById('expensePieChart').style.display = 'none';
-        } else {
-            const ctxPie = document.getElementById('expensePieChart').getContext('2d');
-            new Chart(ctxPie, {
-                type: 'pie',
-                data: {
-                    labels: pieData.labels,
-                    datasets: [{
-                        data: pieData.data,
-                        backgroundColor: colors.slice(0, pieData.labels.length),
-                        borderColor: 'rgba(17, 24, 39, 0.8)',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                color: '#9ca3af',
-                                font: {
-                                    family: 'Inter',
-                                    size: 11
-                                },
-                                boxWidth: 12
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let val = context.raw || 0;
-                                    return ' ' + context.label + ': ₹' + val.toLocaleString('en-IN', {minimumFractionDigits: 2});
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Trend Line Chart
-        if (trendData.labels.length === 0 || trendData.data.length === 0) {
-            document.getElementById('noExpenseTrendData').classList.remove('d-none');
-            document.getElementById('expenseTrendChart').style.display = 'none';
-        } else {
-            const ctxTrend = document.getElementById('expenseTrendChart').getContext('2d');
-            new Chart(ctxTrend, {
-                type: 'line',
-                data: {
-                    labels: trendData.labels,
-                    datasets: [{
-                        label: 'Spending Dynamics',
-                        data: trendData.data,
-                        fill: true,
-                        backgroundColor: 'rgba(236, 72, 153, 0.08)',
-                        borderColor: '#ec4899',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        pointBackgroundColor: '#ec4899',
-                        pointBorderColor: '#fff',
-                        pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let val = context.raw || 0;
-                                    return ' ₹' + val.toLocaleString('en-IN', {minimumFractionDigits: 2});
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#9ca3af',
-                                font: {
-                                    family: 'Inter',
-                                    size: 9
-                                },
-                                maxRotation: 45,
-                                autoSkip: true,
-                                maxTicksLimit: 10
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
-                            },
-                            ticks: {
-                                color: '#9ca3af',
-                                font: {
-                                    family: 'Inter',
-                                    size: 9
-                                },
-                                callback: function(value) {
-                                    return '₹' + value;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    });
-</script>
 {% endblock %}

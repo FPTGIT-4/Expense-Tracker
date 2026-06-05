@@ -92,7 +92,7 @@
     <!-- Main Workspace (2-Column Split) -->
     <div class="row g-4">
         <!-- Left Column: Search Filters & CRUD List Table -->
-        <div class="col-lg-7">
+        <div class="col-lg-8">
             <!-- Filter Panel -->
             <div class="card-hero p-4 rounded-4 text-white mb-4">
                 <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-sliders me-2 text-gradient"></i>Filters &amp; Search</h6>
@@ -286,63 +286,37 @@
             </div>
         </div>
 
-        <!-- Right Column: Visual Charts & Source Contribution -->
-        <div class="col-lg-5">
-            <div class="d-flex flex-column gap-4 h-100">
-                <!-- Source breakdown Pie Chart -->
-                <div class="card-hero p-4 rounded-4 text-white flex-grow-1">
-                    <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-chart-pie me-2 text-gradient"></i>Sources Contribution</h5>
-                    <div class="chart-container position-relative" style="height: 220px;">
-                        <canvas id="sourcePieChart"></canvas>
-                        <div id="noSourceData" class="position-absolute top-50 start-50 translate-middle text-muted-custom text-center d-none">
-                            <i class="fa-solid fa-circle-exclamation mb-2 d-block" style="font-size: 1.5rem;"></i>
-                            <span class="small">No sources data in this range</span>
-                        </div>
-                    </div>
+        <!-- Right Column: Source Contribution Breakdown -->
+        <div class="col-lg-4">
+            <!-- Source Contribution Breakdown Table -->
+            <div class="card-hero p-4 rounded-4 text-white">
+                <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-table me-2 text-gradient"></i>Source Breakdown Detail</h6>
+                {% if source_data %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-border-color: var(--glass-border); font-size: 0.85rem;">
+                        <thead>
+                            <tr class="text-muted-custom">
+                                <th>Source</th>
+                                <th>Total (&#8377;)</th>
+                                <th class="text-center">Count</th>
+                                <th class="text-end">Contribution</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in source_data %}
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td class="py-2 fw-semibold">{{ item.source }}</td>
+                                <td class="py-2 fw-bold text-gradient">&#8377;{{ item.total_amount|floatformat:0 }}</td>
+                                <td class="py-2 text-center text-muted-custom">{{ item.txn_count }}</td>
+                                <td class="py-2 text-end text-success">{{ item.percentage|floatformat:1 }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- Income Trends Line Chart -->
-                <div class="card-hero p-4 rounded-4 text-white flex-grow-1">
-                    <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-chart-line me-2 text-gradient-alt"></i>Income Trend</h5>
-                    <div class="chart-container position-relative" style="height: 220px;">
-                        <canvas id="incomeTrendChart"></canvas>
-                        <div id="noTrendData" class="position-absolute top-50 start-50 translate-middle text-muted-custom text-center d-none">
-                            <i class="fa-solid fa-circle-exclamation mb-2 d-block" style="font-size: 1.5rem;"></i>
-                            <span class="small">No trend data in this range</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Source Contribution Breakdown Table -->
-                <div class="card-hero p-4 rounded-4 text-white">
-                    <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-table me-2 text-gradient"></i>Source Breakdown Detail</h6>
-                    {% if source_data %}
-                    <div class="table-responsive">
-                        <table class="table table-dark table-sm table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-border-color: var(--glass-border); font-size: 0.85rem;">
-                            <thead>
-                                <tr class="text-muted-custom">
-                                    <th>Source</th>
-                                    <th>Total (&#8377;)</th>
-                                    <th class="text-center">Count</th>
-                                    <th class="text-end">Contribution</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in source_data %}
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                    <td class="py-2 fw-semibold">{{ item.source }}</td>
-                                    <td class="py-2 fw-bold text-gradient">&#8377;{{ item.total_amount|floatformat:0 }}</td>
-                                    <td class="py-2 text-center text-muted-custom">{{ item.txn_count }}</td>
-                                    <td class="py-2 text-end text-success">{{ item.percentage|floatformat:1 }}%</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <p class="text-muted-custom small mb-0">No records found to analyze source contributions.</p>
-                    {% endif %}
-                </div>
+                {% else %}
+                <p class="text-muted-custom small mb-0">No records found to analyze source contributions.</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -350,142 +324,4 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const rawPie = '{{ pie_chart_json|escapejs }}';
-        const rawTrend = '{{ trend_chart_json|escapejs }}';
-
-        const pieData = rawPie ? JSON.parse(rawPie) : { labels: [], data: [] };
-        const trendData = rawTrend ? JSON.parse(rawTrend) : { labels: [], data: [] };
-
-        const colors = [
-            '#10b981', // Emerald (representing Income)
-            '#3b82f6', // Blue
-            '#8b5cf6', // Violet
-            '#f59e0b', // Amber
-            '#06b6d4', // Cyan
-            '#6366f1'  // Indigo
-        ];
-
-        // Pie Chart
-        if (pieData.labels.length === 0 || pieData.data.length === 0) {
-            document.getElementById('noSourceData').classList.remove('d-none');
-            document.getElementById('sourcePieChart').style.display = 'none';
-        } else {
-            const ctxPie = document.getElementById('sourcePieChart').getContext('2d');
-            new Chart(ctxPie, {
-                type: 'pie',
-                data: {
-                    labels: pieData.labels,
-                    datasets: [{
-                        data: pieData.data,
-                        backgroundColor: colors.slice(0, pieData.labels.length),
-                        borderColor: 'rgba(17, 24, 39, 0.8)',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                color: '#9ca3af',
-                                font: {
-                                    family: 'Inter',
-                                    size: 11
-                                },
-                                boxWidth: 12
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let val = context.raw || 0;
-                                    return ' ' + context.label + ': ₹' + val.toLocaleString('en-IN', {minimumFractionDigits: 2});
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Trend Line Chart
-        if (trendData.labels.length === 0 || trendData.data.length === 0) {
-            document.getElementById('noTrendData').classList.remove('d-none');
-            document.getElementById('incomeTrendChart').style.display = 'none';
-        } else {
-            const ctxTrend = document.getElementById('incomeTrendChart').getContext('2d');
-            new Chart(ctxTrend, {
-                type: 'line',
-                data: {
-                    labels: trendData.labels,
-                    datasets: [{
-                        label: 'Income Dynamics',
-                        data: trendData.data,
-                        fill: true,
-                        backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                        borderColor: '#10b981',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        pointBackgroundColor: '#10b981',
-                        pointBorderColor: '#fff',
-                        pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let val = context.raw || 0;
-                                    return ' ₹' + val.toLocaleString('en-IN', {minimumFractionDigits: 2});
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#9ca3af',
-                                font: {
-                                    family: 'Inter',
-                                    size: 9
-                                },
-                                maxRotation: 45,
-                                autoSkip: true,
-                                maxTicksLimit: 10
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
-                            },
-                            ticks: {
-                                color: '#9ca3af',
-                                font: {
-                                    family: 'Inter',
-                                    size: 9
-                                },
-                                callback: function(value) {
-                                    return '₹' + value;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    });
-</script>
 {% endblock %}
