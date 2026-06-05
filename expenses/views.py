@@ -1,17 +1,3 @@
-from django.shortcuts import render
-from django.urls import reverse_lazy
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.messages.views import SuccessMessageMixin
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from django.db.models import Q, Sum
-import datetime
-
-from .models import Expense
-from .forms import ExpenseForm
-from categories.models import Category
-
-
 import json
 from decimal import Decimal
 from django.shortcuts import render
