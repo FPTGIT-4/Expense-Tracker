@@ -17,10 +17,15 @@ class AddTransactionView(LoginRequiredMixin, View):
     template_name = 'transactions/add_transaction.html'
 
     def get(self, request, *args, **kwargs):
+        # Read ?tab=income or ?tab=expense to pre-select the right tab
+        tab = request.GET.get('tab', 'income').strip().lower()
+        initial_type = 'expense' if tab == 'expense' else 'income'
+
         context = {
             'today': datetime.date.today().isoformat(),
             'source_choices': Income.SOURCE_CHOICES,
             'categories': Category.objects.filter(user=request.user).order_by('name'),
+            'initial_type': initial_type,
         }
         return render(request, self.template_name, context)
 

@@ -9,7 +9,7 @@
                       "stay"     → reset rows + refresh dashboard stat cards
 {% endcomment %}
 
-<div class="txn-widget-root" data-post-save="{{ post_save }}">
+<div class="txn-widget-root" data-post-save="{{ post_save }}" data-initial-type="{{ initial_type|default:'income' }}">
 
   <!-- Error Box -->
   <div class="txn-error-box alert border-0 bg-danger bg-opacity-15 text-white rounded-3 mb-3" role="alert" style="display: none;">
@@ -468,10 +468,15 @@
   /* ── Auto-init all widgets on page load ─────────────── */
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.txn-widget-root').forEach(root => {
-      root._txnType   = 'income';
+      const initialType = root.dataset.initialType || 'income';
+      root._txnType   = 'income'; // always start internal state as income
       root._txnRowIdx = 0;
       const api = window.txnWidget(root.querySelector('.txn-date-input'));
       api.addRow();
+      // If a specific tab was requested, switch to it after the first income row is added
+      if (initialType === 'expense') {
+        api.switchType('expense');
+      }
     });
   });
 

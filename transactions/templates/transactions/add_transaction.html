@@ -13,7 +13,7 @@
     <p class="text-muted-custom mb-0">Enter multiple income or expense records for a single date, then save at once.</p>
   </div>
 
-  {% include 'transactions/_txn_widget.html' with post_save="redirect" %}
+  {% include 'transactions/_txn_widget.html' with post_save="redirect" initial_type=initial_type %}
 
 </div>
 {% endblock %}
