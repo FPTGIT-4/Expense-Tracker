@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile Details | Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <h1 class="fw-bold font-outfit text-gradient mb-1">My Profile</h1>
+            <p class="text-muted-custom mb-0">View and manage your account details</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Left: Profile Info Card -->
+        <div class="col-lg-4">
+            <div class="card-hero p-4 rounded-4 text-white h-100 text-center">
+                <!-- Avatar -->
+                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+                    style="width:90px;height:90px;background:linear-gradient(135deg,#6366f1,#a855f7);font-size:2.2rem;font-weight:700;color:#fff;letter-spacing:-1px;">
+                    {{ user.username|slice:":1"|upper }}
+                </div>
+                <h4 class="fw-bold font-outfit mb-1">
+                    {{ user.get_full_name|default:user.username }}
+                </h4>
+                <p class="text-muted-custom small mb-3">@{{ user.username }}</p>
+
+                <!-- Info rows -->
+                <div class="text-start mt-4">
+                    <div class="mb-3 pb-3" style="border-bottom:1px solid var(--glass-border);">
+                        <span class="text-muted-custom small uppercase fw-semibold d-block mb-1">
+                            <i class="fa-solid fa-user me-1"></i> Username
+                        </span>
+                        <span class="fw-semibold">{{ user.username }}</span>
+                    </div>
+                    <div class="mb-3 pb-3" style="border-bottom:1px solid var(--glass-border);">
+                        <span class="text-muted-custom small uppercase fw-semibold d-block mb-1">
+                            <i class="fa-solid fa-envelope me-1"></i> Email
+                        </span>
+                        <span class="fw-semibold">{{ user.email|default:"Not provided" }}</span>
+                    </div>
+                    <div class="mb-3 pb-3" style="border-bottom:1px solid var(--glass-border);">
+                        <span class="text-muted-custom small uppercase fw-semibold d-block mb-1">
+                            <i class="fa-solid fa-id-badge me-1"></i> Full Name
+                        </span>
+                        <span class="fw-semibold">{{ user.get_full_name|default:"Not provided" }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-muted-custom small uppercase fw-semibold d-block mb-1">
+                            <i class="fa-solid fa-calendar me-1"></i> Member Since
+                        </span>
+                        <span class="fw-semibold">{{ user.date_joined|date:"F d, Y" }}</span>
+                    </div>
+                </div>
+
+                <!-- Quick actions -->
+                <div class="mt-4 d-grid gap-2">
+                    <a href="{% url 'password_change' %}" class="btn btn-primary-gradient rounded-pill fw-semibold py-2">
+                        <i class="bi bi-key me-2"></i>Change Password
+                    </a>
+                    <a href="{% url 'home' %}" class="btn btn-outline-custom rounded-pill fw-semibold py-2">
+                        <i class="fa-solid fa-house me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Edit Profile Form -->
+        <div class="col-lg-8">
+            <div class="card-hero p-4 rounded-4 text-white">
+                <h5 class="fw-bold font-outfit mb-1">
+                    <i class="fa-solid fa-pen-to-square me-2 text-gradient"></i>Edit Profile
+                </h5>
+                <p class="text-muted-custom small mb-4">Update your full name and email address</p>
+
+                <form method="post" action="{% url 'profile' %}" novalidate>
+                    {% csrf_token %}
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">First Name</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.first_name.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Last Name</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.last_name.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-muted-custom small fw-semibold uppercase">Email Address</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <div class="text-danger small mt-1">{{ form.email.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Read-only fields -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Username <span class="text-muted-custom">(cannot change)</span></label>
+                            <input type="text" class="form-control bg-dark-custom text-muted-custom border-glass" value="{{ user.username }}" disabled>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Date Joined <span class="text-muted-custom">(read only)</span></label>
+                            <input type="text" class="form-control bg-dark-custom text-muted-custom border-glass" value="{{ user.date_joined|date:'F d, Y' }}" disabled>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 py-2 fw-semibold shadow-lg">
+                            <i class="fa-solid fa-floppy-disk me-2"></i>Save Changes
+                        </button>
+                        <a href="{% url 'profile' %}" class="btn btn-outline-custom rounded-pill px-4 py-2 fw-semibold">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Security Card -->
+            <div class="card-hero p-4 rounded-4 text-white mt-4">
+                <h5 class="fw-bold font-outfit mb-1">
+                    <i class="fa-solid fa-shield-halved me-2 text-gradient-alt"></i>Security
+                </h5>
+                <p class="text-muted-custom small mb-3">Manage your password and account security</p>
+                <div class="d-flex align-items-center justify-content-between p-3 rounded-3"
+                    style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);">
+                    <div>
+                        <p class="fw-semibold mb-0">Password</p>
+                        <p class="text-muted-custom small mb-0">Last changed: never (or on account creation)</p>
+                    </div>
+                    <a href="{% url 'password_change' %}" class="btn btn-outline-custom rounded-pill px-3 py-1 small fw-semibold">
+                        <i class="bi bi-key me-1"></i> Change
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
