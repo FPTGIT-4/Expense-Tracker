@@ -29,6 +29,45 @@
         </div>
     </div>
 
+    {% if accounts_below_minimum %}
+    <!-- Minimum Balance Alerts -->
+    <div class="mb-4" id="min-balance-alerts">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="fa-solid fa-triangle-exclamation" style="color: #fbbf24;"></i>
+            <h6 class="fw-bold font-outfit text-white mb-0" style="font-size: 0.95rem; letter-spacing: -0.01em;">Balance Alerts</h6>
+            <span class="badge rounded-pill fw-semibold" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.7rem; padding: 0.3em 0.7em;">{{ accounts_below_minimum|length }}</span>
+        </div>
+        <div class="d-flex flex-column gap-2">
+            {% for acc in accounts_below_minimum %}
+            <a href="{% url 'account-detail' acc.pk %}" class="text-decoration-none">
+                <div class="d-flex align-items-center justify-content-between px-4 py-3 rounded-3"
+                     style="background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.25); transition: background 0.2s ease;"
+                     onmouseenter="this.style.background='rgba(245,158,11,0.14)'"
+                     onmouseleave="this.style.background='rgba(245,158,11,0.07)'">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="feature-icon mb-0 {{ acc.theme_color_class }}" style="width: 36px; height: 36px; border-radius: 10px; font-size: 0.95rem; background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); color: #fbbf24;">
+                            <i class="bi {{ acc.bootstrap_icon }}"></i>
+                        </div>
+                        <div>
+                            <p class="mb-0 fw-semibold text-white font-outfit" style="font-size: 0.9rem;">
+                                <i class="fa-solid fa-circle-exclamation me-1" style="color: #fbbf24; font-size: 0.8rem;"></i>
+                                {{ acc.name }} account balance is below minimum threshold.
+                            </p>
+                            <p class="mb-0 text-muted-custom" style="font-size: 0.78rem;">
+                                Current: <span class="fw-semibold" style="color: #fca5a5;">&#8377;{{ acc.current_balance|floatformat:2 }}</span>
+                                &nbsp;&bull;&nbsp;
+                                Minimum: <span class="fw-semibold" style="color: #fbbf24;">&#8377;{{ acc.minimum_balance|floatformat:2 }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-muted-custom" style="font-size: 0.8rem;"></i>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Summary cards -->
     <div id="dashboard-summary-cards" class="row g-4 mb-4">
         <!-- Total Balance -->
@@ -197,32 +236,255 @@
     <div id="dashboard-accounts-grid" class="row g-3 mb-5">
         {% for acc in accounts %}
         <div class="col-md-6 col-lg-3">
-            <a href="{% url 'account-list' %}" class="text-decoration-none h-100 d-block">
+            <a href="{% url 'account-detail' acc.pk %}" class="text-decoration-none h-100 d-block">
                 <div class="card-feature p-3.5 rounded-4 text-white h-100" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.06);">
-                    <div class="d-flex align-items-center">
-                        <div class="feature-icon mb-0 me-3 
-                            {% if acc.account_type == 'Cash' %}color-1
-                            {% elif acc.account_type == 'Bank Account' %}color-2
-                            {% elif acc.account_type == 'GPay' or acc.account_type == 'PhonePe' %}color-1
-                            {% elif acc.account_type == 'Credit Card' or acc.account_type == 'Debit Card' %}color-3
-                            {% else %}color-2{% endif %}" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
-                            {% if acc.account_type == 'Cash' %}<i class="fa-solid fa-money-bill-wave"></i>
-                            {% elif acc.account_type == 'Bank Account' %}<i class="fa-solid fa-building-columns"></i>
-                            {% elif acc.account_type == 'GPay' or acc.account_type == 'PhonePe' %}<i class="fa-solid fa-mobile-screen-button"></i>
-                            {% elif acc.account_type == 'Credit Card' or acc.account_type == 'Debit Card' %}<i class="fa-solid fa-credit-card"></i>
-                            {% else %}<i class="fa-solid fa-wallet"></i>{% endif %}
+                    <div class="d-flex align-items-center justify-content-between w-100">
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon mb-0 me-3 {{ acc.theme_color_class }}" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
+                                <i class="bi {{ acc.bootstrap_icon }}"></i>
+                            </div>
+                            <div>
+                                <p class="text-muted-custom small mb-0 uppercase fw-semibold" style="font-size: 0.72rem;">{{ acc.name }}</p>
+                                <h4 class="fw-bold mb-0 font-outfit text-white" style="font-size: 1.25rem;">
+                                    ₹{{ acc.current_balance|floatformat:2 }}
+                                </h4>
+                            </div>
                         </div>
                         <div>
-                            <p class="text-muted-custom small mb-0 uppercase fw-semibold" style="font-size: 0.72rem;">{{ acc.name }}</p>
-                            <h4 class="fw-bold mb-0 font-outfit text-white" style="font-size: 1.25rem;">
-                                ₹{{ acc.current_balance|floatformat:2 }}
-                            </h4>
+                            {% if acc.status == 'ACTIVE' %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(16, 185, 129, 0.15) !important; border: 1px solid rgba(16, 185, 129, 0.3) !important; color: #34d399 !important; font-size: 0.6rem; letter-spacing: 0.03em; padding: 0.3em 0.5em;">
+                                Active
+                            </span>
+                            {% elif acc.status == 'INACTIVE' %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(245, 158, 11, 0.15) !important; border: 1px solid rgba(245, 158, 11, 0.3) !important; color: #fbbf24 !important; font-size: 0.6rem; letter-spacing: 0.03em; padding: 0.3em 0.5em;">
+                                Inactive
+                            </span>
+                            {% elif acc.status == 'CLOSED' %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(239, 68, 68, 0.15) !important; border: 1px solid rgba(239, 68, 68, 0.3) !important; color: #f87171 !important; font-size: 0.6rem; letter-spacing: 0.03em; padding: 0.3em 0.5em;">
+                                Closed
+                            </span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </a>
         </div>
         {% endfor %}
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- Account Intelligence Section                                -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <h5 class="fw-bold font-outfit text-white mb-3">
+        <i class="fa-solid fa-brain me-2 text-gradient"></i>Account Intelligence
+        <a href="{% url 'account-reports' %}" class="ms-2 text-decoration-none" style="font-size: 0.78rem; color: #a5b4fc; font-weight: 500; vertical-align: middle;">
+            View Full Reports <i class="fa-solid fa-arrow-right ms-1" style="font-size: 0.7rem;"></i>
+        </a>
+    </h5>
+
+    <!-- Row 1: 4 stat cards -->
+    <div class="row g-4 mb-4">
+
+        <!-- Highest Balance Account -->
+        <div class="col-md-6 col-lg-3">
+            {% if highest_balance_account %}
+            <a href="{% url 'account-detail' highest_balance_account.pk %}" class="text-decoration-none h-100 d-block">
+            {% endif %}
+            <div class="card-feature p-4 rounded-4 text-white h-100" style="position: relative; overflow: hidden;">
+                <div class="position-absolute top-0 end-0 mt-3 me-3 opacity-25" style="font-size: 3.5rem; line-height: 1; pointer-events: none;">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <p class="text-muted-custom small mb-2 uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                    <i class="fa-solid fa-arrow-trend-up me-1" style="color: #34d399;"></i>Highest Balance
+                </p>
+                {% if highest_balance_account %}
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="feature-icon mb-0 {{ highest_balance_account.theme_color_class }}" style="width: 32px; height: 32px; border-radius: 9px; font-size: 0.85rem;">
+                        <i class="bi {{ highest_balance_account.bootstrap_icon }}"></i>
+                    </div>
+                    <p class="fw-semibold text-white mb-0 font-outfit" style="font-size: 0.88rem;">{{ highest_balance_account.name }}</p>
+                </div>
+                <h3 class="fw-bold mb-0 font-outfit text-gradient" style="font-size: 1.55rem;">&#8377;{{ highest_balance_account.current_balance|floatformat:2 }}</h3>
+                <span class="badge bg-glass border border-glass text-muted-custom rounded-pill mt-2" style="font-size: 0.65rem;">{{ highest_balance_account.account_type }}</span>
+                {% else %}
+                <p class="text-muted-custom mb-0 small">No accounts yet</p>
+                {% endif %}
+            </div>
+            {% if highest_balance_account %}</a>{% endif %}
+        </div>
+
+        <!-- Lowest Balance Account -->
+        <div class="col-md-6 col-lg-3">
+            {% if lowest_balance_account %}
+            <a href="{% url 'account-detail' lowest_balance_account.pk %}" class="text-decoration-none h-100 d-block">
+            {% endif %}
+            <div class="card-feature p-4 rounded-4 text-white h-100" style="position: relative; overflow: hidden;">
+                <div class="position-absolute top-0 end-0 mt-3 me-3 opacity-25" style="font-size: 3.5rem; line-height: 1; pointer-events: none;">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                </div>
+                <p class="text-muted-custom small mb-2 uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                    <i class="fa-solid fa-arrow-trend-down me-1" style="color: #f87171;"></i>Lowest Balance
+                </p>
+                {% if lowest_balance_account %}
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="feature-icon mb-0 {{ lowest_balance_account.theme_color_class }}" style="width: 32px; height: 32px; border-radius: 9px; font-size: 0.85rem;">
+                        <i class="bi {{ lowest_balance_account.bootstrap_icon }}"></i>
+                    </div>
+                    <p class="fw-semibold text-white mb-0 font-outfit" style="font-size: 0.88rem;">{{ lowest_balance_account.name }}</p>
+                </div>
+                <h3 class="fw-bold mb-0 font-outfit {% if lowest_balance_account.current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.55rem;">&#8377;{{ lowest_balance_account.current_balance|floatformat:2 }}</h3>
+                <span class="badge bg-glass border border-glass text-muted-custom rounded-pill mt-2" style="font-size: 0.65rem;">{{ lowest_balance_account.account_type }}</span>
+                {% else %}
+                <p class="text-muted-custom mb-0 small">No accounts yet</p>
+                {% endif %}
+            </div>
+            {% if lowest_balance_account %}</a>{% endif %}
+        </div>
+
+        <!-- Total Cash Balance -->
+        <div class="col-md-6 col-lg-3">
+            <a href="{% url 'account-reports' %}?date_filter=this_month" class="text-decoration-none h-100 d-block">
+            <div class="card-feature p-4 rounded-4 text-white h-100" style="position: relative; overflow: hidden;">
+                <div class="position-absolute top-0 end-0 mt-3 me-3 opacity-20" style="font-size: 3.5rem; line-height: 1; pointer-events: none;">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+                <p class="text-muted-custom small mb-2 uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                    <i class="bi bi-cash-coin me-1" style="color: #a5b4fc;"></i>Total Cash
+                </p>
+                <h3 class="fw-bold mb-0 font-outfit {% if total_cash_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.55rem;">&#8377;{{ total_cash_balance|floatformat:2 }}</h3>
+                <p class="text-muted-custom mb-0 mt-2" style="font-size: 0.72rem;">All Cash accounts</p>
+            </div>
+            </a>
+        </div>
+
+        <!-- Total Bank Balance -->
+        <div class="col-md-6 col-lg-3">
+            <a href="{% url 'account-reports' %}?date_filter=this_month" class="text-decoration-none h-100 d-block">
+            <div class="card-feature p-4 rounded-4 text-white h-100" style="position: relative; overflow: hidden;">
+                <div class="position-absolute top-0 end-0 mt-3 me-3 opacity-20" style="font-size: 3.5rem; line-height: 1; pointer-events: none;">
+                    <i class="bi bi-bank"></i>
+                </div>
+                <p class="text-muted-custom small mb-2 uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                    <i class="bi bi-bank me-1" style="color: #a5b4fc;"></i>Total Bank
+                </p>
+                <h3 class="fw-bold mb-0 font-outfit {% if total_bank_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.55rem;">&#8377;{{ total_bank_balance|floatformat:2 }}</h3>
+                <p class="text-muted-custom mb-0 mt-2" style="font-size: 0.72rem;">All Bank Account</p>
+            </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Row 2: Transfer Stats + Low Balance Alerts side-by-side -->
+    <div class="row g-4 mb-5">
+
+        <!-- Transfer Statistics -->
+        <div class="col-lg-6">
+            <div class="card-hero p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h6 class="fw-bold font-outfit mb-0" style="font-size: 0.95rem;">
+                        <i class="fa-solid fa-right-left me-2 text-gradient"></i>Transfer Statistics
+                    </h6>
+                    <a href="{% url 'transfer-list' %}" class="text-decoration-none" style="font-size: 0.78rem; color: #a5b4fc; font-weight: 500;">
+                        History <i class="fa-solid fa-arrow-right ms-1" style="font-size: 0.65rem;"></i>
+                    </a>
+                </div>
+                <div class="row g-3">
+                    <!-- All-time count -->
+                    <div class="col-6">
+                        <div class="rounded-3 p-3 text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+                            <p class="text-muted-custom mb-1" style="font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase;">All-time Transfers</p>
+                            <h4 class="fw-bold font-outfit text-gradient mb-0">{{ transfer_stats.count }}</h4>
+                        </div>
+                    </div>
+                    <!-- All-time total -->
+                    <div class="col-6">
+                        <div class="rounded-3 p-3 text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+                            <p class="text-muted-custom mb-1" style="font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase;">All-time Volume</p>
+                            <h4 class="fw-bold font-outfit text-gradient mb-0" style="font-size: 1.25rem;">&#8377;{{ transfer_stats.total|floatformat:0 }}</h4>
+                        </div>
+                    </div>
+                    <!-- This month count -->
+                    <div class="col-6">
+                        <div class="rounded-3 p-3 text-center" style="background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.15);">
+                            <p class="text-muted-custom mb-1" style="font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase;">This Month</p>
+                            <h4 class="fw-bold font-outfit text-white mb-0">{{ transfer_stats.count_month }}
+                                <span class="text-muted-custom fw-normal" style="font-size: 0.75rem;">transfers</span>
+                            </h4>
+                        </div>
+                    </div>
+                    <!-- This month volume -->
+                    <div class="col-6">
+                        <div class="rounded-3 p-3 text-center" style="background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.15);">
+                            <p class="text-muted-custom mb-1" style="font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase;">Month Volume</p>
+                            <h4 class="fw-bold font-outfit text-white mb-0" style="font-size: 1.25rem;">&#8377;{{ transfer_stats.total_month|floatformat:0 }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 d-flex gap-2" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                    <a href="{% url 'account-transfer' %}" class="btn btn-primary-gradient btn-sm rounded-pill px-4 fw-semibold flex-grow-1 py-2">
+                        <i class="fa-solid fa-right-left me-2"></i>New Transfer
+                    </a>
+                    <a href="{% url 'transfer-list' %}" class="btn btn-outline-custom btn-sm rounded-pill px-4 fw-semibold flex-grow-1 py-2">
+                        <i class="fa-solid fa-clock-rotate-left me-2"></i>History
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Balance Alerts Panel -->
+        <div class="col-lg-6">
+            <div class="card-hero p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h6 class="fw-bold font-outfit mb-0" style="font-size: 0.95rem;">
+                        <i class="fa-solid fa-triangle-exclamation me-2" style="color: #fbbf24;"></i>Low Balance Alerts
+                        {% if accounts_below_minimum %}
+                        <span class="badge rounded-pill ms-1 fw-semibold" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.65rem; padding: 0.25em 0.65em; vertical-align: middle;">{{ accounts_below_minimum|length }}</span>
+                        {% endif %}
+                    </h6>
+                    <a href="{% url 'account-list' %}" class="text-decoration-none" style="font-size: 0.78rem; color: #a5b4fc; font-weight: 500;">
+                        Manage <i class="fa-solid fa-arrow-right ms-1" style="font-size: 0.65rem;"></i>
+                    </a>
+                </div>
+
+                {% if accounts_below_minimum %}
+                <div class="d-flex flex-column gap-2 overflow-auto" style="max-height: 260px;">
+                    {% for acc in accounts_below_minimum %}
+                    <a href="{% url 'account-detail' acc.pk %}" class="text-decoration-none">
+                        <div class="d-flex align-items-center justify-content-between px-3 py-2.5 rounded-3"
+                             style="background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); transition: background 0.2s;"
+                             onmouseenter="this.style.background='rgba(245,158,11,0.14)'"
+                             onmouseleave="this.style.background='rgba(245,158,11,0.07)'">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="feature-icon mb-0" style="width: 32px; height: 32px; border-radius: 9px; font-size: 0.85rem; background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); color: #fbbf24;">
+                                    <i class="bi {{ acc.bootstrap_icon }}"></i>
+                                </div>
+                                <div>
+                                    <p class="fw-semibold text-white mb-0" style="font-size: 0.85rem;">{{ acc.name }}</p>
+                                    <p class="text-muted-custom mb-0" style="font-size: 0.72rem;">
+                                        Min: <span style="color: #fbbf24; font-weight: 600;">&#8377;{{ acc.minimum_balance|floatformat:0 }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <p class="fw-bold mb-0" style="color: #fca5a5; font-size: 0.92rem;">&#8377;{{ acc.current_balance|floatformat:2 }}</p>
+                                <p class="text-muted-custom mb-0" style="font-size: 0.68rem;">Current</p>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center py-4" style="min-height: 180px;">
+                    <div class="mb-3" style="width: 52px; height: 52px; border-radius: 14px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #34d399; margin: 0 auto;">
+                        <i class="fa-solid fa-shield-check"></i>
+                    </div>
+                    <p class="fw-semibold text-white mb-1 font-outfit" style="font-size: 0.9rem;">All Balances Healthy</p>
+                    <p class="text-muted-custom mb-0" style="font-size: 0.78rem;">No accounts are below their minimum balance threshold.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 
     <!-- Main Workspace Layout -->

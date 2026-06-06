@@ -5,14 +5,16 @@
 {% block content %}
 <div class="container py-4">
     <div class="row align-items-center mb-4">
-        <div class="col-md-8">
+        <div class="col-md-6">
             <h1 class="fw-bold font-outfit text-gradient mb-1">Financial Reports</h1>
             <p class="text-muted-custom mb-0">Analyze and review your financial transactions and cash flows</p>
         </div>
-        <div class="col-md-4 text-md-end mt-2 mt-md-0">
-            <span
-                class="badge bg-glass border border-glass text-muted-custom px-3 py-2 rounded-pill font-outfit fw-medium">
-                Active Range: {{ start_date|date:"M d, Y" }} - {{ end_date|date:"M d, Y" }}
+        <div class="col-md-6 text-md-end mt-2 mt-md-0 d-flex flex-wrap justify-content-start justify-content-md-end align-items-center gap-2">
+            <a href="{% url 'account-reports' %}" class="btn btn-outline-custom px-4 py-2 rounded-pill fw-semibold">
+                <i class="fa-solid fa-building-columns me-2"></i>Account Reports
+            </a>
+            <span class="badge bg-glass border border-glass text-muted-custom px-3 py-2 rounded-pill font-outfit fw-medium">
+                Active Range: {{ start_date|date:"M d, Y" }} — {{ end_date|date:"M d, Y" }}
             </span>
         </div>
     </div>

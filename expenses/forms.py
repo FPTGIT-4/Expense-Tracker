@@ -49,6 +49,16 @@ class ExpenseForm(forms.ModelForm):
                 )
             self.fields['category'].queryset = Category.objects.filter(user=user)
             self.fields['category'].empty_label = "Select a category (optional)"
-            self.fields['account'].queryset = Account.objects.filter(user=user)
+            self.fields['account'].queryset = Account.objects.filter(user=user).exclude(status='CLOSED')
             self.fields['account'].empty_label = "Select an account"
             self.fields['account'].required = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+        account = cleaned_data.get('account')
+        if account:
+            if account.status == 'INACTIVE':
+                self.add_error('account', "Cannot create transactions for an inactive account.")
+            elif account.status == 'CLOSED':
+                self.add_error('account', "Cannot create transactions for a closed account.")
+        return cleaned_data

@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ account.name }} Details | Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}" class="text-muted-custom text-decoration-none hover-white">
+                    <i class="fa-solid fa-house me-1"></i> Home
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'account-list' %}" class="text-muted-custom text-decoration-none hover-white">
+                    Accounts
+                </a>
+            </li>
+            <li class="breadcrumb-item active text-white" aria-current="page">{{ account.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Professional Summary Card -->
+    <div class="card-hero p-5 rounded-4 text-white mb-5 position-relative overflow-hidden" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);">
+        <!-- Subtle Background Glow -->
+        <div class="position-absolute" style="top: -20%; right: -10%; width: 320px; height: 320px; background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%); pointer-events: none;"></div>
+
+        <div class="row align-items-center g-4 position-relative" style="z-index: 1;">
+            <div class="col-md-7">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="feature-icon mb-0 {{ account.theme_color_class }}" style="width: 56px; height: 56px; border-radius: 16px; font-size: 1.5rem;">
+                        <i class="bi {{ account.bootstrap_icon }}"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex gap-2 align-items-center mb-1">
+                            <span class="badge bg-glass border border-glass text-muted-custom px-3 py-1.5 rounded-pill font-outfit uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                                {{ account.account_type }}
+                            </span>
+                            {% if account.status == 'ACTIVE' %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(16, 185, 129, 0.15) !important; border: 1px solid rgba(16, 185, 129, 0.3) !important; color: #34d399 !important; font-size: 0.75rem; letter-spacing: 0.05em; padding: 0.4em 0.8em;">
+                                Active
+                            </span>
+                            {% elif account.status == 'INACTIVE' %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(245, 158, 11, 0.15) !important; border: 1px solid rgba(245, 158, 11, 0.3) !important; color: #fbbf24 !important; font-size: 0.75rem; letter-spacing: 0.05em; padding: 0.4em 0.8em;">
+                                Inactive
+                            </span>
+                            {% elif account.status == 'CLOSED' %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(239, 68, 68, 0.15) !important; border: 1px solid rgba(239, 68, 68, 0.3) !important; color: #f87171 !important; font-size: 0.75rem; letter-spacing: 0.05em; padding: 0.4em 0.8em;">
+                                Closed
+                            </span>
+                            {% endif %}
+                        </div>
+                        <h1 class="fw-bold font-outfit text-white mb-0 mt-1" style="font-size: 2.2rem;">{{ account.name }}</h1>
+                    </div>
+                </div>
+                <p class="text-muted-custom mb-0 mt-3 small">
+                    <i class="fa-regular fa-calendar-days me-1"></i> Date Created: <span class="text-white fw-semibold">{{ account.created_at|date:"F j, Y, g:i a" }}</span>
+                </p>
+                {% if account.notes %}
+                <div class="mt-4 p-3 rounded-3 text-muted-custom bg-glass border border-glass small" style="max-width: 480px;">
+                    <span class="text-white fw-semibold d-block mb-1"><i class="fa-solid fa-note-sticky me-1 text-gradient"></i> Account Note</span>
+                    {{ account.notes|linebreaksbr }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-5 text-md-end">
+                <div class="mb-3">
+                    <span class="text-muted-custom small uppercase fw-semibold d-block mb-1" style="font-size: 0.8rem; letter-spacing: 0.05em;">Current Balance</span>
+                    <h1 class="fw-bold font-outfit mb-0 {% if account.current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 2.8rem;">
+                        &#8377;{{ account.current_balance|floatformat:2 }}
+                    </h1>
+                    {% if account.is_below_minimum %}
+                    <div class="mt-2 d-flex justify-content-md-end">
+                        <span class="badge rounded-pill fw-semibold d-inline-flex align-items-center gap-1" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.75rem; padding: 0.4em 0.9em;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Below Minimum Threshold
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="text-muted-custom small">
+                    Opening Balance: <span class="text-white fw-semibold">&#8377;{{ account.initial_balance|floatformat:2 }}</span>
+                </div>
+                {% if account.minimum_balance and account.minimum_balance > 0 %}
+                <div class="text-muted-custom small mt-1">
+                    Minimum Balance:
+                    {% if account.is_below_minimum %}
+                    <span class="fw-semibold" style="color: #fbbf24;">&#8377;{{ account.minimum_balance|floatformat:2 }}</span>
+                    {% else %}
+                    <span class="text-white fw-semibold">&#8377;{{ account.minimum_balance|floatformat:2 }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Analytics Section -->
+    <h5 class="fw-bold font-outfit text-white mb-3 mt-5">
+        <i class="fa-solid fa-chart-pie me-2 text-gradient"></i>Account Analytics
+    </h5>
+    <div class="row g-4 mb-4">
+        <!-- Opening Balance -->
+        <div class="col-md-4">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-2 me-3" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-vault"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Opening Balance</p>
+                        <h3 class="fw-bold mb-0 font-outfit text-white mt-1">&#8377;{{ account.initial_balance|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Balance -->
+        <div class="col-md-4">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-1 me-3" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Current Balance</p>
+                        <h3 class="fw-bold mb-0 font-outfit mt-1 {% if account.current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">&#8377;{{ account.current_balance|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Change -->
+        <div class="col-md-4">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 me-3 {% if net_change >= 0 %}color-1{% else %}color-3{% endif %}" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1.15rem; {% if net_change >= 0 %}background:rgba(16, 185, 129, 0.15); border-color:rgba(16, 185, 129, 0.25); color:#34d399;{% else %}background:rgba(239, 68, 68, 0.12); border-color:rgba(239, 68, 68, 0.25); color:#fca5a5;{% endif %}">
+                        {% if net_change >= 0 %}
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+                        {% else %}
+                        <i class="fa-solid fa-arrow-trend-down"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Net Change</p>
+                        <h3 class="fw-bold mb-0 font-outfit mt-1 {% if net_change >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
+                            {% if net_change > 0 %}+{% endif %}&#8377;{{ net_change|floatformat:2 }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction History Section -->
+    <div class="card-hero p-4 rounded-4 text-white mb-5 mt-5" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);">
+        <h5 class="fw-bold font-outfit mb-4"><i class="fa-solid fa-clock-rotate-left me-2 text-gradient"></i>Transaction History</h5>
+        
+        {% if transactions %}
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-border-color: var(--glass-border);">
+                <thead>
+                    <tr class="text-muted-custom" style="border-bottom: 2px solid var(--glass-border);">
+                        <th class="py-3">Date</th>
+                        <th class="py-3">Type</th>
+                        <th class="py-3">Category / Source</th>
+                        <th class="py-3">Description</th>
+                        <th class="py-3 text-end">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td class="py-3 fw-medium">{{ tx.date|date:"M d, Y" }}</td>
+                        <td class="py-3">
+                            {% if tx.type == 'Income' %}
+                            <span class="badge rounded-pill px-3 py-1 fw-semibold" style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.25); color:#34d399; font-size:0.75rem;">
+                                Income
+                            </span>
+                            {% else %}
+                            <span class="badge rounded-pill px-3 py-1 fw-semibold" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); color:#fca5a5; font-size:0.75rem;">
+                                Expense
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3">
+                            <span class="fw-semibold text-white">{{ tx.category_or_source }}</span>
+                        </td>
+                        <td class="py-3 text-muted-custom small">{{ tx.description|default:"-"|truncatechars:40 }}</td>
+                        <td class="py-3 text-end fw-bold {% if tx.type == 'Income' %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size:1.1rem;">
+                            {% if tx.type == 'Income' %}+{% else %}-{% endif %}&#8377;{{ tx.amount|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if transactions.has_other_pages %}
+        <nav class="mt-4 d-flex justify-content-center" aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0 gap-1">
+                {% if transactions.has_previous %}
+                <li class="page-item">
+                    <a class="page-link bg-dark-custom border-glass text-white rounded-3" href="?page={{ transactions.previous_page_number }}">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in transactions.paginator.page_range %}
+                    {% if transactions.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link rounded-3 fw-bold" style="background:linear-gradient(135deg,#6366f1,#a855f7); border:none;">{{ num }}</span>
+                    </li>
+                    {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link bg-dark-custom border-glass text-white rounded-3" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if transactions.has_next %}
+                <li class="page-item">
+                    <a class="page-link bg-dark-custom border-glass text-white rounded-3" href="?page={{ transactions.next_page_number }}">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <div class="hero-icon-glow mx-auto mb-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                <i class="fa-solid fa-receipt"></i>
+            </div>
+            <h5 class="fw-bold font-outfit">No transactions yet</h5>
+            <p class="text-muted-custom mb-0 small">Transactions logged to this account will appear here.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <a href="{% url 'account-list' %}" class="btn btn-outline-custom px-4 py-2.5 rounded-pill fw-semibold">
+            <i class="fa-solid fa-arrow-left me-2"></i> Back to Accounts
+        </a>
+        <div class="d-flex gap-2">
+            <a href="{% url 'account-edit' account.pk %}" class="btn btn-outline-custom px-4 py-2.5 rounded-pill fw-semibold">
+                <i class="fa-solid fa-pen-to-square me-2"></i> Edit Account
+            </a>
+            <a href="{% url 'account-delete' account.pk %}" class="btn btn-outline-custom px-4 py-2.5 rounded-pill fw-semibold text-danger border-danger-hover">
+                <i class="fa-solid fa-trash me-2"></i> Delete Account
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom hover interactions */
+.hover-white:hover {
+    color: #fff !important;
+    transition: color 0.2s ease;
+}
+.breadcrumb-item + .breadcrumb-item::before {
+    color: rgba(255, 255, 255, 0.2) !important;
+}
+.border-danger-hover:hover {
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+</style>
+{% endblock %}

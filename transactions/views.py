@@ -35,7 +35,7 @@ class AddTransactionView(LoginRequiredMixin, View):
             'today': datetime.date.today().isoformat(),
             'source_choices': Income.SOURCE_CHOICES,
             'categories': Category.objects.filter(user=request.user).order_by('name'),
-            'accounts': Account.objects.filter(user=request.user).order_by('name'),
+            'accounts': Account.objects.filter(user=request.user).exclude(status='CLOSED').order_by('name'),
             'initial_type': initial_type,
         }
         return render(request, self.template_name, context)
@@ -96,7 +96,11 @@ class AddTransactionView(LoginRequiredMixin, View):
                             errors.append(f'Row {i+1}: Account selection is required.')
                         else:
                             try:
-                                Account.objects.get(pk=int(account_id), user=request.user)
+                                acc = Account.objects.get(pk=int(account_id), user=request.user)
+                                if acc.status == 'CLOSED':
+                                    errors.append(f'Row {i+1}: Cannot create transactions for a closed account.')
+                                elif acc.status == 'INACTIVE':
+                                    errors.append(f'Row {i+1}: Cannot create transactions for an inactive account.')
                             except (Account.DoesNotExist, ValueError):
                                 errors.append(f'Row {i+1}: Invalid account selected.')
 
@@ -146,7 +150,11 @@ class AddTransactionView(LoginRequiredMixin, View):
                             errors.append(f'Row {i+1}: Account selection is required.')
                         else:
                             try:
-                                Account.objects.get(pk=int(account_id), user=request.user)
+                                acc = Account.objects.get(pk=int(account_id), user=request.user)
+                                if acc.status == 'CLOSED':
+                                    errors.append(f'Row {i+1}: Cannot create transactions for a closed account.')
+                                elif acc.status == 'INACTIVE':
+                                    errors.append(f'Row {i+1}: Cannot create transactions for an inactive account.')
                             except (Account.DoesNotExist, ValueError):
                                 errors.append(f'Row {i+1}: Invalid account selected.')
 

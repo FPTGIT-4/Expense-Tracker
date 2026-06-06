@@ -10,7 +10,19 @@
             <h1 class="fw-bold font-outfit text-gradient mb-1">My Accounts</h1>
             <p class="text-muted-custom">Manage your payment methods, wallets, bank accounts, and cards</p>
         </div>
-        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex justify-content-start justify-content-md-end gap-2 flex-wrap">
+            <a href="{% url 'account-reports' %}"
+                class="btn btn-outline-custom px-4 py-2 rounded-pill fw-semibold shadow-lg">
+                <i class="fa-solid fa-chart-column me-2"></i> Reports
+            </a>
+            <a href="{% url 'transfer-list' %}"
+                class="btn btn-outline-custom px-4 py-2 rounded-pill fw-semibold shadow-lg">
+                <i class="fa-solid fa-clock-rotate-left me-2"></i> Transfer History
+            </a>
+            <a href="{% url 'account-transfer' %}"
+                class="btn btn-outline-custom px-4 py-2 rounded-pill fw-semibold shadow-lg">
+                <i class="fa-solid fa-right-left me-2"></i> Transfer Money
+            </a>
             <a href="{% url 'account-add' %}"
                 class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
                 <i class="fa-solid fa-plus me-2"></i> Add Account
@@ -59,42 +71,57 @@
     <div class="row g-4">
         {% for acc in accounts %}
         <div class="col-md-6 col-lg-4">
-            <div class="card-hero p-4 rounded-4 text-white h-100 d-flex flex-column justify-content-between position-relative" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); transition: all 0.3s ease;">
+            <div class="card-hero card-feature p-4 rounded-4 text-white h-100 d-flex flex-column justify-content-between position-relative" style="transition: all 0.3s ease;">
                 
-                <div>
+                <a href="{% url 'account-detail' acc.pk %}" class="text-decoration-none text-white d-block">
                     <!-- Top row: Icon + Type Badge -->
                     <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="feature-icon mb-0 
-                            {% if acc.account_type == 'Cash' %}color-1
-                            {% elif acc.account_type == 'Bank Account' %}color-2
-                            {% elif acc.account_type == 'GPay' or acc.account_type == 'PhonePe' %}color-1
-                            {% elif acc.account_type == 'Credit Card' or acc.account_type == 'Debit Card' %}color-3
-                            {% else %}color-2{% endif %}" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1.1rem;">
-                            {% if acc.account_type == 'Cash' %}<i class="fa-solid fa-money-bill-wave"></i>
-                            {% elif acc.account_type == 'Bank Account' %}<i class="fa-solid fa-building-columns"></i>
-                            {% elif acc.account_type == 'GPay' or acc.account_type == 'PhonePe' %}<i class="fa-solid fa-mobile-screen-button"></i>
-                            {% elif acc.account_type == 'Credit Card' or acc.account_type == 'Debit Card' %}<i class="fa-solid fa-credit-card"></i>
-                            {% else %}<i class="fa-solid fa-wallet"></i>{% endif %}
+                        <div class="feature-icon mb-0 {{ acc.theme_color_class }}" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1.1rem;">
+                            <i class="bi {{ acc.bootstrap_icon }}"></i>
                         </div>
-                        <span class="badge bg-glass border border-glass text-muted-custom px-2.5 py-1.5 rounded-pill font-outfit small uppercase" style="font-size: 0.68rem; letter-spacing: 0.03em;">
-                            {{ acc.account_type }}
-                        </span>
+                        <div class="d-flex gap-1.5 align-items-center">
+                            <span class="badge bg-glass border border-glass text-muted-custom px-2.5 py-1.5 rounded-pill font-outfit small uppercase" style="font-size: 0.68rem; letter-spacing: 0.03em;">
+                                {{ acc.account_type }}
+                            </span>
+                            {% if acc.status == 'ACTIVE' %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(16, 185, 129, 0.15) !important; border: 1px solid rgba(16, 185, 129, 0.3) !important; color: #34d399 !important; font-size: 0.68rem; letter-spacing: 0.03em; padding: 0.35em 0.65em;">
+                                Active
+                            </span>
+                            {% elif acc.status == 'INACTIVE' %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(245, 158, 11, 0.15) !important; border: 1px solid rgba(245, 158, 11, 0.3) !important; color: #fbbf24 !important; font-size: 0.68rem; letter-spacing: 0.03em; padding: 0.35em 0.65em;">
+                                Inactive
+                            </span>
+                            {% elif acc.status == 'CLOSED' %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(239, 68, 68, 0.15) !important; border: 1px solid rgba(239, 68, 68, 0.3) !important; color: #f87171 !important; font-size: 0.68rem; letter-spacing: 0.03em; padding: 0.35em 0.65em;">
+                                Closed
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <!-- Name -->
                     <h4 class="fw-bold font-outfit mb-1 text-white">{{ acc.name }}</h4>
                     <p class="text-muted-custom small mb-4">Initial: &#8377;{{ acc.initial_balance|floatformat:2 }}</p>
-                </div>
 
-                <div>
                     <!-- Balance -->
                     <div class="mb-4">
                         <span class="text-muted-custom small uppercase fw-semibold d-block mb-1" style="font-size: 0.72rem; letter-spacing: 0.05em;">Current Balance</span>
                         <h2 class="fw-bold font-outfit mb-0 {% if acc.current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.8rem;">
                             &#8377;{{ acc.current_balance|floatformat:2 }}
                         </h2>
+                        {% if acc.is_below_minimum %}
+                        <div class="d-flex align-items-center gap-1.5 mt-2">
+                            <span class="badge rounded-pill fw-semibold" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.68rem; padding: 0.3em 0.65em; letter-spacing: 0.03em;">
+                                <i class="fa-solid fa-triangle-exclamation me-1" style="font-size: 0.65rem;"></i>Below Min &#8377;{{ acc.minimum_balance|floatformat:0 }}
+                            </span>
+                        </div>
+                        {% elif acc.minimum_balance and acc.minimum_balance > 0 %}
+                        <p class="text-muted-custom mb-0 mt-1" style="font-size: 0.72rem;">Min: &#8377;{{ acc.minimum_balance|floatformat:2 }}</p>
+                        {% endif %}
                     </div>
+                </a>
 
+                <div>
                     <!-- Actions -->
                     <div class="d-flex gap-2 justify-content-end border-top pt-3" style="border-top-color: rgba(255,255,255,0.06) !important;">
                         <a href="{% url 'account-edit' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5">

@@ -10,7 +10,7 @@ from datetime import timedelta
 from income.models import Income
 from expenses.models import Expense
 from categories.models import Category
-from accounts.models import Account
+from accounts.models import Account, AccountTransfer
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'dashboard/dashboard.html'
@@ -36,6 +36,43 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         accounts = Account.objects.filter(user=user).order_by('name')
         total_balance = sum(acc.current_balance for acc in accounts)
         total_categories = Category.objects.filter(user=user).count()
+        accounts_below_minimum = [acc for acc in accounts if acc.is_below_minimum]
+
+        # --- Account Intelligence ---
+        active_accounts = [acc for acc in accounts if acc.status != 'CLOSED']
+
+        # Highest and Lowest balance among active accounts
+        highest_balance_account = max(active_accounts, key=lambda a: a.current_balance) if active_accounts else None
+        lowest_balance_account  = min(active_accounts, key=lambda a: a.current_balance) if active_accounts else None
+
+        # Balance grouped by type
+        total_cash_balance = sum(
+            acc.current_balance for acc in accounts
+            if acc.account_type == 'Cash' and acc.status != 'CLOSED'
+        )
+        total_bank_balance = sum(
+            acc.current_balance for acc in accounts
+            if acc.account_type == 'Bank Account' and acc.status != 'CLOSED'
+        )
+
+        # Transfer statistics (all-time for user)
+        user_transfers = AccountTransfer.objects.filter(user=user)
+        transfer_count = user_transfers.count()
+        transfer_total = user_transfers.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+        # This month transfers
+        start_of_month = today.replace(day=1)
+        transfer_count_month = user_transfers.filter(transfer_date__gte=start_of_month).count()
+        transfer_total_month  = user_transfers.filter(transfer_date__gte=start_of_month).aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
+
+        transfer_stats = {
+            'count':        transfer_count,
+            'total':        transfer_total,
+            'count_month':  transfer_count_month,
+            'total_month':  transfer_total_month,
+        }
 
         # Today's statistics
         income_today = Income.objects.filter(user=user, date=today).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
@@ -123,6 +160,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'recent_expenses': recent_expenses,
             'source_choices': Income.SOURCE_CHOICES,
             'categories': Category.objects.filter(user=user).order_by('name'),
+            'accounts_below_minimum': accounts_below_minimum,
+            # Account Intelligence
+            'highest_balance_account': highest_balance_account,
+            'lowest_balance_account':  lowest_balance_account,
+            'total_cash_balance':      total_cash_balance,
+            'total_bank_balance':      total_bank_balance,
+            'transfer_stats':          transfer_stats,
         })
 
         return context
