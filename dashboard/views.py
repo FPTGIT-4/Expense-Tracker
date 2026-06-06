@@ -5,10 +5,12 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Sum
 from decimal import Decimal
+from datetime import timedelta
 
 from income.models import Income
 from expenses.models import Expense
 from categories.models import Category
+from accounts.models import Account
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'dashboard/dashboard.html'
@@ -21,12 +23,55 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Summary statistics
         total_income = Income.objects.filter(user=user).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         total_expenses = Expense.objects.filter(user=user).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        current_balance = total_income - total_expenses
+        
+        # Ensure user has at least one account
+        if not Account.objects.filter(user=user).exists():
+            Account.objects.create(
+                user=user,
+                name='Cash',
+                account_type='Cash',
+                initial_balance=Decimal('0.00')
+            )
+        
+        accounts = Account.objects.filter(user=user).order_by('name')
+        total_balance = sum(acc.current_balance for acc in accounts)
         total_categories = Category.objects.filter(user=user).count()
 
         # Today's statistics
         income_today = Income.objects.filter(user=user, date=today).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         expenses_today = Expense.objects.filter(user=user, date=today).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        savings_today = income_today - expenses_today
+        count_today = Income.objects.filter(user=user, date=today).count() + Expense.objects.filter(user=user, date=today).count()
+
+        # Helper for period statistics
+        def get_period_stats(start_date, is_today=False):
+            if is_today:
+                inc_qs = Income.objects.filter(user=user, date=today)
+                exp_qs = Expense.objects.filter(user=user, date=today)
+            else:
+                inc_qs = Income.objects.filter(user=user, date__gte=start_date)
+                exp_qs = Expense.objects.filter(user=user, date__gte=start_date)
+            
+            inc_total = inc_qs.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            exp_total = exp_qs.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            return {
+                'income': float(inc_total),
+                'expense': float(exp_total),
+                'savings': float(inc_total - exp_total),
+                'count': inc_qs.count() + exp_qs.count()
+            }
+
+        start_of_week = today - timedelta(days=today.weekday())
+        start_of_month = today.replace(day=1)
+        start_of_year = today.replace(month=1, day=1)
+
+        financial_summary = {
+            'today': get_period_stats(today, is_today=True),
+            'week': get_period_stats(start_of_week),
+            'month': get_period_stats(start_of_month),
+            'year': get_period_stats(start_of_year)
+        }
 
         # Recent transactions (fetch up to 4 for each type, sorted)
         db_incomes = Income.objects.filter(user=user).order_by('-date', '-created_at')[:4]
@@ -64,10 +109,15 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'today': today,
             'total_income': total_income,
             'total_expenses': total_expenses,
-            'current_balance': current_balance,
+            'total_balance': total_balance,
+            'current_balance': total_balance,
+            'accounts': accounts,
             'total_categories': total_categories,
             'income_today': income_today,
             'expenses_today': expenses_today,
+            'savings_today': savings_today,
+            'count_today': count_today,
+            'financial_summary': financial_summary,
             'recent_transactions': recent_transactions,
             'recent_incomes': recent_incomes,
             'recent_expenses': recent_expenses,

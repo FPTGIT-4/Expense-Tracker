@@ -30,20 +30,20 @@
     </div>
 
     <!-- Summary cards -->
-    <div class="row g-4 mb-5">
-        <!-- Current Balance -->
+    <div id="dashboard-summary-cards" class="row g-4 mb-4">
+        <!-- Total Balance -->
         <div class="col-md-6 col-lg-3">
-            <a href="{% url 'reports-dashboard' %}" class="text-decoration-none h-100 d-block">
+            <a href="{% url 'account-list' %}" class="text-decoration-none h-100 d-block">
                 <div class="card-feature p-4 rounded-4 text-white h-100">
                     <div class="d-flex align-items-center">
                         <div class="feature-icon mb-0 color-2 me-3">
-                            <i class="fa-solid fa-wallet"></i>
+                            <i class="fa-solid fa-scale-balanced"></i>
                         </div>
                         <div>
-                            <p class="text-muted-custom small mb-0 uppercase fw-semibold">Current Balance</p>
+                            <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Balance</p>
                             <h3
-                                class="fw-bold mb-0 font-outfit {% if current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
-                                ₹{{ current_balance|floatformat:2 }}
+                                class="fw-bold mb-0 font-outfit {% if total_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
+                                ₹{{ total_balance|floatformat:2 }}
                             </h3>
                         </div>
                     </div>
@@ -109,6 +109,122 @@
         </div>
     </div>
 
+    <!-- Financial Summary Section -->
+    <div class="mb-5">
+        <h5 class="fw-bold font-outfit text-white mb-3">
+            <i class="fa-solid fa-chart-line me-2 text-gradient"></i>Financial Summary
+        </h5>
+        <div class="card-hero p-4 rounded-4 text-white">
+            <!-- Period Tabs Switcher -->
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 border-bottom pb-3" style="border-bottom-color: rgba(255, 255, 255, 0.08) !important;">
+                <div class="d-flex gap-2" id="financial-period-tabs">
+                    <button type="button" class="btn btn-sm rounded-pill px-3 py-1.5 active-filter" style="font-size:0.85rem; background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); color:#fff;" onclick="switchFinancialPeriod('today', this)">Today</button>
+                    <button type="button" class="btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5" style="font-size:0.85rem;" onclick="switchFinancialPeriod('week', this)">This Week</button>
+                    <button type="button" class="btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5" style="font-size:0.85rem;" onclick="switchFinancialPeriod('month', this)">This Month</button>
+                    <button type="button" class="btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5" style="font-size:0.85rem;" onclick="switchFinancialPeriod('year', this)">This Year</button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="row g-4">
+                <!-- Total Income -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card-feature p-4 rounded-4 text-white h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon mb-0 color-1 me-3">
+                                <i class="fa-solid fa-circle-arrow-down"></i>
+                            </div>
+                            <div>
+                                <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Income</p>
+                                <h3 class="fw-bold mb-0 font-outfit text-white mt-1" id="fin-income">₹{{ income_today|floatformat:2 }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Expense -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card-feature p-4 rounded-4 text-white h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon mb-0 color-3 me-3">
+                                <i class="fa-solid fa-circle-arrow-up"></i>
+                            </div>
+                            <div>
+                                <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Expense</p>
+                                <h3 class="fw-bold mb-0 font-outfit text-white mt-1" id="fin-expense">₹{{ expenses_today|floatformat:2 }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Net Savings -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card-feature p-4 rounded-4 text-white h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon mb-0 color-2 me-3">
+                                <i class="fa-solid fa-scale-balanced"></i>
+                            </div>
+                            <div>
+                                <p class="text-muted-custom small mb-0 uppercase fw-semibold">Net Savings</p>
+                                <h3 class="fw-bold mb-0 font-outfit mt-1 {% if savings_today >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" id="fin-savings">₹{{ savings_today|floatformat:2 }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Count -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card-feature p-4 rounded-4 text-white h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon mb-0 color-1 me-3" style="background:rgba(139, 92, 246, 0.15); border:1px solid rgba(139, 92, 246, 0.25); color:var(--accent-violet);">
+                                <i class="fa-solid fa-list-check"></i>
+                            </div>
+                            <div>
+                                <p class="text-muted-custom small mb-0 uppercase fw-semibold">Transactions</p>
+                                <h3 class="fw-bold mb-0 font-outfit text-white mt-1" id="fin-count">{{ count_today }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Balances Row -->
+    <h5 class="fw-bold font-outfit text-white mb-3">
+        <i class="fa-solid fa-wallet me-2 text-gradient"></i>Account Balances
+    </h5>
+    <div id="dashboard-accounts-grid" class="row g-3 mb-5">
+        {% for acc in accounts %}
+        <div class="col-md-6 col-lg-3">
+            <a href="{% url 'account-list' %}" class="text-decoration-none h-100 d-block">
+                <div class="card-feature p-3.5 rounded-4 text-white h-100" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.06);">
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon mb-0 me-3 
+                            {% if acc.account_type == 'Cash' %}color-1
+                            {% elif acc.account_type == 'Bank Account' %}color-2
+                            {% elif acc.account_type == 'GPay' or acc.account_type == 'PhonePe' %}color-1
+                            {% elif acc.account_type == 'Credit Card' or acc.account_type == 'Debit Card' %}color-3
+                            {% else %}color-2{% endif %}" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
+                            {% if acc.account_type == 'Cash' %}<i class="fa-solid fa-money-bill-wave"></i>
+                            {% elif acc.account_type == 'Bank Account' %}<i class="fa-solid fa-building-columns"></i>
+                            {% elif acc.account_type == 'GPay' or acc.account_type == 'PhonePe' %}<i class="fa-solid fa-mobile-screen-button"></i>
+                            {% elif acc.account_type == 'Credit Card' or acc.account_type == 'Debit Card' %}<i class="fa-solid fa-credit-card"></i>
+                            {% else %}<i class="fa-solid fa-wallet"></i>{% endif %}
+                        </div>
+                        <div>
+                            <p class="text-muted-custom small mb-0 uppercase fw-semibold" style="font-size: 0.72rem;">{{ acc.name }}</p>
+                            <h4 class="fw-bold mb-0 font-outfit text-white" style="font-size: 1.25rem;">
+                                ₹{{ acc.current_balance|floatformat:2 }}
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
     <!-- Main Workspace Layout -->
     <div class="row g-4">
         <!-- Unified Quick Add Card -->
@@ -120,7 +236,7 @@
                     </h5>
                     <p class="text-muted-custom mb-0 small">Enter multiple income or expense records for a single date, then save at once.</p>
                 </div>
-                {% include 'transactions/_txn_widget.html' with post_save="stay" %}
+                {% include 'transactions/_txn_widget.html' with post_save="stay" is_dashboard=True %}
             </div>
         </div>
 
@@ -350,5 +466,55 @@ if (wrapper && display) {
     display.style.boxShadow     = '';
   });
 }
+
+/* ── Switch Financial Period client-side ── */
+function switchFinancialPeriod(period, btn) {
+  // Update button active states
+  const container = document.getElementById('financial-period-tabs');
+  if (container) {
+    container.querySelectorAll('button').forEach(b => {
+      b.className = 'btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5';
+      b.style.background = '';
+      b.style.borderColor = '';
+      b.style.color = '';
+    });
+  }
+  
+  // Set active style for selected button
+  btn.className = 'btn btn-sm rounded-pill px-3 py-1.5';
+  btn.style.background = 'rgba(99,102,241,0.2)';
+  btn.style.borderColor = 'rgba(99,102,241,0.4)';
+  btn.style.color = '#fff';
+
+  // Retrieve data
+  const dataEl = document.getElementById('financial-summary-data');
+  if (!dataEl) return;
+  const summaryData = JSON.parse(dataEl.textContent);
+  const periodData = summaryData[period];
+  if (!periodData) return;
+
+  const fmt = (val) => '₹' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // Update elements
+  const incEl = document.getElementById('fin-income');
+  const expEl = document.getElementById('fin-expense');
+  const savEl = document.getElementById('fin-savings');
+  const cntEl = document.getElementById('fin-count');
+
+  if (incEl) incEl.textContent = fmt(periodData.income);
+  if (expEl) expEl.textContent = fmt(periodData.expense);
+  
+  if (savEl) {
+    savEl.textContent = fmt(periodData.savings);
+    if (periodData.savings >= 0) {
+      savEl.className = 'fw-bold mb-0 font-outfit text-gradient mt-1';
+    } else {
+      savEl.className = 'fw-bold mb-0 font-outfit text-gradient-alt mt-1';
+    }
+  }
+
+  if (cntEl) cntEl.textContent = periodData.count;
+}
 </script>
+{{ financial_summary|json_script:"financial-summary-data" }}
 {% endblock %}

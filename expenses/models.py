@@ -4,6 +4,7 @@ from categories.models import Category
 
 class Expense(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='expenses')
+    account = models.ForeignKey('accounts.Account', on_delete=models.CASCADE, related_name='expenses', null=True, blank=True)
     name = models.CharField(max_length=200)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     date = models.DateField()
@@ -14,6 +15,18 @@ class Expense(models.Model):
 
     class Meta:
         ordering = ['-date', '-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.account_id:
+            from accounts.models import Account
+            from decimal import Decimal
+            account, _ = Account.objects.get_or_create(
+                user=self.user,
+                account_type='Cash',
+                defaults={'name': 'Cash', 'initial_balance': Decimal('0.00')}
+            )
+            self.account = account
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user.username} - {self.name} (${self.amount}) on {self.date}"

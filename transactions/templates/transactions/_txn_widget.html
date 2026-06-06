@@ -9,7 +9,7 @@
                       "stay"     → reset rows + refresh dashboard stat cards
 {% endcomment %}
 
-<div class="txn-widget-root" data-post-save="{{ post_save }}" data-initial-type="{{ initial_type|default:'income' }}">
+<div class="txn-widget-root{% if is_dashboard %} txn-dashboard-widget{% endif %}" data-post-save="{{ post_save }}" data-initial-type="{{ initial_type|default:'income' }}">
 
   <!-- Error Box -->
   <div class="txn-error-box alert border-0 bg-danger bg-opacity-15 text-white rounded-3 mb-3" role="alert" style="display: none;">
@@ -23,16 +23,24 @@
   </div>
 
   <!-- Date bar + Type tabs -->
-  <div class="txn-date-bar">
-    <label><i class="fa-solid fa-calendar-days me-1"></i> DATE</label>
-    <input type="date" class="txn-date-input" value="{{ today|date:'Y-m-d' }}">
+  <div class="txn-date-bar d-flex flex-wrap align-items-center gap-3">
+    <div class="d-flex align-items-center gap-2">
+      <label class="mb-0 text-nowrap"><i class="fa-solid fa-calendar-days me-1"></i> DATE</label>
+      <input type="date" class="txn-date-input" value="{{ today|date:'Y-m-d' }}">
+    </div>
+    
+    <div class="d-flex align-items-center gap-2 ms-sm-3">
+      <label class="mb-0 text-nowrap"><i class="fa-solid fa-building-columns me-1"></i> DEFAULT ACCOUNT</label>
+      <select class="txn-default-account-input txn-select" onchange="txnWidget(this).updateDefaultAccount()" style="min-width: 140px; padding: 0.35rem 0.5rem; font-size: 0.85rem;">
+        {% for acc in accounts %}
+          <option value="{{ acc.pk }}">{{ acc.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
     <div class="ms-auto type-tabs">
-      <button class="type-tab active-income txn-tab-income" onclick="txnWidget(this).switchType('income')">
-        <i class="fa-solid fa-arrow-trend-up"></i> Income
-      </button>
-      <button class="type-tab txn-tab-expense" onclick="txnWidget(this).switchType('expense')">
-        <i class="fa-solid fa-arrow-trend-down"></i> Expense
-      </button>
+      <button class="type-tab active-income txn-tab-income" onclick="txnWidget(this).switchType('income')" title="Income"><i class="fa-solid fa-arrow-trend-up"></i>{% if not is_dashboard %} Income{% endif %}</button>
+      <button class="type-tab txn-tab-expense" onclick="txnWidget(this).switchType('expense')" title="Expense"><i class="fa-solid fa-arrow-trend-down"></i>{% if not is_dashboard %} Expense{% endif %}</button>
     </div>
   </div>
 
@@ -45,6 +53,7 @@
         <table class="txn-table">
           <thead>
             <tr>
+              <th class="col-account">ACCOUNT</th>
               <th class="col-amount">AMOUNT (₹)</th>
               <th class="col-source">SOURCE</th>
               <th>DESCRIPTION (OPTIONAL)</th>
@@ -62,9 +71,9 @@
         <table class="txn-table">
           <thead>
             <tr>
+              <th class="col-account">ACCOUNT</th>
               <th class="col-amount">AMOUNT (₹)</th>
-              <th class="col-name">NAME</th>
-              <th class="col-category">CATEGORY (OPTIONAL)</th>
+              <th class="col-category">CATEGORY</th>
               <th>DESCRIPTION (OPTIONAL)</th>
               <th class="col-remove"></th>
             </tr>
@@ -133,6 +142,12 @@
     {% endfor %}
   ];
 
+  const ACCOUNTS = [
+    {% for acc in accounts %}
+      { id: "{{ acc.pk }}", name: "{{ acc.name|escapejs }}" }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
   /* ── CSRF ────────────────────────────────────────────── */
   function getCsrf() {
     const m = document.cookie.match(/csrftoken=([^;]+)/);
@@ -181,10 +196,15 @@
 
     /* ── Row builders ────────────────────────────────── */
     function buildIncomeRow() {
+      const accOpts = ACCOUNTS.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
       const opts = SOURCE_CHOICES.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
       const tr = document.createElement('tr');
       tr.className = 'txn-row';
+      const defAcc = $('.txn-default-account-input').value;
       tr.innerHTML = `
+        <td class="col-account">
+          <select class="txn-select row-account-select">${accOpts}</select>
+        </td>
         <td class="col-amount">
           <input type="number" class="txn-input amount-input"
                  placeholder="0.00" step="0.01" min="0.01"
@@ -203,24 +223,27 @@
             <i class="fa-solid fa-xmark"></i>
           </button>
         </td>`;
+      const sel = tr.querySelector('.row-account-select');
+      if (sel && defAcc) sel.value = defAcc;
       return tr;
     }
 
     function buildExpenseRow() {
+      const accOpts = ACCOUNTS.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
       const catOpts = CATEGORIES.length
         ? CATEGORIES.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
         : '';
       const tr = document.createElement('tr');
       tr.className = 'txn-row';
+      const defAcc = $('.txn-default-account-input').value;
       tr.innerHTML = `
+        <td class="col-account">
+          <select class="txn-select row-account-select">${accOpts}</select>
+        </td>
         <td class="col-amount">
           <input type="number" class="txn-input amount-input"
                  placeholder="0.00" step="0.01" min="0.01"
                  oninput="txnWidget(this).updateTotal()" autocomplete="off">
-        </td>
-        <td class="col-name">
-          <input type="text" class="txn-input name-input"
-                 placeholder="e.g. Lunch, Bus fare" autocomplete="off">
         </td>
         <td class="col-category">
           <select class="txn-select category-select">
@@ -238,7 +261,18 @@
             <i class="fa-solid fa-xmark"></i>
           </button>
         </td>`;
+      const sel = tr.querySelector('.row-account-select');
+      if (sel && defAcc) sel.value = defAcc;
       return tr;
+    }
+
+    /* ── updateDefaultAccount ────────────────────────── */
+    function updateDefaultAccount() {
+      const defAcc = $('.txn-default-account-input').value;
+      if (!defAcc) return;
+      $$('.row-account-select').forEach(sel => {
+        sel.value = defAcc;
+      });
     }
 
     /* ── addRow / removeRow ──────────────────────────── */
@@ -309,11 +343,19 @@
           errs.push(`Row ${i+1}: Amount must be a positive number.`);
           valid = false;
         }
+
+        const accEl = tr.querySelector('.row-account-select');
+        if (!accEl.value) {
+          accEl.classList.add('is-invalid');
+          errs.push(`Row ${i+1}: Account selection is required.`);
+          valid = false;
+        }
+
         if (currentType === 'expense') {
-          const nameEl = tr.querySelector('.name-input');
-          if (!nameEl.value.trim()) {
-            nameEl.classList.add('is-invalid');
-            errs.push(`Row ${i+1}: Expense name is required.`);
+          const catEl = tr.querySelector('.category-select');
+          if (!catEl.value) {
+            catEl.classList.add('is-invalid');
+            errs.push(`Row ${i+1}: Category is required.`);
             valid = false;
           }
         }
@@ -330,21 +372,25 @@
       const date = $('.txn-date-input').value;
       if (!date) { showErrors(['Please select a date.']); return; }
 
+      const defaultAccount = $('.txn-default-account-input').value;
+
       const body = currentType === 'income' ? $('.txn-income-body') : $('.txn-expense-body');
       const rows = [];
       Array.from(body.rows).forEach(tr => {
+        const rowAccount = tr.querySelector('.row-account-select').value;
         if (currentType === 'income') {
           rows.push({
             amount:      tr.querySelector('.amount-input').value,
             source:      tr.querySelector('.txn-source-select').value,
             description: tr.querySelector('.description-input').value.trim(),
+            account:     rowAccount,
           });
         } else {
           rows.push({
             amount:      tr.querySelector('.amount-input').value,
-            name:        tr.querySelector('.name-input').value.trim(),
             category:    tr.querySelector('.category-select').value,
             description: tr.querySelector('.description-input').value.trim(),
+            account:     rowAccount,
           });
         }
       });
@@ -357,7 +403,7 @@
       fetch('/transactions/add/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-        body: JSON.stringify({ type: currentType, date, rows }),
+        body: JSON.stringify({ type: currentType, date, account: defaultAccount, rows }),
       })
       .then(r => r.json())
       .then(data => {
@@ -423,6 +469,13 @@
             oldSummary.innerHTML = newSummary.innerHTML;
           }
 
+          // Swap accounts grid
+          const newAccounts = doc.querySelector('#dashboard-accounts-grid');
+          const oldAccounts = document.querySelector('#dashboard-accounts-grid');
+          if (newAccounts && oldAccounts) {
+            oldAccounts.innerHTML = newAccounts.innerHTML;
+          }
+
           // Swap recent activity list
           const newActivity = doc.querySelector('#dashboard-recent-activity');
           const oldActivity = document.querySelector('#dashboard-recent-activity');
@@ -462,7 +515,7 @@
     }
 
     /* ── Return public API ───────────────────────────── */
-    return { switchType, addRow, removeRow, updateTotal, saveAll };
+    return { switchType, addRow, removeRow, updateTotal, saveAll, updateDefaultAccount };
   };
 
   /* ── Auto-init all widgets on page load ─────────────── */

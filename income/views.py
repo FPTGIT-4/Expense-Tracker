@@ -201,6 +201,11 @@ class IncomeCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
 
 class IncomeUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Income
@@ -211,6 +216,11 @@ class IncomeUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
 
     def get_queryset(self):
         return Income.objects.filter(user=self.request.user)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
 
 class IncomeDeleteView(LoginRequiredMixin, DeleteView):

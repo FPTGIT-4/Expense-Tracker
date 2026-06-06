@@ -80,14 +80,25 @@ class DashboardViewTests(TestCase):
         # Verify initial count
         initial_count = Income.objects.filter(user=self.user1).count()
         
-        response = self.client.post(reverse('dashboard'), {
-            'action': 'add_income',
-            'amount': '350.00',
-            'source': 'Freelancing',
-            'description': 'Quick consulting session'
-        })
-        # Check redirect on success
-        self.assertRedirects(response, reverse('dashboard'))
+        from accounts.models import Account
+        account, _ = Account.objects.get_or_create(user=self.user1, name='Cash', account_type='Cash')
+
+        response = self.client.post(
+            reverse('transaction-add'),
+            data={
+                'type': 'income',
+                'date': str(datetime.date.today()),
+                'account': account.id,
+                'rows': [{
+                    'amount': '350.00',
+                    'source': 'Freelancing',
+                    'description': 'Quick consulting session'
+                }]
+            },
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['success'], True)
         
         # Verify database record creation
         self.assertEqual(Income.objects.filter(user=self.user1).count(), initial_count + 1)
@@ -101,15 +112,26 @@ class DashboardViewTests(TestCase):
         # Verify initial count
         initial_count = Expense.objects.filter(user=self.user1).count()
         
-        response = self.client.post(reverse('dashboard'), {
-            'action': 'add_expense',
-            'name': 'Internet bill',
-            'amount': '60.00',
-            'category': self.cat2.id,
-            'description': 'Monthly subscription'
-        })
-        # Check redirect on success
-        self.assertRedirects(response, reverse('dashboard'))
+        from accounts.models import Account
+        account, _ = Account.objects.get_or_create(user=self.user1, name='Cash', account_type='Cash')
+
+        response = self.client.post(
+            reverse('transaction-add'),
+            data={
+                'type': 'expense',
+                'date': str(datetime.date.today()),
+                'account': account.id,
+                'rows': [{
+                    'name': 'Internet bill',
+                    'amount': '60.00',
+                    'category': self.cat2.id,
+                    'description': 'Monthly subscription'
+                }]
+            },
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['success'], True)
         
         # Verify database record creation
         self.assertEqual(Expense.objects.filter(user=self.user1).count(), initial_count + 1)
@@ -118,3 +140,47 @@ class DashboardViewTests(TestCase):
         self.assertEqual(new_expense.amount, Decimal('60.00'))
         self.assertEqual(new_expense.category, self.cat2)
         self.assertEqual(new_expense.date, datetime.date.today())
+
+    def test_quick_add_with_row_level_accounts(self):
+        self.client.force_login(self.user1)
+        from accounts.models import Account
+        acc_cash, _ = Account.objects.get_or_create(user=self.user1, name='Cash', account_type='Cash')
+        acc_bank, _ = Account.objects.get_or_create(user=self.user1, name='Bank', account_type='Bank Account')
+
+        initial_income_count = Income.objects.filter(user=self.user1).count()
+
+        response = self.client.post(
+            reverse('transaction-add'),
+            data={
+                'type': 'income',
+                'date': str(datetime.date.today()),
+                'rows': [
+                    {
+                        'amount': '150.00',
+                        'source': 'Salary',
+                        'description': 'Cash pay',
+                        'account': acc_cash.id
+                    },
+                    {
+                        'amount': '850.00',
+                        'source': 'Freelancing',
+                        'description': 'Direct deposit',
+                        'account': acc_bank.id
+                    }
+                ]
+            },
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['success'], True)
+        self.assertEqual(response.json()['count'], 2)
+
+        # Verify both records created and associated to correct accounts
+        self.assertEqual(Income.objects.filter(user=self.user1).count(), initial_income_count + 2)
+        tx_cash = Income.objects.get(user=self.user1, description='Cash pay')
+        self.assertEqual(tx_cash.amount, Decimal('150.00'))
+        self.assertEqual(tx_cash.account, acc_cash)
+
+        tx_bank = Income.objects.get(user=self.user1, description='Direct deposit')
+        self.assertEqual(tx_bank.amount, Decimal('850.00'))
+        self.assertEqual(tx_bank.account, acc_bank)

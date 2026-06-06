@@ -90,19 +90,31 @@ class ExpenseViewsTest(TestCase):
 
     def test_expense_create_post(self):
         self.client.force_login(self.user1)
-        response = self.client.post(reverse('expense-add'), {
-            'name': 'Groceries',
-            'amount': '45.20',
+        from accounts.models import Account
+        account, _ = Account.objects.get_or_create(user=self.user1, name='Cash', account_type='Cash')
+        
+        response = self.client.post(reverse('transaction-add'), {
+            'type': 'expense',
             'date': '2026-06-03',
-            'category': self.cat1.id,
-            'description': 'Weekly supply'
-        })
-        self.assertEqual(response.status_code, 302)
+            'account': account.id,
+            'rows': [{
+                'name': 'Groceries',
+                'amount': '45.20',
+                'category': self.cat1.id,
+                'description': 'Weekly supply'
+            }]
+        }, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['success'], True)
         self.assertTrue(Expense.objects.filter(user=self.user1, name='Groceries').exists())
 
     def test_expense_update_owner(self):
         self.client.force_login(self.user1)
+        from accounts.models import Account
+        account, _ = Account.objects.get_or_create(user=self.user1, name='Cash', account_type='Cash')
+        
         response = self.client.post(reverse('expense-edit', kwargs={'pk': self.expense1.pk}), {
+            'account': account.id,
             'name': 'Updated Lunch',
             'amount': '18.00',
             'date': '2026-06-03',

@@ -1,11 +1,15 @@
 from django import forms
 from .models import Income
+from accounts.models import Account
 
 class IncomeForm(forms.ModelForm):
     class Meta:
         model = Income
-        fields = ['amount', 'source', 'date', 'description']
+        fields = ['account', 'amount', 'source', 'date', 'description']
         widgets = {
+            'account': forms.Select(attrs={
+                'class': 'form-select bg-dark-custom text-white border-glass',
+            }),
             'amount': forms.NumberInput(attrs={
                 'class': 'form-control bg-dark-custom text-white border-glass',
                 'placeholder': '0.00',
@@ -25,3 +29,19 @@ class IncomeForm(forms.ModelForm):
                 'rows': 3,
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            from decimal import Decimal
+            if not Account.objects.filter(user=user).exists():
+                Account.objects.create(
+                    user=user,
+                    name='Cash',
+                    account_type='Cash',
+                    initial_balance=Decimal('0.00')
+                )
+            self.fields['account'].queryset = Account.objects.filter(user=user)
+            self.fields['account'].empty_label = "Select an account"
+            self.fields['account'].required = True

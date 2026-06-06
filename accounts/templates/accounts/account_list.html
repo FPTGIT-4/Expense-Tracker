@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Accounts | Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Block -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-6">
+            <h1 class="fw-bold font-outfit text-gradient mb-1">My Accounts</h1>
+            <p class="text-muted-custom">Manage your payment methods, wallets, bank accounts, and cards</p>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+            <a href="{% url 'account-add' %}"
+                class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
+                <i class="fa-solid fa-plus me-2"></i> Add Account
+            </a>
+        </div>
+    </div>
+
+    <!-- Analytics Summary Cards -->
+    <div class="row g-4 mb-5">
+        <!-- Total Accounts Count -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-2 me-3">
+                        <i class="fa-solid fa-building-columns"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Accounts</p>
+                        <h3 class="fw-bold mb-0 font-outfit">{{ accounts.count }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net / Total Balance -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-1 me-3">
+                        <i class="fa-solid fa-indian-rupee-sign"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Balance</p>
+                        <h3 class="fw-bold mb-0 font-outfit text-gradient">&#8377;{{ total_balance|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid of Account Cards -->
+    <h5 class="fw-bold font-outfit text-white mb-3">
+        <i class="fa-solid fa-wallet me-2 text-gradient"></i>Account Details
+    </h5>
+    
+    <div class="row g-4">
+        {% for acc in accounts %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card-hero p-4 rounded-4 text-white h-100 d-flex flex-column justify-content-between position-relative" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); transition: all 0.3s ease;">
+                
+                <div>
+                    <!-- Top row: Icon + Type Badge -->
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="feature-icon mb-0 
+                            {% if acc.account_type == 'Cash' %}color-1
+                            {% elif acc.account_type == 'Bank Account' %}color-2
+                            {% elif acc.account_type == 'GPay' or acc.account_type == 'PhonePe' %}color-1
+                            {% elif acc.account_type == 'Credit Card' or acc.account_type == 'Debit Card' %}color-3
+                            {% else %}color-2{% endif %}" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1.1rem;">
+                            {% if acc.account_type == 'Cash' %}<i class="fa-solid fa-money-bill-wave"></i>
+                            {% elif acc.account_type == 'Bank Account' %}<i class="fa-solid fa-building-columns"></i>
+                            {% elif acc.account_type == 'GPay' or acc.account_type == 'PhonePe' %}<i class="fa-solid fa-mobile-screen-button"></i>
+                            {% elif acc.account_type == 'Credit Card' or acc.account_type == 'Debit Card' %}<i class="fa-solid fa-credit-card"></i>
+                            {% else %}<i class="fa-solid fa-wallet"></i>{% endif %}
+                        </div>
+                        <span class="badge bg-glass border border-glass text-muted-custom px-2.5 py-1.5 rounded-pill font-outfit small uppercase" style="font-size: 0.68rem; letter-spacing: 0.03em;">
+                            {{ acc.account_type }}
+                        </span>
+                    </div>
+
+                    <!-- Name -->
+                    <h4 class="fw-bold font-outfit mb-1 text-white">{{ acc.name }}</h4>
+                    <p class="text-muted-custom small mb-4">Initial: &#8377;{{ acc.initial_balance|floatformat:2 }}</p>
+                </div>
+
+                <div>
+                    <!-- Balance -->
+                    <div class="mb-4">
+                        <span class="text-muted-custom small uppercase fw-semibold d-block mb-1" style="font-size: 0.72rem; letter-spacing: 0.05em;">Current Balance</span>
+                        <h2 class="fw-bold font-outfit mb-0 {% if acc.current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.8rem;">
+                            &#8377;{{ acc.current_balance|floatformat:2 }}
+                        </h2>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex gap-2 justify-content-end border-top pt-3" style="border-top-color: rgba(255,255,255,0.06) !important;">
+                        <a href="{% url 'account-edit' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                        </a>
+                        <a href="{% url 'account-delete' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 text-danger border-danger-hover">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="hero-icon-glow mx-auto mb-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <h4 class="fw-bold font-outfit">No accounts created</h4>
+            <p class="text-muted-custom mb-0 small">Create your first financial account to start tracking account-based balances.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+/* Custom hover borders for Delete button */
+.border-danger-hover:hover {
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+</style>
+{% endblock %}
