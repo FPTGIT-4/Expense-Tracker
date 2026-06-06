@@ -8,13 +8,24 @@
     <div class="row align-items-center mb-4">
         <div class="col-md-8">
             <h1 class="fw-bold font-outfit text-gradient mb-1">Expense Tracker Dashboard</h1>
-            <p class="text-muted-custom mb-0">Welcome back, <span class="text-white fw-semibold">{{ user.username }}</span>!</p>
+            <p class="text-muted-custom mb-0">Welcome back, <span class="text-white fw-semibold">{{ user.get_full_name|default:user.username }}</span>!</p>
         </div>
         <div class="col-md-4 text-md-end mt-2 mt-md-0">
-            <span
-                class="badge bg-glass border border-glass text-muted-custom px-3 py-2 rounded-pill font-outfit fw-medium">
-                <i class="fa-regular fa-calendar me-1"></i> {{ today|date:"l, F j, Y" }}
-            </span>
+            <!-- Interactive Date Picker Badge -->
+            <div class="date-picker-wrapper d-inline-flex align-items-center gap-2 position-relative"
+                 style="cursor:pointer;" id="dateBadgeWrapper" onclick="document.getElementById('dashDateInput').showPicker()">
+                <div class="date-badge-display d-flex align-items-center gap-2 px-4 py-2 rounded-pill"
+                     style="background:rgba(99,102,241,0.12);border:1.5px solid rgba(99,102,241,0.35);backdrop-filter:blur(12px);transition:all 0.2s ease;">
+                    <i class="fa-regular fa-calendar-days" style="color:#a5b4fc;font-size:1.1rem;"></i>
+                    <span id="dateBadgeLabel" class="fw-semibold font-outfit"
+                          style="font-size:1.05rem;color:#e2e8f0;letter-spacing:0.01em;">{{ today|date:"l, F j, Y" }}</span>
+                    <i class="fa-solid fa-chevron-down ms-1" style="color:#a5b4fc;font-size:0.7rem;opacity:0.8;"></i>
+                </div>
+                <input type="date" id="dashDateInput"
+                       value="{{ today|date:'Y-m-d' }}"
+                       style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;"
+                       onchange="updateDashboardDate(this.value)">
+            </div>
         </div>
     </div>
 
@@ -22,71 +33,79 @@
     <div class="row g-4 mb-5">
         <!-- Current Balance -->
         <div class="col-md-6 col-lg-3">
-            <div class="card-feature p-4 rounded-4 text-white h-100">
-                <div class="d-flex align-items-center">
-                    <div class="feature-icon mb-0 color-2 me-3">
-                        <i class="fa-solid fa-wallet"></i>
-                    </div>
-                    <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Current Balance</p>
-                        <h3
-                            class="fw-bold mb-0 font-outfit {% if current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
-                            ₹{{ current_balance|floatformat:2 }}
-                        </h3>
+            <a href="{% url 'reports-dashboard' %}" class="text-decoration-none h-100 d-block">
+                <div class="card-feature p-4 rounded-4 text-white h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon mb-0 color-2 me-3">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted-custom small mb-0 uppercase fw-semibold">Current Balance</p>
+                            <h3
+                                class="fw-bold mb-0 font-outfit {% if current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
+                                ₹{{ current_balance|floatformat:2 }}
+                            </h3>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- Total Income -->
         <div class="col-md-6 col-lg-3">
-            <div class="card-feature p-4 rounded-4 text-white h-100">
-                <div class="d-flex align-items-center mb-2">
-                    <div class="feature-icon mb-0 color-1 me-3">
-                        <i class="fa-solid fa-circle-arrow-down"></i>
+            <a href="{% url 'income-list' %}" class="text-decoration-none h-100 d-block">
+                <div class="card-feature p-4 rounded-4 text-white h-100">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="feature-icon mb-0 color-1 me-3">
+                            <i class="fa-solid fa-circle-arrow-down"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Income</p>
+                            <h3 class="fw-bold mb-0 font-outfit">₹{{ total_income|floatformat:2 }}</h3>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Income</p>
-                        <h3 class="fw-bold mb-0 font-outfit">₹{{ total_income|floatformat:2 }}</h3>
+                    <div class="ps-5 text-success small font-outfit">
+                        <i class="fa-solid fa-caret-up me-1"></i>Today: +₹{{ income_today|floatformat:2 }}
                     </div>
                 </div>
-                <div class="ps-5 text-success small font-outfit">
-                    <i class="fa-solid fa-caret-up me-1"></i>Today: +₹{{ income_today|floatformat:2 }}
-                </div>
-            </div>
+            </a>
         </div>
 
         <!-- Total Expenses -->
         <div class="col-md-6 col-lg-3">
-            <div class="card-feature p-4 rounded-4 text-white h-100">
-                <div class="d-flex align-items-center mb-2">
-                    <div class="feature-icon mb-0 color-3 me-3">
-                        <i class="fa-solid fa-circle-arrow-up"></i>
+            <a href="{% url 'expense-list' %}" class="text-decoration-none h-100 d-block">
+                <div class="card-feature p-4 rounded-4 text-white h-100">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="feature-icon mb-0 color-3 me-3">
+                            <i class="fa-solid fa-circle-arrow-up"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Expenses</p>
+                            <h3 class="fw-bold mb-0 font-outfit">₹{{ total_expenses|floatformat:2 }}</h3>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Expenses</p>
-                        <h3 class="fw-bold mb-0 font-outfit">₹{{ total_expenses|floatformat:2 }}</h3>
+                    <div class="ps-5 text-danger small font-outfit">
+                        <i class="fa-solid fa-caret-down me-1"></i>Today: -₹{{ expenses_today|floatformat:2 }}
                     </div>
                 </div>
-                <div class="ps-5 text-danger small font-outfit">
-                    <i class="fa-solid fa-caret-down me-1"></i>Today: -₹{{ expenses_today|floatformat:2 }}
-                </div>
-            </div>
+            </a>
         </div>
 
         <!-- Total Categories -->
         <div class="col-md-6 col-lg-3">
-            <div class="card-feature p-4 rounded-4 text-white h-100">
-                <div class="d-flex align-items-center">
-                    <div class="feature-icon mb-0 color-1 me-3">
-                        <i class="fa-solid fa-tags"></i>
-                    </div>
-                    <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Categories</p>
-                        <h3 class="fw-bold mb-0 font-outfit">{{ total_categories }}</h3>
+            <a href="{% url 'category-list' %}" class="text-decoration-none h-100 d-block">
+                <div class="card-feature p-4 rounded-4 text-white h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon mb-0 color-1 me-3">
+                            <i class="fa-solid fa-tags"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted-custom small mb-0 uppercase fw-semibold">Categories</p>
+                            <h3 class="fw-bold mb-0 font-outfit">{{ total_categories }}</h3>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
@@ -112,53 +131,224 @@
                     <h5 class="fw-bold font-outfit mb-0">
                         <i class="fa-solid fa-list-check me-2"></i>Recent Activity
                     </h5>
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'income-list' %}" class="btn btn-outline-custom btn-sm rounded-pill px-2 py-1" style="font-size:0.75rem;">Incomes</a>
-                        <a href="{% url 'expense-list' %}" class="btn btn-outline-custom btn-sm rounded-pill px-2 py-1" style="font-size:0.75rem;">Expenses</a>
+                    <div class="d-flex gap-2" id="activity-filter-group">
+                        <button type="button" class="btn btn-sm rounded-pill px-2.5 py-1 active-filter" style="font-size:0.75rem; background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); color:#fff;" onclick="filterActivity('all', this)">All</button>
+                        <button type="button" class="btn btn-outline-custom btn-sm rounded-pill px-2.5 py-1" style="font-size:0.75rem;" onclick="filterActivity('income', this)">Incomes</button>
+                        <button type="button" class="btn btn-outline-custom btn-sm rounded-pill px-2.5 py-1" style="font-size:0.75rem;" onclick="filterActivity('expense', this)">Expenses</button>
                     </div>
                 </div>
 
-                {% if recent_transactions %}
-                <div class="d-flex flex-column gap-3">
-                    {% for tx in recent_transactions %}
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="feature-icon mb-0 {% if tx.type == 'Income' %}color-1{% else %}color-3{% endif %}" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
-                                {% if tx.type == 'Income' %}
-                                <i class="fa-solid fa-arrow-trend-up"></i>
-                                {% else %}
-                                <i class="fa-solid fa-arrow-trend-down"></i>
+                <div id="activity-lists-container">
+                    <!-- Combined (All) List -->
+                    <div class="d-flex flex-column gap-3" id="activity-all-list">
+                        {% for tx in recent_transactions %}
+                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 txn-activity-item" 
+                             data-type="{{ tx.type|lower }}"
+                             style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="feature-icon mb-0 {% if tx.type == 'Income' %}color-1{% else %}color-3{% endif %}" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
+                                    {% if tx.type == 'Income' %}
+                                    <i class="fa-solid fa-arrow-trend-up"></i>
+                                    {% else %}
+                                    <i class="fa-solid fa-arrow-trend-down"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold text-white font-outfit">{{ tx.category_or_source }}</h6>
+                                    <span class="text-muted-custom small" style="font-size: 0.75rem;">{{ tx.date|date:"M d, Y" }}</span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold {% if tx.type == 'Income' %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.05rem;">
+                                    {% if tx.type == 'Income' %}+{% else %}-{% endif %}₹{{ tx.amount|floatformat:2 }}
+                                </span>
+                                {% if tx.description %}
+                                <div class="text-muted-custom small" style="font-size: 0.75rem; max-width: 120px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                    {{ tx.description }}
+                                </div>
                                 {% endif %}
                             </div>
-                            <div>
-                                <h6 class="mb-0 fw-semibold text-white font-outfit">{{ tx.category_or_source }}</h6>
-                                <span class="text-muted-custom small" style="font-size: 0.75rem;">{{ tx.date|date:"M d, Y" }}</span>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-5">
+                            <div class="hero-icon-glow mx-auto mb-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <h5 class="fw-bold font-outfit">No transactions yet</h5>
+                            <p class="text-muted-custom mb-0 small">Use the Quick Add form to log your first income or expense.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Incomes List -->
+                    <div class="flex-column gap-3" id="activity-income-list" style="display: none !important;">
+                        {% for tx in recent_incomes %}
+                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 txn-activity-item" 
+                             data-type="{{ tx.type|lower }}"
+                             style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="feature-icon mb-0 color-1" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
+                                    <i class="fa-solid fa-arrow-trend-up"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold text-white font-outfit">{{ tx.category_or_source }}</h6>
+                                    <span class="text-muted-custom small" style="font-size: 0.75rem;">{{ tx.date|date:"M d, Y" }}</span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold text-gradient" style="font-size: 1.05rem;">
+                                    +₹{{ tx.amount|floatformat:2 }}
+                                </span>
+                                {% if tx.description %}
+                                <div class="text-muted-custom small" style="font-size: 0.75rem; max-width: 120px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                    {{ tx.description }}
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
-                        <div class="text-end">
-                            <span class="fw-bold {% if tx.type == 'Income' %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.05rem;">
-                                {% if tx.type == 'Income' %}+{% else %}-{% endif %}₹{{ tx.amount|floatformat:2 }}
-                            </span>
-                            {% if tx.description %}
-                            <div class="text-muted-custom small" style="font-size: 0.75rem; max-width: 120px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                                {{ tx.description }}
+                        {% empty %}
+                        <div class="text-center py-5">
+                            <div class="hero-icon-glow mx-auto mb-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                <i class="fa-solid fa-receipt"></i>
                             </div>
-                            {% endif %}
+                            <h5 class="fw-bold font-outfit">No incomes yet</h5>
+                            <p class="text-muted-custom mb-0 small">Use the Quick Add form to log your first income.</p>
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <div class="hero-icon-glow mx-auto mb-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
-                        <i class="fa-solid fa-receipt"></i>
+
+                    <!-- Expenses List -->
+                    <div class="flex-column gap-3" id="activity-expense-list" style="display: none !important;">
+                        {% for tx in recent_expenses %}
+                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 txn-activity-item" 
+                             data-type="{{ tx.type|lower }}"
+                             style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="feature-icon mb-0 color-3" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
+                                    <i class="fa-solid fa-arrow-trend-down"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold text-white font-outfit">{{ tx.category_or_source }}</h6>
+                                    <span class="text-muted-custom small" style="font-size: 0.75rem;">{{ tx.date|date:"M d, Y" }}</span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold text-gradient-alt" style="font-size: 1.05rem;">
+                                    -₹{{ tx.amount|floatformat:2 }}
+                                </span>
+                                {% if tx.description %}
+                                <div class="text-muted-custom small" style="font-size: 0.75rem; max-width: 120px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                    {{ tx.description }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-5">
+                            <div class="hero-icon-glow mx-auto mb-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <h5 class="fw-bold font-outfit">No expenses yet</h5>
+                            <p class="text-muted-custom mb-0 small">Use the Quick Add form to log your first expense.</p>
+                        </div>
+                        {% endfor %}
                     </div>
-                    <h5 class="fw-bold font-outfit">No transactions yet</h5>
-                    <p class="text-muted-custom mb-0 small">Use the Quick Add form to log your first income or expense.</p>
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Filter Recent Activity client-side ── */
+function filterActivity(type, btn) {
+  // Update button active states
+  const group = document.getElementById('activity-filter-group');
+  if (group) {
+    group.querySelectorAll('button').forEach(b => {
+      b.className = 'btn btn-outline-custom btn-sm rounded-pill px-2.5 py-1';
+      b.style.background = '';
+      b.style.borderColor = '';
+      b.style.color = '';
+    });
+  }
+  
+  // Set active style for selected button
+  btn.className = 'btn btn-sm rounded-pill px-2.5 py-1';
+  btn.style.background = 'rgba(99,102,241,0.2)';
+  btn.style.borderColor = 'rgba(99,102,241,0.4)';
+  btn.style.color = '#fff';
+
+  // Toggle container display
+  const allList = document.getElementById('activity-all-list');
+  const incomeList = document.getElementById('activity-income-list');
+  const expenseList = document.getElementById('activity-expense-list');
+  
+  if (allList) allList.style.setProperty('display', 'none', 'important');
+  if (incomeList) incomeList.style.setProperty('display', 'none', 'important');
+  if (expenseList) expenseList.style.setProperty('display', 'none', 'important');
+
+  let activeList = null;
+  if (type === 'all') activeList = allList;
+  else if (type === 'income') activeList = incomeList;
+  else if (type === 'expense') activeList = expenseList;
+
+  if (activeList) {
+    activeList.style.setProperty('display', 'flex', 'important');
+  }
+
+  // Handle empty state message if everything is filtered out
+  const noTxMsg = document.getElementById('no-matching-activity-msg');
+  const hasItems = activeList && activeList.querySelectorAll('.txn-activity-item').length > 0;
+  if (!hasItems) {
+    if (!noTxMsg) {
+      const parent = document.getElementById('activity-lists-container');
+      if (parent) {
+        const div = document.createElement('div');
+        div.id = 'no-matching-activity-msg';
+        div.className = 'text-center py-4 text-muted-custom small';
+        div.innerHTML = '<i class="fa-solid fa-circle-info me-1"></i> No recent ' + type + ' records.';
+        parent.appendChild(div);
+      }
+    } else {
+      noTxMsg.style.display = 'block';
+      noTxMsg.innerHTML = '<i class="fa-solid fa-circle-info me-1"></i> No recent ' + type + ' records.';
+    }
+  } else if (noTxMsg) {
+    noTxMsg.style.display = 'none';
+  }
+}
+
+/* ── Dashboard interactive date badge ── */
+const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+
+function updateDashboardDate(val) {
+  if (!val) return;
+  // Parse as local date (avoid UTC offset issues)
+  const [y, m, d] = val.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const label = `${DAYS[date.getDay()]}, ${MONTHS[date.getMonth()]} ${d}, ${y}`;
+  document.getElementById('dateBadgeLabel').textContent = label;
+}
+
+/* Hover glow effect */
+const wrapper = document.getElementById('dateBadgeWrapper');
+const display = wrapper ? wrapper.querySelector('.date-badge-display') : null;
+if (wrapper && display) {
+  wrapper.addEventListener('mouseenter', () => {
+    display.style.background    = 'rgba(99,102,241,0.22)';
+    display.style.borderColor   = 'rgba(99,102,241,0.6)';
+    display.style.boxShadow     = '0 0 18px rgba(99,102,241,0.28)';
+  });
+  wrapper.addEventListener('mouseleave', () => {
+    display.style.background    = 'rgba(99,102,241,0.12)';
+    display.style.borderColor   = 'rgba(99,102,241,0.35)';
+    display.style.boxShadow     = '';
+  });
+}
+</script>
+{% endblock %}

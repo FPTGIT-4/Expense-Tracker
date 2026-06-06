@@ -369,6 +369,15 @@ h6,
   transition: border-color .2s, box-shadow .2s;
   outline: none;
 }
+/* Hide number input spinners (up/down arrows) */
+.txn-input::-webkit-outer-spin-button,
+.txn-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.txn-input[type=number] {
+  -moz-appearance: textfield;
+}
 .txn-input::placeholder {
   color: #6b7280;
 }

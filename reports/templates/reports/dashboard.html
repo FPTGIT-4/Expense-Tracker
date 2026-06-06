@@ -75,51 +75,59 @@
     <!-- Summary Cards -->
     <div class="row g-4 mb-5">
         <div class="col-md-6 col-lg-3">
-            <div class="card-feature p-4 rounded-4 text-white h-100">
-                <div class="d-flex align-items-center">
-                    <div class="feature-icon mb-0 color-1 me-3"><i class="fa-solid fa-circle-arrow-down"></i></div>
-                    <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Income</p>
-                        <h3 class="fw-bold mb-0 font-outfit text-gradient">&#8377;{{ total_income|floatformat:2 }}</h3>
+            <a href="{% url 'income-list' %}" class="text-decoration-none h-100 d-block">
+                <div class="card-feature p-4 rounded-4 text-white h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon mb-0 color-1 me-3"><i class="fa-solid fa-circle-arrow-down"></i></div>
+                        <div>
+                            <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Income</p>
+                            <h3 class="fw-bold mb-0 font-outfit text-gradient">&#8377;{{ total_income|floatformat:2 }}</h3>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card-feature p-4 rounded-4 text-white h-100">
-                <div class="d-flex align-items-center">
-                    <div class="feature-icon mb-0 color-3 me-3"><i class="fa-solid fa-circle-arrow-up"></i></div>
-                    <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Expenses</p>
-                        <h3 class="fw-bold mb-0 font-outfit text-gradient-alt">&#8377;{{ total_expenses|floatformat:2 }}
-                        </h3>
+            <a href="{% url 'expense-list' %}" class="text-decoration-none h-100 d-block">
+                <div class="card-feature p-4 rounded-4 text-white h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon mb-0 color-3 me-3"><i class="fa-solid fa-circle-arrow-up"></i></div>
+                        <div>
+                            <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Expenses</p>
+                            <h3 class="fw-bold mb-0 font-outfit text-gradient-alt">&#8377;{{ total_expenses|floatformat:2 }}
+                            </h3>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card-feature p-4 rounded-4 text-white h-100">
-                <div class="d-flex align-items-center">
-                    <div class="feature-icon mb-0 color-2 me-3"><i class="fa-solid fa-wallet"></i></div>
-                    <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Net Balance</p>
-                        <h3
-                            class="fw-bold mb-0 font-outfit {% if current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
-                            &#8377;{{ current_balance|floatformat:2 }}</h3>
+            <a href="{% url 'home' %}" class="text-decoration-none h-100 d-block">
+                <div class="card-feature p-4 rounded-4 text-white h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon mb-0 color-2 me-3"><i class="fa-solid fa-wallet"></i></div>
+                        <div>
+                            <p class="text-muted-custom small mb-0 uppercase fw-semibold">Net Balance</p>
+                            <h3
+                                class="fw-bold mb-0 font-outfit {% if current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
+                                &#8377;{{ current_balance|floatformat:2 }}</h3>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card-feature p-4 rounded-4 text-white h-100">
-                <div class="d-flex align-items-center">
-                    <div class="feature-icon mb-0 color-1 me-3"><i class="fa-solid fa-list-check"></i></div>
-                    <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Transactions</p>
-                        <h3 class="fw-bold mb-0 font-outfit">{{ total_transactions }}</h3>
+            <a href="#range-transactions-card" class="text-decoration-none h-100 d-block">
+                <div class="card-feature p-4 rounded-4 text-white h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon mb-0 color-1 me-3"><i class="fa-solid fa-list-check"></i></div>
+                        <div>
+                            <p class="text-muted-custom small mb-0 uppercase fw-semibold">Transactions</p>
+                            <h3 class="fw-bold mb-0 font-outfit">{{ total_transactions }}</h3>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
@@ -145,7 +153,7 @@
                                 <td class="py-3 fw-medium">{{ item.name }}</td>
                                 <td class="py-3 fw-bold text-gradient-alt">&#8377;{{ item.amount|floatformat:2 }}</td>
                                 <td class="py-3">
-                                    <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center gap-2">
                                         <div class="progress flex-grow-1 bg-secondary bg-opacity-25"
                                             style="height:6px;border-radius:3px;">
                                             <div class="progress-bar" role="progressbar"
@@ -153,8 +161,7 @@
                                                 aria-valuenow="{{ item.percentage }}" aria-valuemin="0"
                                                 aria-valuemax="100"></div>
                                         </div>
-                                        <span class="ms-2 small text-muted-custom">{{ item.percentage|floatformat:1
-                                            }}%</span>
+                                        <span class="ms-2 small text-muted-custom">{{ item.percentage|floatformat:1 }}%</span>
                                     </div>
                                 </td>
                             </tr>
@@ -239,7 +246,7 @@
     </div>
 
     <!-- Recent Transactions -->
-    <div class="card-hero p-4 rounded-4 text-white mb-4">
+    <div class="card-hero p-4 rounded-4 text-white mb-4" id="range-transactions-card">
         <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-list me-2 text-gradient"></i>Transactions in Selected
             Range</h5>
         {% if recent_transactions %}

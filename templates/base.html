@@ -22,6 +22,17 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
+        /* Hide number input spinners globally */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none !important;
+            margin: 0 !important;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield !important;
+            appearance: textfield !important;
+        }
+
         .dropdown-menu {
             background: var(--glass-bg) !important;
             backdrop-filter: blur(16px);
@@ -97,7 +108,7 @@
                         <a class="nav-link dropdown-toggle d-flex align-items-center {% if request.path == '/accounts/profile/' %}active{% endif %}"
                             href="#" id="navbarDropdownProfile" role="button" data-bs-toggle="dropdown"
                             aria-expanded="false">
-                            <i class="bi bi-person me-1"></i> Profile
+                            <i class="bi bi-person me-1"></i> {{ user.get_full_name|default:user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end bg-dark-custom border-glass shadow-lg"
                             aria-labelledby="navbarDropdownProfile" style="min-width: 180px;">
