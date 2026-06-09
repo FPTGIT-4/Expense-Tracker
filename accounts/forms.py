@@ -49,7 +49,7 @@ class AccountForm(forms.ModelForm):
         self.instance._explicit_threshold_edit = True
         minimum_balance = cleaned_data.get('minimum_balance')
         initial_balance = cleaned_data.get('initial_balance')
-        
+
         if minimum_balance is not None and initial_balance is not None:
             if minimum_balance > initial_balance:
                 self.add_error('minimum_balance', "Low balance threshold cannot be greater than the opening balance.")
@@ -129,6 +129,8 @@ class UserSettingsForm(forms.ModelForm):
             'low_balance_show_dashboard_panel',
             'low_balance_alert_scope',
             'low_balance_default_minimum',
+            # Appearance
+            'dark_mode',
         ]
         widgets = {
             'currency': forms.Select(attrs={
@@ -170,5 +172,11 @@ class UserSettingsForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0',
             }),
+            'dark_mode': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'role': 'switch',
+                'id': 'id_dark_mode',
+            }),
         }
+
 

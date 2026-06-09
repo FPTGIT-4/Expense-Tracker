@@ -2,13 +2,15 @@ from django.urls import include, path
 from .views import (
     SignUpView, ProfileView, SettingsView, AccountListView, AccountCreateView, 
     AccountUpdateView, AccountDeleteView, AccountDetailView, 
-    AccountTransferCreateView, TransferListView, TransferDetailView
+    AccountTransferCreateView, TransferListView, TransferDetailView,
+    ThemeToggleView,
 )
 
 urlpatterns = [
     path('signup/', SignUpView.as_view(), name='signup'),
     path('profile/', ProfileView.as_view(), name='profile'),
     path('settings/', SettingsView.as_view(), name='settings'),
+    path('theme-toggle/', ThemeToggleView.as_view(), name='theme-toggle'),
     path('manage/', AccountListView.as_view(), name='account-list'),
     path('manage/add/', AccountCreateView.as_view(), name='account-add'),
     path('manage/transfer/', AccountTransferCreateView.as_view(), name='account-transfer'),

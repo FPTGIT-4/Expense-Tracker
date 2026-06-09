@@ -1,22 +1,186 @@
 /* Expense Tracker - Global Styles */
 
 /* --- Design Tokens / Theme Variables --- */
-:root {
+:root,
+[data-theme="dark"] {
     --bg-primary: #0b0f19;
     --bg-secondary: #111827;
+    --bg-card: rgba(17, 24, 39, 0.85);
+    --bg-card-solid: #161d2e;
+    --bg-input: rgba(15, 20, 35, 0.8);
     --accent-indigo: #6366f1;
     --accent-violet: #8b5cf6;
     --accent-pink: #ec4899;
     --text-main: #f3f4f6;
     --text-muted: #9ca3af;
+    --text-heading: #ffffff;
     --glass-bg: rgba(17, 24, 39, 0.7);
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-shadow: rgba(0, 0, 0, 0.3);
-
+    --sidebar-bg: rgba(11, 15, 25, 0.97);
+    --sidebar-border: rgba(255,255,255,0.06);
+    --row-hover: rgba(255,255,255,0.03);
+    --input-border: rgba(255,255,255,0.12);
+    --badge-bg: rgba(255,255,255,0.08);
+    --scroll-thumb: rgba(99,102,241,0.35);
     /* Fonts */
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-heading: 'Outfit', sans-serif;
 }
+
+/* ── Light Theme ───────────────────────────────────────────────────── */
+[data-theme="light"] {
+    --bg-primary: #f0f2f9;
+    --bg-secondary: #e8eaf4;
+    --bg-card: rgba(255, 255, 255, 0.92);
+    --bg-card-solid: #ffffff;
+    --bg-input: #ffffff;
+    --accent-indigo: #4f46e5;
+    --accent-violet: #7c3aed;
+    --accent-pink: #db2777;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --text-heading: #0f172a;
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(99, 102, 241, 0.18);
+    --glass-shadow: rgba(99, 102, 241, 0.12);
+    --sidebar-bg: rgba(240, 242, 249, 0.98);
+    --sidebar-border: rgba(99,102,241,0.12);
+    --row-hover: rgba(99,102,241,0.05);
+    --input-border: rgba(99,102,241,0.25);
+    --badge-bg: rgba(99,102,241,0.10);
+    --scroll-thumb: rgba(99,102,241,0.4);
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-heading: 'Outfit', sans-serif;
+}
+
+/* Smooth theme transitions */
+*, *::before, *::after {
+    transition: background-color 0.28s ease, color 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+}
+
+/* Light-mode body overrides */
+[data-theme="light"] body {
+    background-color: var(--bg-primary);
+    background-image:
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.07) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.07) 0px, transparent 50%);
+    color: var(--text-main);
+}
+
+/* Light-mode card overrides */
+[data-theme="light"] .card-hero {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: var(--text-main) !important;
+    box-shadow: 0 4px 24px rgba(99,102,241,0.09) !important;
+}
+[data-theme="light"] .card-hero .text-white,
+[data-theme="light"] .card-hero h1,
+[data-theme="light"] .card-hero h2,
+[data-theme="light"] .card-hero h3,
+[data-theme="light"] .card-hero h4,
+[data-theme="light"] .card-hero h5,
+[data-theme="light"] .card-hero h6 {
+    color: var(--text-heading) !important;
+}
+[data-theme="light"] .card-hero p.text-muted-custom,
+[data-theme="light"] .card-hero .text-muted-custom {
+    color: var(--text-muted) !important;
+}
+
+/* Light-mode sidebar */
+[data-theme="light"] .sidebar,
+[data-theme="light"] .top-sidebar {
+    background: var(--sidebar-bg) !important;
+    border-right-color: var(--sidebar-border) !important;
+}
+[data-theme="light"] .nav-link-custom {
+    color: var(--text-muted) !important;
+}
+[data-theme="light"] .nav-link-custom:hover,
+[data-theme="light"] .nav-link-custom.active {
+    background: rgba(99,102,241,0.1) !important;
+    color: var(--accent-indigo) !important;
+}
+
+/* Light-mode top header */
+[data-theme="light"] .top-header,
+[data-theme="light"] .bg-glass {
+    background: rgba(255,255,255,0.85) !important;
+    border-bottom-color: var(--glass-border) !important;
+    box-shadow: 0 2px 20px rgba(99,102,241,0.08) !important;
+}
+[data-theme="light"] .top-header .text-white,
+[data-theme="light"] .top-header .page-title,
+[data-theme="light"] .top-header h5 {
+    color: var(--text-heading) !important;
+}
+
+/* Light-mode form controls */
+[data-theme="light"] .form-control,
+[data-theme="light"] .form-select,
+[data-theme="light"] .bg-dark-custom {
+    background: var(--bg-input) !important;
+    color: var(--text-main) !important;
+    border-color: var(--input-border) !important;
+}
+[data-theme="light"] .border-glass {
+    border-color: var(--input-border) !important;
+}
+
+/* Light-mode tables */
+[data-theme="light"] .table {
+    color: var(--text-main) !important;
+}
+[data-theme="light"] .table > :not(caption) > * > * {
+    background-color: transparent !important;
+    color: var(--text-main) !important;
+    border-color: var(--glass-border) !important;
+}
+[data-theme="light"] .table-hover > tbody > tr:hover > * {
+    background-color: var(--row-hover) !important;
+}
+
+/* Light-mode text colours */
+[data-theme="light"] .text-white { color: var(--text-heading) !important; }
+[data-theme="light"] .text-muted-custom { color: var(--text-muted) !important; }
+
+/* Light-mode badges / pills */
+[data-theme="light"] .badge-glass,
+[data-theme="light"] .badge {
+    background: var(--badge-bg);
+}
+
+/* Light-mode modals */
+[data-theme="light"] .modal-content-glass,
+[data-theme="light"] .modal-content {
+    background: rgba(255,255,255,0.97) !important;
+    color: var(--text-main) !important;
+    border-color: var(--glass-border) !important;
+}
+[data-theme="light"] .modal-header,
+[data-theme="light"] .modal-footer {
+    border-color: var(--glass-border) !important;
+}
+
+/* Light-mode dropdown */
+[data-theme="light"] .dropdown-menu {
+    background: var(--bg-card) !important;
+    border-color: var(--glass-border) !important;
+}
+[data-theme="light"] .dropdown-item {
+    color: var(--text-main) !important;
+}
+[data-theme="light"] .dropdown-item:hover {
+    background: rgba(99,102,241,0.08) !important;
+    color: var(--accent-indigo) !important;
+}
+
+/* Light-mode scrollbar */
+[data-theme="light"] ::-webkit-scrollbar-track { background: #e8eaf4; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); }
+
 
 /* --- Base Reset --- */
 body {
@@ -604,7 +768,7 @@ h6,
 .top-header {
     height: 70px;
     z-index: 1050;
-    border-bottom: 1px solid var(--glass-border) !important;
+    border-bottom: none !important;
 }
 
 .app-layout-container {
@@ -616,7 +780,7 @@ h6,
 
 .app-sidebar {
     position: fixed;
-    top: 70px;
+    top: 0;
     left: 0;
     bottom: 0;
     width: 260px;
@@ -640,7 +804,7 @@ h6,
     width: calc(100% - 260px);
     display: flex;
     flex-direction: column;
-    min-height: calc(100vh - 70px);
+    min-height: 100vh;
 }
 
 .app-sidebar.collapsed ~ .main-content-wrapper {
@@ -701,7 +865,7 @@ h6,
 /* Responsive Rules */
 @media (max-width: 991.98px) {
     .app-sidebar {
-        top: 70px;
+        top: 0;
         transform: translateX(-100%);
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     }
@@ -722,7 +886,7 @@ h6,
     /* Backdrop for mobile when sidebar is open */
     .sidebar-backdrop {
         position: fixed;
-        top: 70px;
+        top: 0;
         left: 0;
         right: 0;
         bottom: 0;
@@ -772,4 +936,11 @@ h6,
 
 .notification-list::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
-}
+}
+
+/* Page top spacing adjustment */
+.main-content-wrapper .container.py-4 {
+    padding-top: 0.5rem !important;
+}
+
+

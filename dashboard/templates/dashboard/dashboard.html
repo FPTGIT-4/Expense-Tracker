@@ -1,25 +1,25 @@
 {% extends 'base.html' %}
 
+{% load static %}
 {% block title %}Dashboard | Expense Tracker{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <!-- Header Block -->
-    <div class="row align-items-center mb-4">
+    <div class="row align-items-center mb-3">
         <div class="col-md-8">
-            <h1 class="fw-bold font-outfit text-gradient mb-1">Expense Tracker Dashboard</h1>
             <p class="text-muted-custom mb-0">Welcome back, <span class="text-white fw-semibold">{{ user.get_full_name|default:user.username }}</span>!</p>
         </div>
         <div class="col-md-4 text-md-end mt-2 mt-md-0">
             <!-- Interactive Date Picker Badge -->
             <div class="date-picker-wrapper d-inline-flex align-items-center gap-2 position-relative"
                  style="cursor:pointer;" id="dateBadgeWrapper" onclick="document.getElementById('dashDateInput').showPicker()">
-                <div class="date-badge-display d-flex align-items-center gap-2 px-4 py-2 rounded-pill"
-                     style="background:rgba(99,102,241,0.12);border:1.5px solid rgba(99,102,241,0.35);backdrop-filter:blur(12px);transition:all 0.2s ease;">
-                    <i class="fa-regular fa-calendar-days" style="color:#a5b4fc;font-size:1.1rem;"></i>
+                <div class="date-badge-display d-flex align-items-center gap-2 px-2.5 py-1 rounded-pill"
+                     style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);backdrop-filter:blur(12px);transition:all 0.2s ease;">
+                    <i class="fa-regular fa-calendar-days" style="color:#a5b4fc;font-size:0.85rem;"></i>
                     <span id="dateBadgeLabel" class="fw-semibold font-outfit"
-                          style="font-size:1.05rem;color:#e2e8f0;letter-spacing:0.01em;">{{ today|date:"l, F j, Y" }}</span>
-                    <i class="fa-solid fa-chevron-down ms-1" style="color:#a5b4fc;font-size:0.7rem;opacity:0.8;"></i>
+                          style="font-size:0.8rem;color:#e2e8f0;letter-spacing:0.01em;">{{ today|date:"l, F j, Y" }}</span>
+                    <i class="fa-solid fa-chevron-down ms-1" style="color:#a5b4fc;font-size:0.6rem;opacity:0.8;"></i>
                 </div>
                 <input type="date" id="dashDateInput"
                        value="{{ today|date:'Y-m-d'|default:today }}"
@@ -28,45 +28,6 @@
             </div>
         </div>
     </div>
-
-    {% if accounts_below_minimum %}
-    <!-- Minimum Balance Alerts -->
-    <div class="mb-4" id="min-balance-alerts">
-        <div class="d-flex align-items-center gap-2 mb-3">
-            <i class="fa-solid fa-triangle-exclamation" style="color: #fbbf24;"></i>
-            <h6 class="fw-bold font-outfit text-white mb-0" style="font-size: 0.95rem; letter-spacing: -0.01em;">Balance Alerts</h6>
-            <span class="badge rounded-pill fw-semibold" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.7rem; padding: 0.3em 0.7em;">{{ accounts_below_minimum|length }}</span>
-        </div>
-        <div class="d-flex flex-column gap-2">
-            {% for acc in accounts_below_minimum %}
-            <a href="{% url 'account-detail' acc.pk %}" class="text-decoration-none">
-                <div class="d-flex align-items-center justify-content-between px-4 py-3 rounded-3"
-                     style="background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.25); transition: background 0.2s ease;"
-                     onmouseenter="this.style.background='rgba(245,158,11,0.14)'"
-                     onmouseleave="this.style.background='rgba(245,158,11,0.07)'">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="feature-icon mb-0 {{ acc.theme_color_class }}" style="width: 36px; height: 36px; border-radius: 10px; font-size: 0.95rem; background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); color: #fbbf24;">
-                            <i class="bi {{ acc.bootstrap_icon }}"></i>
-                        </div>
-                        <div>
-                            <p class="mb-0 fw-semibold text-white font-outfit" style="font-size: 0.9rem;">
-                                <i class="fa-solid fa-circle-exclamation me-1" style="color: #fbbf24; font-size: 0.8rem;"></i>
-                                Low Balance Alert - Threshold {{ currency_symbol }}{{ acc.minimum_balance|floatformat:0 }} ({{ acc.name }})
-                            </p>
-                            <p class="mb-0 text-muted-custom" style="font-size: 0.78rem;">
-                                Current: <span class="fw-semibold" style="color: #fca5a5;">{{ currency_symbol }}{{ acc.current_balance|floatformat:2 }}</span>
-                                &nbsp;&bull;&nbsp;
-                                Alert Threshold: <span class="fw-semibold" style="color: #fbbf24;">{{ currency_symbol }}{{ acc.minimum_balance|floatformat:2 }}</span>
-                            </p>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-muted-custom" style="font-size: 0.8rem;"></i>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Summary cards -->
     <div id="dashboard-summary-cards" class="row g-4 mb-4">
@@ -329,30 +290,30 @@
         {% for acc in accounts %}
         <div class="col-md-6 col-lg-3">
             <a href="{% url 'account-detail' acc.pk %}" class="text-decoration-none h-100 d-block">
-                <div class="card-feature p-3.5 rounded-4 text-white h-100" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.06);">
+                <div class="card-feature p-4 rounded-4 text-white h-100">
                     <div class="d-flex align-items-center justify-content-between w-100">
                         <div class="d-flex align-items-center">
-                            <div class="feature-icon mb-0 me-3 {{ acc.theme_color_class }}" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
+                            <div class="feature-icon mb-0 me-3 {{ acc.theme_color_class }}">
                                 <i class="bi {{ acc.bootstrap_icon }}"></i>
                             </div>
                             <div>
-                                <p class="text-muted-custom small mb-0 uppercase fw-semibold" style="font-size: 0.72rem;">{{ acc.name }}</p>
-                                <h4 class="fw-bold mb-0 font-outfit text-white" style="font-size: 1.25rem;">
+                                <p class="text-muted-custom small mb-0 uppercase fw-semibold">{{ acc.name }}</p>
+                                <h3 class="fw-bold mb-0 font-outfit text-white mt-1">
                                     {{ currency_symbol }}{{ acc.current_balance|floatformat:2 }}
-                                </h4>
+                                </h3>
                             </div>
                         </div>
                         <div>
                             {% if acc.status == 'ACTIVE' %}
-                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(16, 185, 129, 0.15) !important; border: 1px solid rgba(16, 185, 129, 0.3) !important; color: #34d399 !important; font-size: 0.6rem; letter-spacing: 0.03em; padding: 0.3em 0.5em;">
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(16, 185, 129, 0.15) !important; border: 1px solid rgba(16, 185, 129, 0.3) !important; color: #34d399 !important; font-size: 0.65rem; letter-spacing: 0.03em; padding: 0.35em 0.65em;">
                                 Active
                             </span>
                             {% elif acc.status == 'INACTIVE' %}
-                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(245, 158, 11, 0.15) !important; border: 1px solid rgba(245, 158, 11, 0.3) !important; color: #fbbf24 !important; font-size: 0.6rem; letter-spacing: 0.03em; padding: 0.3em 0.5em;">
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(245, 158, 11, 0.15) !important; border: 1px solid rgba(245, 158, 11, 0.3) !important; color: #fbbf24 !important; font-size: 0.65rem; letter-spacing: 0.03em; padding: 0.35em 0.65em;">
                                 Inactive
                             </span>
                             {% elif acc.status == 'CLOSED' %}
-                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(239, 68, 68, 0.15) !important; border: 1px solid rgba(239, 68, 68, 0.3) !important; color: #f87171 !important; font-size: 0.6rem; letter-spacing: 0.03em; padding: 0.3em 0.5em;">
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(239, 68, 68, 0.15) !important; border: 1px solid rgba(239, 68, 68, 0.3) !important; color: #f87171 !important; font-size: 0.65rem; letter-spacing: 0.03em; padding: 0.35em 0.65em;">
                                 Closed
                             </span>
                             {% endif %}
@@ -364,107 +325,6 @@
         {% endfor %}
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════ -->
-    <!-- Account Intelligence Section                                -->
-    <!-- ═══════════════════════════════════════════════════════════ -->
-    <h5 class="fw-bold font-outfit text-white mb-3">
-        <i class="fa-solid fa-brain me-2 text-gradient"></i>Account Intelligence
-        <a href="{% url 'account-reports' %}" class="ms-2 text-decoration-none" style="font-size: 0.78rem; color: #a5b4fc; font-weight: 500; vertical-align: middle;">
-            View Full Reports <i class="fa-solid fa-arrow-right ms-1" style="font-size: 0.7rem;"></i>
-        </a>
-    </h5>
-
-    <!-- Row 1: 4 stat cards -->
-    <div class="row g-4 mb-4">
-
-        <!-- Highest Balance Account -->
-        <div class="col-md-6 col-lg-3">
-            {% if highest_balance_account %}
-            <a href="{% url 'account-detail' highest_balance_account.pk %}" class="text-decoration-none h-100 d-block">
-            {% endif %}
-            <div class="card-feature p-4 rounded-4 text-white h-100" style="position: relative; overflow: hidden;">
-                <div class="position-absolute top-0 end-0 mt-3 me-3 opacity-25" style="font-size: 3.5rem; line-height: 1; pointer-events: none;">
-                    <i class="fa-solid fa-trophy"></i>
-                </div>
-                <p class="text-muted-custom small mb-2 uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">
-                    <i class="fa-solid fa-arrow-trend-up me-1" style="color: #34d399;"></i>Highest Balance
-                </p>
-                {% if highest_balance_account %}
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <div class="feature-icon mb-0 {{ highest_balance_account.theme_color_class }}" style="width: 32px; height: 32px; border-radius: 9px; font-size: 0.85rem;">
-                        <i class="bi {{ highest_balance_account.bootstrap_icon }}"></i>
-                    </div>
-                    <p class="fw-semibold text-white mb-0 font-outfit" style="font-size: 0.88rem;">{{ highest_balance_account.name }}</p>
-                </div>
-                <h3 class="fw-bold mb-0 font-outfit text-gradient" style="font-size: 1.55rem;">{{ currency_symbol }}{{ highest_balance_account.current_balance|floatformat:2 }}</h3>
-                <span class="badge bg-glass border border-glass text-muted-custom rounded-pill mt-2" style="font-size: 0.65rem;">{{ highest_balance_account.account_type }}</span>
-                {% else %}
-                <p class="text-muted-custom mb-0 small">No accounts yet</p>
-                {% endif %}
-            </div>
-            {% if highest_balance_account %}</a>{% endif %}
-        </div>
-
-        <!-- Lowest Balance Account -->
-        <div class="col-md-6 col-lg-3">
-            {% if lowest_balance_account %}
-            <a href="{% url 'account-detail' lowest_balance_account.pk %}" class="text-decoration-none h-100 d-block">
-            {% endif %}
-            <div class="card-feature p-4 rounded-4 text-white h-100" style="position: relative; overflow: hidden;">
-                <div class="position-absolute top-0 end-0 mt-3 me-3 opacity-25" style="font-size: 3.5rem; line-height: 1; pointer-events: none;">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                </div>
-                <p class="text-muted-custom small mb-2 uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">
-                    <i class="fa-solid fa-arrow-trend-down me-1" style="color: #f87171;"></i>Lowest Balance
-                </p>
-                {% if lowest_balance_account %}
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <div class="feature-icon mb-0 {{ lowest_balance_account.theme_color_class }}" style="width: 32px; height: 32px; border-radius: 9px; font-size: 0.85rem;">
-                        <i class="bi {{ lowest_balance_account.bootstrap_icon }}"></i>
-                    </div>
-                    <p class="fw-semibold text-white mb-0 font-outfit" style="font-size: 0.88rem;">{{ lowest_balance_account.name }}</p>
-                </div>
-                <h3 class="fw-bold mb-0 font-outfit {% if lowest_balance_account.current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.55rem;">{{ currency_symbol }}{{ lowest_balance_account.current_balance|floatformat:2 }}</h3>
-                <span class="badge bg-glass border border-glass text-muted-custom rounded-pill mt-2" style="font-size: 0.65rem;">{{ lowest_balance_account.account_type }}</span>
-                {% else %}
-                <p class="text-muted-custom mb-0 small">No accounts yet</p>
-                {% endif %}
-            </div>
-            {% if lowest_balance_account %}</a>{% endif %}
-        </div>
-
-        <!-- Total Cash Balance -->
-        <div class="col-md-6 col-lg-3">
-            <a href="{% url 'account-reports' %}?date_filter=this_month" class="text-decoration-none h-100 d-block">
-            <div class="card-feature p-4 rounded-4 text-white h-100" style="position: relative; overflow: hidden;">
-                <div class="position-absolute top-0 end-0 mt-3 me-3 opacity-20" style="font-size: 3.5rem; line-height: 1; pointer-events: none;">
-                    <i class="bi bi-cash-coin"></i>
-                </div>
-                <p class="text-muted-custom small mb-2 uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">
-                    <i class="bi bi-cash-coin me-1" style="color: #a5b4fc;"></i>Total Cash
-                </p>
-                <h3 class="fw-bold mb-0 font-outfit {% if total_cash_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.55rem;">{{ currency_symbol }}{{ total_cash_balance|floatformat:2 }}</h3>
-                <p class="text-muted-custom mb-0 mt-2" style="font-size: 0.72rem;">All Cash accounts</p>
-            </div>
-            </a>
-        </div>
-
-        <!-- Total Bank Balance -->
-        <div class="col-md-6 col-lg-3">
-            <a href="{% url 'account-reports' %}?date_filter=this_month" class="text-decoration-none h-100 d-block">
-            <div class="card-feature p-4 rounded-4 text-white h-100" style="position: relative; overflow: hidden;">
-                <div class="position-absolute top-0 end-0 mt-3 me-3 opacity-20" style="font-size: 3.5rem; line-height: 1; pointer-events: none;">
-                    <i class="bi bi-bank"></i>
-                </div>
-                <p class="text-muted-custom small mb-2 uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">
-                    <i class="bi bi-bank me-1" style="color: #a5b4fc;"></i>Total Bank
-                </p>
-                <h3 class="fw-bold mb-0 font-outfit {% if total_bank_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.55rem;">{{ currency_symbol }}{{ total_bank_balance|floatformat:2 }}</h3>
-                <p class="text-muted-custom mb-0 mt-2" style="font-size: 0.72rem;">All Bank Account</p>
-            </div>
-            </a>
-        </div>
-    </div>
 
     <!-- Row 2: Transfer Stats + Low Balance Alerts side-by-side -->
     <div class="row g-4 mb-5">
@@ -694,9 +554,9 @@
                     <!-- Combined (All) List -->
                     <div class="d-flex flex-column gap-3" id="activity-all-list">
                         {% for tx in recent_transactions %}
-                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 txn-activity-item" 
+                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 txn-activity-item {% if forloop.counter > 5 %}d-none{% endif %}" 
                              data-type="{{ tx.type|lower }}"
-                             style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                             style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); {% if forloop.counter > 5 %}display: none !important;{% endif %}">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="feature-icon mb-0 {% if tx.type == 'Income' %}color-1{% else %}color-3{% endif %}" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
                                     {% if tx.type == 'Income' %}
@@ -730,14 +590,24 @@
                             <p class="text-muted-custom mb-0 small">Use the Quick Action buttons to log your first income or expense.</p>
                         </div>
                         {% endfor %}
+                        {% if recent_transactions|length > 5 %}
+                        <div class="d-flex justify-content-center gap-2 mt-2" id="action-buttons-all-container">
+                            <button type="button" class="btn btn-outline-custom btn-sm rounded-pill px-4 py-2 fw-semibold" id="load-more-all" style="font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);" onclick="loadMoreActivity('all')">
+                                Load More <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.7rem;"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-custom btn-sm rounded-pill px-4 py-2 fw-semibold d-none" id="show-less-all" style="font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); display: none !important;" onclick="showLessActivity('all')">
+                                Show Less <i class="fa-solid fa-chevron-up ms-1" style="font-size: 0.7rem;"></i>
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
 
                     <!-- Incomes List -->
                     <div class="flex-column gap-3" id="activity-income-list" style="display: none !important;">
                         {% for tx in recent_incomes %}
-                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 txn-activity-item" 
+                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 txn-activity-item {% if forloop.counter > 5 %}d-none{% endif %}" 
                              data-type="{{ tx.type|lower }}"
-                             style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                             style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); {% if forloop.counter > 5 %}display: none !important;{% endif %}">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="feature-icon mb-0 color-1" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
                                     <i class="fa-solid fa-arrow-trend-up"></i>
@@ -767,14 +637,24 @@
                             <p class="text-muted-custom mb-0 small">Use the Quick Action buttons to log your first income.</p>
                         </div>
                         {% endfor %}
+                        {% if recent_incomes|length > 5 %}
+                        <div class="d-flex justify-content-center gap-2 mt-2" id="action-buttons-income-container">
+                            <button type="button" class="btn btn-outline-custom btn-sm rounded-pill px-4 py-2 fw-semibold" id="load-more-income" style="font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);" onclick="loadMoreActivity('income')">
+                                Load More <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.7rem;"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-custom btn-sm rounded-pill px-4 py-2 fw-semibold d-none" id="show-less-income" style="font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); display: none !important;" onclick="showLessActivity('income')">
+                                Show Less <i class="fa-solid fa-chevron-up ms-1" style="font-size: 0.7rem;"></i>
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
 
                     <!-- Expenses List -->
                     <div class="flex-column gap-3" id="activity-expense-list" style="display: none !important;">
                         {% for tx in recent_expenses %}
-                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 txn-activity-item" 
+                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 txn-activity-item {% if forloop.counter > 5 %}d-none{% endif %}" 
                              data-type="{{ tx.type|lower }}"
-                             style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                             style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); {% if forloop.counter > 5 %}display: none !important;{% endif %}">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="feature-icon mb-0 color-3" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1rem;">
                                     <i class="fa-solid fa-arrow-trend-down"></i>
@@ -804,6 +684,16 @@
                             <p class="text-muted-custom mb-0 small">Use the Quick Action buttons to log your first expense.</p>
                         </div>
                         {% endfor %}
+                        {% if recent_expenses|length > 5 %}
+                        <div class="d-flex justify-content-center gap-2 mt-2" id="action-buttons-expense-container">
+                            <button type="button" class="btn btn-outline-custom btn-sm rounded-pill px-4 py-2 fw-semibold" id="load-more-expense" style="font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);" onclick="loadMoreActivity('expense')">
+                                Load More <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.7rem;"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-custom btn-sm rounded-pill px-4 py-2 fw-semibold d-none" id="show-less-expense" style="font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); display: none !important;" onclick="showLessActivity('expense')">
+                                Show Less <i class="fa-solid fa-chevron-up ms-1" style="font-size: 0.7rem;"></i>
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -814,6 +704,80 @@
 
 {% block extra_js %}
 <script>
+/* ── Load More Activity client-side ── */
+function loadMoreActivity(type) {
+  const list = document.getElementById(`activity-${type}-list`);
+  if (!list) return;
+  
+  // Find all hidden txn-activity-item elements inside this list
+  const hiddenItems = Array.from(list.querySelectorAll('.txn-activity-item.d-none'));
+  
+  // Show the next 5 items
+  const itemsToShow = hiddenItems.slice(0, 5);
+  itemsToShow.forEach(item => {
+    item.classList.remove('d-none');
+    item.style.setProperty('display', 'flex', 'important');
+  });
+  
+  // Update button visibilities
+  updateActivityButtons(type);
+}
+
+/* ── Show Less Activity client-side ── */
+function showLessActivity(type) {
+  const list = document.getElementById(`activity-${type}-list`);
+  if (!list) return;
+  
+  // Find all visible items
+  const visibleItems = Array.from(list.querySelectorAll('.txn-activity-item:not(.d-none)'));
+  
+  // We want to keep at least 5 items, and hide the last 5 items of the visible ones
+  if (visibleItems.length > 5) {
+    const itemsToHide = visibleItems.slice(Math.max(5, visibleItems.length - 5));
+    itemsToHide.forEach(item => {
+      item.classList.add('d-none');
+      item.style.setProperty('display', 'none', 'important');
+    });
+  }
+  
+  // Update button visibilities
+  updateActivityButtons(type);
+}
+
+
+/* ── Toggle Load More / Show Less buttons ── */
+function updateActivityButtons(type) {
+  const list = document.getElementById(`activity-${type}-list`);
+  if (!list) return;
+  
+  const totalItems = list.querySelectorAll('.txn-activity-item').length;
+  const hiddenItems = list.querySelectorAll('.txn-activity-item.d-none').length;
+  const visibleItems = totalItems - hiddenItems;
+  
+  const loadMoreBtn = document.getElementById(`load-more-${type}`);
+  const showLessBtn = document.getElementById(`show-less-${type}`);
+  
+  if (loadMoreBtn) {
+    if (hiddenItems > 0) {
+      loadMoreBtn.classList.remove('d-none');
+      loadMoreBtn.style.setProperty('display', 'inline-block', 'important');
+    } else {
+      loadMoreBtn.classList.add('d-none');
+      loadMoreBtn.style.setProperty('display', 'none', 'important');
+    }
+  }
+  
+  if (showLessBtn) {
+    if (visibleItems > 5) {
+      showLessBtn.classList.remove('d-none');
+      showLessBtn.style.setProperty('display', 'inline-block', 'important');
+    } else {
+      showLessBtn.classList.add('d-none');
+      showLessBtn.style.setProperty('display', 'none', 'important');
+    }
+  }
+}
+
 /* ── Filter Recent Activity client-side ── */
 function filterActivity(type, btn) {
   // Update button active states

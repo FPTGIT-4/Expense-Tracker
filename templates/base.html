@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{% if user_dark_mode %}dark{% else %}light{% endif %}">
 
 <head>
     <meta charset="UTF-8">
@@ -68,17 +68,29 @@
         }
     </style>
     {% block extra_css %}{% endblock %}
+    <!-- Instant theme: apply before render to prevent flash of wrong theme -->
+    <script>
+        (function () {
+            var stored = localStorage.getItem('et-dark-mode');
+            var serverDark = {% if user_dark_mode %}true{% else %}false{% endif %};
+            var isDark = (stored !== null) ? (stored === 'true') : serverDark;
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        })();
+    </script>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
-    <!-- Header -->
+    {% if user.is_authenticated %}
+    <!-- Hidden form used by JS to sync theme preference to DB via fetch() -->
+    <form id="theme-sync-form" method="post" action="{% url 'theme-toggle' %}" style="display:none;">
+        {% csrf_token %}
+        <input type="hidden" name="dark_mode" value="{% if user_dark_mode %}on{% endif %}">
+    </form>
+    {% endif %}
+    {% if not user.is_authenticated %}
+    <!-- Header for Unauthenticated Users -->
     <header class="top-header bg-glass sticky-top d-flex align-items-center justify-content-between px-3 px-lg-4">
         <div class="d-flex align-items-center">
-            {% if user.is_authenticated %}
-            <button class="btn btn-link text-white p-0 me-3" id="sidebar-toggle" style="font-size: 1.3rem; text-decoration: none;" type="button">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            {% endif %}
             <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
                 <div class="brand-icon-wrapper me-2">
                     <i class="fa-solid fa-wallet text-gradient"></i>
@@ -86,92 +98,16 @@
                 <span class="brand-text">Expense<span class="text-gradient-alt">Tracker</span></span>
             </a>
         </div>
-        
         <div class="d-flex align-items-center gap-2 gap-md-3">
-            {% if user.is_authenticated %}
-                <!-- Notifications Dropdown -->
-                <div class="nav-item dropdown">
-                    <a class="nav-link position-relative d-inline-flex align-items-center p-2 text-white"
-                       href="#" id="navbarDropdownNotifications" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
-                        <i class="fa-solid fa-bell" style="font-size: 1.25rem;"></i>
-                        {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
-                        {% if total_alerts > 0 %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                              style="font-size: 0.6rem; padding: 0.25em 0.5em; min-width: 16px; line-height: 1; border: 1.5px solid rgba(15,15,35,0.8); margin-top: 5px; margin-left: -2px;">
-                            {{ total_alerts }}
-                        </span>
-                        {% endif %}
-                        {% endwith %}
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end bg-dark-custom border-glass shadow-lg py-2" aria-labelledby="navbarDropdownNotifications" style="width: 320px;">
-                        <li class="px-3 py-2 border-bottom border-glass d-flex justify-content-between align-items-center">
-                            <span class="fw-bold font-outfit text-white">Notifications</span>
-                            {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
-                            {% if total_alerts > 0 %}
-                            <span class="badge rounded-pill" style="font-size: 0.7rem; background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3);">
-                                {{ total_alerts }} New
-                            </span>
-                            {% endif %}
-                            {% endwith %}
-                        </li>
-                        <div class="notification-list" style="max-height: 280px; overflow-y: auto;">
-                            {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
-                            {% if total_alerts == 0 %}
-                            <li class="text-center py-4 text-muted-custom">
-                                <i class="fa-regular fa-bell-slash d-block mb-2 fs-4"></i>
-                                <span class="small">No new notifications</span>
-                            </li>
-                            {% else %}
-                                {% if lba_show_navbar and global_low_balance_count > 0 %}
-                                    {% for acc in global_accounts_below_minimum %}
-                                    <li>
-                                        <a class="dropdown-item px-3 py-2.5 border-bottom border-glass d-flex align-items-start gap-2.5" href="{% url 'account-list' %}" style="white-space: normal;">
-                                            <span class="text-warning mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i></span>
-                                            <div class="small text-white">
-                                                Account <strong>{{ acc.name }}</strong> is below minimum balance.
-                                                <div class="text-muted-custom mt-1" style="font-size: 0.75rem;">Shortage: {{ currency_symbol }}{{ acc.shortage }}</div>
-                                            </div>
-                                        </a>
-                                    </li>
-                                    {% endfor %}
-                                {% endif %}
-                                {% if budget_alert_count > 0 %}
-                                    {% for alert in budget_alerts %}
-                                    <li>
-                                        <a class="dropdown-item px-3 py-2.5 border-bottom border-glass d-flex align-items-start gap-2.5" href="{% url 'budget-list' %}" style="white-space: normal;">
-                                            <span class="{% if alert.type == 'exceeded' %}text-danger{% else %}text-warning{% endif %} mt-0.5">
-                                                {% if alert.type == 'exceeded' %}<i class="fa-solid fa-circle-exclamation"></i>{% else %}<i class="fa-solid fa-triangle-exclamation"></i>{% endif %}
-                                            </span>
-                                            <div class="small text-white">
-                                                {{ alert.message }}
-                                                <div class="text-muted-custom mt-1" style="font-size: 0.75rem;">Usage: {{ alert.usage_percentage|floatformat:0 }}%</div>
-                                            </div>
-                                        </a>
-                                    </li>
-                                    {% endfor %}
-                                {% endif %}
-                            {% endif %}
-                            {% endwith %}
-                        </div>
-                    </ul>
-                </div>
-
-                <!-- Settings Option -->
-                <div class="nav-item">
-                    <a href="{% url 'settings' %}" class="nav-link p-2 text-white" title="Settings">
-                        <i class="fa-solid fa-gear" style="font-size: 1.25rem;"></i>
-                    </a>
-                </div>
-            {% else %}
-                <div class="nav-item">
-                    <a class="nav-link text-white px-2" href="{% url 'login' %}"><i class="fa-solid fa-right-to-bracket me-1"></i> Login</a>
-                </div>
-                <div class="nav-item">
-                    <a class="btn btn-primary-gradient btn-sm rounded-pill px-3 py-1.5 ms-2" href="{% url 'signup' %}"><i class="fa-solid fa-user-plus me-1"></i> Sign Up</a>
-                </div>
-            {% endif %}
+            <div class="nav-item">
+                <a class="nav-link text-white px-2" href="{% url 'login' %}"><i class="fa-solid fa-right-to-bracket me-1"></i> Login</a>
+            </div>
+            <div class="nav-item">
+                <a class="btn btn-primary-gradient btn-sm rounded-pill px-3 py-1.5 ms-2" href="{% url 'signup' %}"><i class="fa-solid fa-user-plus me-1"></i> Sign Up</a>
+            </div>
         </div>
     </header>
+    {% endif %}
 
     <!-- Layout Wrapper -->
     <div class="app-layout-container">
@@ -179,9 +115,13 @@
         <!-- Sidebar Navigation -->
         <aside class="app-sidebar bg-glass" id="app-sidebar">
             <div class="sidebar-content py-4">
-                <div class="sidebar-brand-section px-4 mb-4 d-none d-lg-block">
-                    <span class="font-outfit fw-bold text-white small uppercase tracking-wider text-muted-custom">Navigation</span>
-                </div>
+                <!-- Branding logo inside sidebar top -->
+                <a class="navbar-brand d-flex align-items-center px-4 mb-4 mt-1" href="{% url 'home' %}" style="text-decoration: none;">
+                    <div class="brand-icon-wrapper me-2">
+                        <i class="fa-solid fa-wallet text-gradient"></i>
+                    </div>
+                    <span class="brand-text">Expense<span class="text-gradient-alt">Tracker</span></span>
+                </a>
                 <ul class="sidebar-nav list-unstyled mb-0 px-3">
                     <li class="sidebar-item mb-1">
                         <a href="{% url 'home' %}" class="sidebar-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
@@ -238,7 +178,143 @@
         {% endif %}
 
         <!-- Main Content Area -->
-        <main class="main-content-wrapper flex-grow-1" id="main-content">
+        <main class="main-content-wrapper flex-grow-1 {% if not user.is_authenticated %}ms-0 w-100{% endif %}" id="main-content">
+            {% if user.is_authenticated %}
+            <!-- Authenticated top header -->
+            <header class="d-flex align-items-center justify-content-between pt-2 pb-0 px-3 px-lg-4" style="background: transparent;">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-outline-custom d-lg-none p-0 rounded-circle d-flex align-items-center justify-content-center" 
+                            id="sidebar-toggle" 
+                            style="width: 38px; height: 38px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);">
+                        <i class="fa-solid fa-bars text-white" style="font-size: 1.1rem;"></i>
+                    </button>
+                    <h1 class="h3 mb-0 font-outfit fw-bold text-white">
+                        {% block page_title %}
+                            {% if request.resolver_match.url_name == 'home' %}
+                                Overview
+                            {% elif request.resolver_match.url_name in 'income-list income-create income-edit income-delete' %}
+                                Incomes
+                            {% elif request.resolver_match.url_name in 'expense-list expense-create expense-edit expense-delete' %}
+                                Expenses
+                            {% elif request.resolver_match.url_name in 'category-list category-add category-edit category-delete' %}
+                                Categories
+                            {% elif request.resolver_match.url_name in 'account-list account-add account-edit account-delete account-detail' %}
+                                Accounts
+                            {% elif request.resolver_match.url_name == 'account-transfer' %}
+                                Transfer Funds
+                            {% elif request.resolver_match.url_name in 'transfer-list transfer-detail' %}
+                                Transfer History
+                            {% elif request.resolver_match.url_name in 'budget-list budget-add budget-edit budget-delete' %}
+                                Budgets
+                            {% elif request.resolver_match.url_name == 'budget-detail' %}
+                                Budget Details
+                            {% elif request.resolver_match.url_name == 'reports-dashboard' %}
+                                Reports
+                            {% elif request.resolver_match.url_name == 'account-reports' %}
+                                Account Reports
+                            {% elif request.resolver_match.url_name in 'transaction-history transaction-history-detail' %}
+                                History
+                            {% elif request.resolver_match.url_name == 'settings' %}
+                                Settings
+                            {% elif request.resolver_match.url_name in 'profile password_change password_change_done' %}
+                                Profile
+                            {% elif request.resolver_match.url_name == 'transaction-add' %}
+                                Add Transaction
+                            {% else %}
+                                Overview
+                            {% endif %}
+                        {% endblock %}
+                    </h1>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Notifications Dropdown -->
+                    <div class="dropdown">
+                        <a class="p-0 text-white d-flex align-items-center justify-content-center" 
+                           href="#" id="navbarDropdownNotifications" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications"
+                           style="width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); text-decoration: none; position: relative;">
+                            <i class="fa-solid fa-bell text-muted-custom" style="font-size: 1.1rem;"></i>
+                            {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
+                            {% if total_alerts > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                  style="font-size: 0.6rem; padding: 0.25em 0.5em; min-width: 16px; line-height: 1; border: 1.5px solid rgba(15,15,35,0.8); margin-top: 5px; margin-left: -5px;">
+                                {{ total_alerts }}
+                            </span>
+                            {% endif %}
+                            {% endwith %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end bg-dark-custom border-glass shadow-lg py-2" aria-labelledby="navbarDropdownNotifications" style="width: 320px;">
+                            <li class="px-3 py-2 border-bottom border-glass d-flex justify-content-between align-items-center">
+                                <span class="fw-bold font-outfit text-white">Notifications</span>
+                                {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
+                                {% if total_alerts > 0 %}
+                                <span class="badge rounded-pill" style="font-size: 0.7rem; background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3);">
+                                    {{ total_alerts }} New
+                                </span>
+                                {% endif %}
+                                {% endwith %}
+                            </li>
+                            <div class="notification-list" style="max-height: 280px; overflow-y: auto;">
+                                {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
+                                {% if total_alerts == 0 %}
+                                <li class="text-center py-4 text-muted-custom">
+                                    <i class="fa-regular fa-bell-slash d-block mb-2 fs-4"></i>
+                                    <span class="small">No new notifications</span>
+                                </li>
+                                {% else %}
+                                    {% if lba_show_navbar and global_low_balance_count > 0 %}
+                                        {% for acc in global_accounts_below_minimum %}
+                                        <li>
+                                            <a class="dropdown-item px-3 py-2.5 border-bottom border-glass d-flex align-items-start gap-2.5" href="{% url 'account-list' %}" style="white-space: normal;">
+                                                <span class="text-warning mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                                                <div class="small text-white">
+                                                    Account <strong>{{ acc.name }}</strong> is below minimum balance.
+                                                    <div class="text-muted-custom mt-1" style="font-size: 0.75rem;">Shortage: {{ currency_symbol }}{{ acc.shortage }}</div>
+                                                </div>
+                                            </a>
+                                        </li>
+                                        {% endfor %}
+                                    {% endif %}
+                                    {% if budget_alert_count > 0 %}
+                                        {% for alert in budget_alerts %}
+                                        <li>
+                                            <a class="dropdown-item px-3 py-2.5 border-bottom border-glass d-flex align-items-start gap-2.5" href="{% url 'budget-list' %}" style="white-space: normal;">
+                                                <span class="{% if alert.type == 'exceeded' %}text-danger{% else %}text-warning{% endif %} mt-0.5">
+                                                    {% if alert.type == 'exceeded' %}<i class="fa-solid fa-circle-exclamation"></i>{% else %}<i class="fa-solid fa-triangle-exclamation"></i>{% endif %}
+                                                </span>
+                                                <div class="small text-white">
+                                                    {{ alert.message }}
+                                                    <div class="text-muted-custom mt-1" style="font-size: 0.75rem;">Usage: {{ alert.usage_percentage|floatformat:0 }}%</div>
+                                                </div>
+                                            </a>
+                                        </li>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endif %}
+                                {% endwith %}
+                            </div>
+                        </ul>
+                    </div>
+
+                    <!-- Dark / Light Theme Toggle -->
+                    <button id="nav-theme-toggle"
+                            title="Toggle Dark / Light Mode"
+                            class="d-flex align-items-center justify-content-center"
+                            style="width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:pointer;flex-shrink:0;transition:background 0.2s,border-color 0.2s;">
+                        <!-- Moon shown in dark mode, sun shown in light mode -->
+                        <i id="nav-theme-icon" class="bi {% if user_dark_mode %}bi-moon-stars-fill{% else %}bi-sun-fill{% endif %}"
+                           style="font-size:1.1rem;color:{% if user_dark_mode %}#a5b4fc{% else %}#fbbf24{% endif %};"></i>
+                    </button>
+
+                    <!-- Settings Option -->
+                    <a href="{% url 'settings' %}" class="text-white d-flex align-items-center justify-content-center" title="Settings"
+                       style="width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); text-decoration: none;">
+                        <i class="fa-solid fa-gear text-muted-custom" style="font-size: 1.1rem;"></i>
+                    </a>
+                </div>
+            </header>
+            {% endif %}
+
             <div class="flex-grow-1">
                 <!-- Floating Notifications Container (does not push down the page layout) -->
                 {% if messages %}
@@ -260,13 +336,6 @@
 
                 {% block content %}{% endblock %}
             </div>
-
-            <!-- Footer -->
-            <footer class="footer mt-auto py-4 border-top">
-                <div class="container text-center">
-                    <p class="mb-0 text-muted">&copy; 2026 Expense Tracker. Built with Django & Bootstrap 5.</p>
-                </div>
-            </footer>
         </main>
     </div>
 
@@ -570,6 +639,57 @@
                     }
                 });
             }
+
+            // ── Theme Toggle (nav button) ───────────────────────────────────────
+            (function () {
+                var htmlEl   = document.documentElement;
+                var toggleBtn = document.getElementById('nav-theme-toggle');
+                var icon      = document.getElementById('nav-theme-icon');
+
+                // Server-side default (from UserSettings)
+                var serverDark = {% if user_dark_mode %}true{% else %}false{% endif %};
+
+                // Prefer localStorage so the theme is remembered across pages
+                // without a server round-trip
+                var stored = localStorage.getItem('et-dark-mode');
+                var isDark = (stored !== null) ? (stored === 'true') : serverDark;
+
+                function applyTheme(dark) {
+                    isDark = dark;
+                    htmlEl.setAttribute('data-theme', dark ? 'dark' : 'light');
+                    localStorage.setItem('et-dark-mode', dark);
+                    if (icon) {
+                        icon.className = dark ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
+                        icon.style.color = dark ? '#a5b4fc' : '#fbbf24';
+                    }
+                    if (toggleBtn) {
+                        toggleBtn.style.background = dark
+                            ? 'rgba(255,255,255,0.03)'
+                            : 'rgba(99,102,241,0.10)';
+                        toggleBtn.style.borderColor = dark
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(99,102,241,0.30)';
+                    }
+                    // Persist to server via hidden form POST so DB stays in sync
+                    var form = document.getElementById('theme-sync-form');
+                    if (form) {
+                        form.querySelector('[name="dark_mode"]').value = dark ? 'on' : '';
+                        // Fire-and-forget fetch so the page doesn't reload
+                        var fd = new FormData(form);
+                        fetch(form.action, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                            .catch(function(){}); // ignore network errors silently
+                    }
+                }
+
+                // Apply correct theme immediately (before paint)
+                applyTheme(isDark);
+
+                if (toggleBtn) {
+                    toggleBtn.addEventListener('click', function () {
+                        applyTheme(!isDark);
+                    });
+                }
+            })();
         });
     </script>
     {% block extra_js %}{% endblock %}

@@ -8,7 +8,6 @@
     <!-- Page Header -->
     <div class="row align-items-center mb-5">
         <div class="col">
-            <h1 class="fw-bold font-outfit text-gradient mb-1">Preferences &amp; Settings</h1>
             <p class="text-muted-custom mb-0">Customize your app preferences, alert behaviour, and account details</p>
         </div>
     </div>
@@ -21,6 +20,88 @@
                  LEFT COLUMN
                  ════════════════════════════════════════════════════ -->
             <div class="col-lg-5 d-flex flex-column gap-4">
+
+                <!-- ── Appearance & Theme Card ──────────────────── -->
+                <div class="card-hero p-4 rounded-4 text-white" id="appearance-card">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <div style="width:32px;height:32px;border-radius:9px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);display:flex;align-items:center;justify-content:center;">
+                            <i class="bi bi-palette" style="color:#a5b4fc;font-size:0.9rem;"></i>
+                        </div>
+                        <h5 class="fw-bold font-outfit mb-0">Appearance & Theme</h5>
+                    </div>
+                    <p class="text-muted-custom small mb-4 ps-1" style="padding-left:40px !important;">Choose between dark and light interface modes</p>
+
+                    <!-- Visual theme picker -->
+                    <div class="d-flex gap-3 mb-4" id="theme-picker">
+
+                        <!-- Dark Mode option -->
+                        <label class="theme-option flex-fill" for="theme-dark" style="cursor:pointer;">
+                            <input type="radio" name="theme_pick" id="theme-dark" class="d-none" value="dark" {% if user_settings.dark_mode %}checked{% endif %}>
+                            <div class="theme-card rounded-3 p-3 text-center theme-card-dark" style="border:2px solid transparent;transition:border-color 0.2s;background:#0b0f19;">
+                                <!-- Mini dark preview -->
+                                <div class="mb-2 mx-auto rounded-2 overflow-hidden" style="width:64px;height:44px;background:#111827;border:1px solid rgba(255,255,255,0.08);">
+                                    <div style="height:10px;background:rgba(17,24,39,0.9);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;padding:0 4px;gap:2px;">
+                                        <span style="width:3px;height:3px;border-radius:50%;background:#6366f1;display:inline-block;"></span>
+                                        <span style="width:16px;height:2px;border-radius:1px;background:rgba(255,255,255,0.2);display:inline-block;"></span>
+                                    </div>
+                                    <div style="padding:4px;display:flex;gap:3px;">
+                                        <div style="width:16px;border-radius:2px;background:rgba(99,102,241,0.2);height:24px;"></div>
+                                        <div style="flex:1;">
+                                            <div style="height:5px;border-radius:2px;background:rgba(255,255,255,0.07);margin-bottom:3px;"></div>
+                                            <div style="height:4px;border-radius:2px;background:rgba(255,255,255,0.04);margin-bottom:3px;"></div>
+                                            <div style="height:4px;border-radius:2px;background:rgba(255,255,255,0.04);width:70%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="mb-0 fw-semibold" style="font-size:0.8rem;color:#e2e8f0;">Dark</p>
+                                <p class="mb-0" style="font-size:0.65rem;color:#94a3b8;">Default</p>
+                            </div>
+                        </label>
+
+                        <!-- Light Mode option -->
+                        <label class="theme-option flex-fill" for="theme-light" style="cursor:pointer;">
+                            <input type="radio" name="theme_pick" id="theme-light" class="d-none" value="light" {% if not user_settings.dark_mode %}checked{% endif %}>
+                            <div class="theme-card rounded-3 p-3 text-center theme-card-light" style="border:2px solid transparent;transition:border-color 0.2s;background:#f0f2f9;">
+                                <!-- Mini light preview -->
+                                <div class="mb-2 mx-auto rounded-2 overflow-hidden" style="width:64px;height:44px;background:#fff;border:1px solid rgba(99,102,241,0.15);">
+                                    <div style="height:10px;background:rgba(255,255,255,0.9);border-bottom:1px solid rgba(99,102,241,0.12);display:flex;align-items:center;padding:0 4px;gap:2px;">
+                                        <span style="width:3px;height:3px;border-radius:50%;background:#4f46e5;display:inline-block;"></span>
+                                        <span style="width:16px;height:2px;border-radius:1px;background:rgba(30,41,59,0.2);display:inline-block;"></span>
+                                    </div>
+                                    <div style="padding:4px;display:flex;gap:3px;">
+                                        <div style="width:16px;border-radius:2px;background:rgba(79,70,229,0.12);height:24px;"></div>
+                                        <div style="flex:1;">
+                                            <div style="height:5px;border-radius:2px;background:rgba(30,41,59,0.1);margin-bottom:3px;"></div>
+                                            <div style="height:4px;border-radius:2px;background:rgba(30,41,59,0.07);margin-bottom:3px;"></div>
+                                            <div style="height:4px;border-radius:2px;background:rgba(30,41,59,0.07);width:70%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="mb-0 fw-semibold" style="font-size:0.8rem;color:#1e293b;">Light</p>
+                                <p class="mb-0" style="font-size:0.65rem;color:#64748b;">Bright</p>
+                            </div>
+                        </label>
+
+                    </div>
+
+                    <!-- Hidden actual form field -->
+                    <div style="display:none;">{{ settings_form.dark_mode }}</div>
+
+                    <!-- Toggle row -->
+                    <div class="d-flex align-items-center justify-content-between px-3 py-2 rounded-3" style="background:rgba(99,102,241,0.06);border:1.5px solid rgba(99,102,241,0.18);">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-moon-stars-fill" style="color:#a5b4fc;font-size:0.9rem;"></i>
+                            <div>
+                                <p class="fw-semibold text-white mb-0" style="font-size:0.85rem;">Dark Mode</p>
+                                <p class="text-muted-custom mb-0" style="font-size:0.68rem;">Enable dark interface theme</p>
+                            </div>
+                        </div>
+                        <div style="transform:scale(1.2);flex-shrink:0;margin-left:1rem;">
+                            <input type="checkbox" class="form-check-input" role="switch" id="dark-mode-quick-toggle"
+                                {% if user_settings.dark_mode %}checked{% endif %}>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- ── General Preferences Card ─────────────────── -->
                 <div class="card-hero p-4 rounded-4 text-white">
@@ -331,11 +412,25 @@
     pointer-events: none;
 }
 .cursor-pointer { cursor: pointer; }
+
+/* ── Theme Picker Cards ── */
+.theme-card {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+.theme-card:hover {
+    transform: translateY(-2px);
+}
+.theme-option input[type="radio"]:checked + .theme-card {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+}
+.theme-card-dark { color: #e2e8f0; }
+.theme-card-light { color: #1e293b; }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Low Balance Alert toggle
+    // ── Low Balance Alert toggle ───────────────────────────────────────────
     var masterToggle = document.getElementById('id_low_balance_alerts');
     var subSection   = document.getElementById('lba-display-options');
 
@@ -352,7 +447,7 @@ document.addEventListener('DOMContentLoaded', function () {
         masterToggle.addEventListener('change', syncState);
     }
 
-    // Budget Alert toggle
+    // ── Budget Alert toggle ────────────────────────────────────────────────
     var budgetToggle = document.getElementById('id_enable_budget_alerts');
     var budgetSection   = document.getElementById('budget-display-options');
 
@@ -367,6 +462,40 @@ document.addEventListener('DOMContentLoaded', function () {
     if (budgetToggle) {
         syncBudgetState();
         budgetToggle.addEventListener('change', syncBudgetState);
+    }
+
+    // ── Dark Mode theme picker ─────────────────────────────────────────────
+    var hiddenCheckbox   = document.getElementById('id_dark_mode');
+    var quickToggle      = document.getElementById('dark-mode-quick-toggle');
+    var radioDark        = document.getElementById('theme-dark');
+    var radioLight       = document.getElementById('theme-light');
+    var htmlEl           = document.documentElement;
+
+    function applyTheme(isDark) {
+        htmlEl.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        if (hiddenCheckbox)   hiddenCheckbox.checked   = isDark;
+        if (quickToggle)      quickToggle.checked       = isDark;
+        if (radioDark)        radioDark.checked         = isDark;
+        if (radioLight)       radioLight.checked        = !isDark;
+        // Update moon / sun icon on quick toggle row
+        var moonIcon = document.querySelector('#appearance-card .bi-moon-stars-fill, #appearance-card .bi-sun-fill');
+        if (moonIcon) {
+            moonIcon.className = isDark ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
+            moonIcon.style.color = isDark ? '#a5b4fc' : '#fbbf24';
+        }
+    }
+
+    // Radio card change
+    if (radioDark) {
+        radioDark.addEventListener('change', function () { if (this.checked) applyTheme(true); });
+    }
+    if (radioLight) {
+        radioLight.addEventListener('change', function () { if (this.checked) applyTheme(false); });
+    }
+
+    // Quick toggle change
+    if (quickToggle) {
+        quickToggle.addEventListener('change', function () { applyTheme(this.checked); });
     }
 });
 </script>

@@ -113,9 +113,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'year': get_period_stats(start_of_year)
         }
 
-        # Recent transactions (fetch up to 4 for each type, sorted)
-        db_incomes = Income.objects.filter(user=user).order_by('-date', '-created_at')[:4]
-        db_expenses = Expense.objects.filter(user=user).select_related('category').order_by('-date', '-created_at')[:4]
+        # Recent transactions (fetch up to 20 for each type, sorted)
+        db_incomes = Income.objects.filter(user=user).order_by('-date', '-created_at')[:20]
+        db_expenses = Expense.objects.filter(user=user).select_related('category').order_by('-date', '-created_at')[:20]
 
         recent_incomes = []
         for inc in db_incomes:
@@ -142,7 +142,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Combined transactions
         all_transactions = recent_incomes + recent_expenses
         all_transactions.sort(key=lambda x: (x['date'], x['created_at']), reverse=True)
-        recent_transactions = all_transactions[:4]
+        recent_transactions = all_transactions[:20]
 
         # Context variables
         context.update({

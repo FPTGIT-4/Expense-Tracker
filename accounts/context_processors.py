@@ -42,6 +42,8 @@ def user_settings(request):
             'lba_show_navbar':   settings.low_balance_alerts and settings.low_balance_show_navbar_badge,
             'lba_show_banner':   settings.low_balance_alerts and settings.low_balance_show_dashboard_banner,
             'lba_show_panel':    settings.low_balance_alerts and settings.low_balance_show_dashboard_panel,
+            # Appearance
+            'user_dark_mode': settings.dark_mode,
         }
     return {
         'currency_symbol': '₹',
@@ -54,6 +56,7 @@ def user_settings(request):
         'lba_show_navbar': False,
         'lba_show_banner': False,
         'lba_show_panel':  False,
+        'user_dark_mode':  True,
     }
 
 

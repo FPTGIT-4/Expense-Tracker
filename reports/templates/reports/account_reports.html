@@ -8,14 +8,13 @@
     <!-- Page Header -->
     <div class="row align-items-center mb-4">
         <div class="col-md-7">
-            <div class="d-flex align-items-center gap-3 mb-1">
+            <div class="d-flex align-items-center gap-3 mb-2">
                 <a href="{% url 'reports-dashboard' %}" class="text-decoration-none text-muted-custom small hover-white">
                     <i class="fa-solid fa-chart-pie me-1"></i> Reports
                 </a>
                 <i class="fa-solid fa-chevron-right text-muted-custom" style="font-size: 0.65rem;"></i>
                 <span class="text-white small fw-semibold">Account Reports</span>
             </div>
-            <h1 class="fw-bold font-outfit text-gradient mb-1">Account Reports</h1>
             <p class="text-muted-custom mb-0">Income &amp; expense breakdown per financial account</p>
         </div>
         <div class="col-md-5 text-md-end mt-2 mt-md-0">
@@ -76,10 +75,7 @@
         </div>
     </div>
 
-    <!-- Overall Summary Cards -->
-    <h5 class="fw-bold font-outfit text-white mb-3">
-        <i class="fa-solid fa-chart-line me-2 text-gradient"></i>Overall Summary
-    </h5>
+
     <div class="row g-4 mb-5">
         <!-- Total Income -->
         <div class="col-md-4">
@@ -131,11 +127,7 @@
         </div>
     </div>
 
-    <!-- Per Account Summary -->
-    <h5 class="fw-bold font-outfit text-white mb-3">
-        <i class="fa-solid fa-building-columns me-2 text-gradient"></i>Per Account Summary
-        <span class="badge bg-glass border border-glass text-muted-custom ms-2 rounded-pill fw-medium" style="font-size: 0.75rem; padding: 0.3em 0.8em; vertical-align: middle;">{{ total_accounts }}</span>
-    </h5>
+
 
     {% if account_summary %}
     <!-- Desktop Table -->
@@ -170,7 +162,7 @@
                                 {% endif %}
                                 {% if row.account.is_below_minimum %}
                                 <span class="badge rounded-pill ms-1" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.65rem; padding: 0.2em 0.55em;">
-                                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 0.6rem;"></i> Low Balance Alert - Threshold {{ currency_symbol }}{{ row.account.minimum_balance|floatformat:0 }}
+                                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 0.6rem;"></i> Low Balance Alert - Threshold {{ currency_symbol }}{{ row.account.effective_minimum_balance|floatformat:0 }}
                                 </span>
                                 {% endif %}
                             </div>
@@ -231,7 +223,7 @@
                         <span class="badge bg-glass border border-glass text-muted-custom rounded-pill" style="font-size: 0.65rem;">{{ row.account.account_type }}</span>
                         {% if row.account.is_below_minimum %}
                         <span class="badge rounded-pill" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.65rem; padding: 0.25em 0.6em;">
-                            <i class="fa-solid fa-triangle-exclamation" style="font-size: 0.6rem;"></i> Low Balance Alert - Threshold {{ currency_symbol }}{{ row.account.minimum_balance|floatformat:0 }}
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size: 0.6rem;"></i> Low Balance Alert - Threshold {{ currency_symbol }}{{ row.account.effective_minimum_balance|floatformat:0 }}
                         </span>
                         {% endif %}
                     </div>

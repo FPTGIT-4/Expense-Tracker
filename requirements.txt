@@ -2,3 +2,5 @@ django>=6.0,<7.0
 asgiref
 sqlparse
 tzdata
+djangorestframework
+django-filter

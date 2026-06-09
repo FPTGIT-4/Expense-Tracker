@@ -70,8 +70,19 @@ class Account(models.Model):
         return mapping.get(self.account_type, 'color-2')
 
     @property
+    def effective_minimum_balance(self):
+        """Returns the actual threshold balance being used for alerts (either own minimum_balance or fallback default)."""
+        threshold = self.minimum_balance
+        if not threshold or threshold <= 0:
+            try:
+                threshold = self.user.settings.low_balance_default_minimum
+            except Exception:
+                threshold = Decimal('0.00')
+        return threshold
+
+    @property
     def is_below_minimum(self):
-        """Returns True if current balance is below the minimum balance threshold and alerts are enabled."""
+        """Returns True if current balance is at or below the minimum balance threshold and alerts are enabled."""
         if self.status == 'CLOSED':
             return False
 
@@ -79,28 +90,32 @@ class Account(models.Model):
             show_alerts = self.user.settings.low_balance_alerts
         except Exception:
             show_alerts = True
-            
+
         if not show_alerts:
             return False
-            
-        if self.minimum_balance is not None and self.minimum_balance > 0:
-            return self.current_balance <= self.minimum_balance
+
+        threshold = self.effective_minimum_balance
+        if threshold and threshold > 0:
+            return self.current_balance <= threshold
         return False
 
     @property
     def shortage(self):
-        """Returns the shortage amount if the balance is below the minimum."""
-        if self.minimum_balance and self.minimum_balance > 0 and self.current_balance <= self.minimum_balance:
-            return self.minimum_balance - self.current_balance
+        """Returns the shortage amount if the balance is at or below the minimum."""
+        threshold = self.effective_minimum_balance
+        if threshold and threshold > 0 and self.current_balance <= threshold:
+            return threshold - self.current_balance
         return Decimal('0.00')
 
     @property
     def coverage_percentage(self):
         """Returns the current balance as a percentage of the minimum balance."""
-        if self.minimum_balance and self.minimum_balance > 0:
-            pct = (self.current_balance / self.minimum_balance) * 100
+        threshold = self.effective_minimum_balance
+        if threshold and threshold > 0:
+            pct = (self.current_balance / threshold) * 100
             return max(0.0, float(pct))
         return 100.0
+
 
     def clean(self):
         super().clean()
@@ -205,6 +220,12 @@ class UserSettings(models.Model):
         max_digits=12, decimal_places=2,
         default=Decimal('0.00'), blank=True,
         help_text='Default minimum balance applied when creating new accounts (0 = disabled).'
+    )
+
+    # ── Appearance ─────────────────────────────────────────────────────────────
+    dark_mode = models.BooleanField(
+        default=True,
+        help_text='Use the dark theme (default). Uncheck for light mode.'
     )
 
     def __str__(self):

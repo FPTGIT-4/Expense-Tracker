@@ -135,6 +135,36 @@ class UserSettingsViewTests(TestCase):
         self.assertFalse(account.is_below_minimum)
 
 
+    def test_settings_low_balance_fallback_minimum(self):
+        from accounts.models import UserSettings, Account
+        from decimal import Decimal
+        
+        self.client.force_login(self.user)
+        settings, _ = UserSettings.objects.get_or_create(user=self.user)
+        
+        settings.low_balance_default_minimum = Decimal('1000.00')
+        settings.save()
+        
+        account = Account.objects.create(
+            user=self.user,
+            name='Fallback Account',
+            account_type='Cash',
+            initial_balance=Decimal('950.00'),
+            minimum_balance=Decimal('0.00')
+        )
+        
+        self.assertTrue(account.is_below_minimum)
+        self.assertEqual(account.shortage, Decimal('50.00'))
+        self.assertEqual(account.coverage_percentage, 95.0)
+        
+        account.initial_balance = Decimal('1050.00')
+        account.save()
+        account.refresh_from_db()
+        self.assertFalse(account.is_below_minimum)
+        self.assertEqual(account.shortage, Decimal('0.00'))
+        self.assertEqual(account.coverage_percentage, 105.0)
+
+
 
 from accounts.models import Account
 

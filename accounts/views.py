@@ -7,6 +7,8 @@ from django.contrib.auth.models import User
 from django.views.generic import CreateView, TemplateView, UpdateView, ListView, DeleteView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django import forms
+from django.http import JsonResponse
+from django.views import View
 from .models import Account, AccountTransfer, UserSettings
 from .forms import AccountForm, TransferForm, UserSettingsForm
 
@@ -103,6 +105,16 @@ class SettingsView(LoginRequiredMixin, TemplateView):
             'settings_form': settings_form,
         })
 
+
+# ── Theme Toggle (AJAX) ────────────────────────────────────────────────────────
+class ThemeToggleView(LoginRequiredMixin, View):
+    """Lightweight endpoint that saves dark_mode pref from the nav toggle."""
+    def post(self, request, *args, **kwargs):
+        settings, _ = UserSettings.objects.get_or_create(user=request.user)
+        # 'dark_mode' field value is 'on' (checkbox) or '' (off)
+        settings.dark_mode = (request.POST.get('dark_mode') == 'on')
+        settings.save(update_fields=['dark_mode'])
+        return JsonResponse({'ok': True, 'dark_mode': settings.dark_mode})
 
 
 # ── Financial Account Management CRUD ─────────────────────────────────────────
