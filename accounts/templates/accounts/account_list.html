@@ -56,7 +56,7 @@
                     </div>
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Balance</p>
-                        <h3 class="fw-bold mb-0 font-outfit text-gradient">&#8377;{{ total_balance|floatformat:2 }}</h3>
+                        <h3 class="fw-bold mb-0 font-outfit text-gradient">{{ currency_symbol }}{{ total_balance|floatformat:2 }}</h3>
                     </div>
                 </div>
             </div>
@@ -101,35 +101,70 @@
 
                     <!-- Name -->
                     <h4 class="fw-bold font-outfit mb-1 text-white">{{ acc.name }}</h4>
-                    <p class="text-muted-custom small mb-4">Initial: &#8377;{{ acc.initial_balance|floatformat:2 }}</p>
+                    <p class="text-muted-custom small mb-4">Initial: {{ currency_symbol }}{{ acc.initial_balance|floatformat:2 }}</p>
 
                     <!-- Balance -->
                     <div class="mb-4">
                         <span class="text-muted-custom small uppercase fw-semibold d-block mb-1" style="font-size: 0.72rem; letter-spacing: 0.05em;">Current Balance</span>
                         <h2 class="fw-bold font-outfit mb-0 {% if acc.current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.8rem;">
-                            &#8377;{{ acc.current_balance|floatformat:2 }}
+                            {{ currency_symbol }}{{ acc.current_balance|floatformat:2 }}
                         </h2>
                         {% if acc.is_below_minimum %}
                         <div class="d-flex align-items-center gap-1.5 mt-2">
                             <span class="badge rounded-pill fw-semibold" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.68rem; padding: 0.3em 0.65em; letter-spacing: 0.03em;">
-                                <i class="fa-solid fa-triangle-exclamation me-1" style="font-size: 0.65rem;"></i>Below Min &#8377;{{ acc.minimum_balance|floatformat:0 }}
+                                <i class="fa-solid fa-triangle-exclamation me-1" style="font-size: 0.65rem;"></i>Low Balance Alert - Threshold {{ currency_symbol }}{{ acc.minimum_balance|floatformat:0 }}
                             </span>
                         </div>
                         {% elif acc.minimum_balance and acc.minimum_balance > 0 %}
-                        <p class="text-muted-custom mb-0 mt-1" style="font-size: 0.72rem;">Min: &#8377;{{ acc.minimum_balance|floatformat:2 }}</p>
+                        <p class="text-muted-custom mb-0 mt-1" style="font-size: 0.72rem;">Alert Threshold: {{ currency_symbol }}{{ acc.minimum_balance|floatformat:2 }}</p>
                         {% endif %}
                     </div>
                 </a>
 
                 <div>
+                    <!-- Contextual Quick Actions -->
+                    <div class="d-flex gap-1.5 mb-3 flex-wrap">
+                        <button type="button" class="btn btn-sm rounded-pill px-2.5 py-1 fw-semibold text-success d-inline-flex align-items-center gap-1"
+                                style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.78rem;"
+                                onmouseenter="this.style.background='rgba(16, 185, 129, 0.15)'"
+                                onmouseleave="this.style.background='rgba(16, 185, 129, 0.08)'"
+                                data-bs-toggle="modal" data-bs-target="#globalAddIncomeModal" data-account-id="{{ acc.pk }}">
+                            <i class="bi bi-plus-circle-fill" style="font-size:0.8rem;"></i> +Income
+                        </button>
+                        <button type="button" class="btn btn-sm rounded-pill px-2.5 py-1 fw-semibold text-danger d-inline-flex align-items-center gap-1"
+                                style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); font-size: 0.78rem;"
+                                onmouseenter="this.style.background='rgba(239, 68, 68, 0.15)'"
+                                onmouseleave="this.style.background='rgba(239, 68, 68, 0.08)'"
+                                data-bs-toggle="modal" data-bs-target="#globalAddExpenseModal" data-account-id="{{ acc.pk }}">
+                            <i class="bi bi-dash-circle-fill" style="font-size:0.8rem;"></i> +Expense
+                        </button>
+                        <button type="button" class="btn btn-sm rounded-pill px-2.5 py-1 fw-semibold text-primary d-inline-flex align-items-center gap-1"
+                                style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); font-size: 0.78rem;"
+                                onmouseenter="this.style.background='rgba(59, 130, 246, 0.15)'"
+                                onmouseleave="this.style.background='rgba(59, 130, 246, 0.08)'"
+                                data-bs-toggle="modal" data-bs-target="#globalAddTransferModal" data-account-id="{{ acc.pk }}">
+                            <i class="fa-solid fa-arrow-right-arrow-left" style="font-size:0.75rem;"></i> +Transfer
+                        </button>
+                        <a href="{% url 'transaction-history' %}?account={{ acc.pk }}" class="btn btn-sm rounded-pill px-2.5 py-1 fw-semibold text-info d-inline-flex align-items-center gap-1"
+                           style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); text-decoration:none; font-size: 0.78rem;"
+                           onmouseenter="this.style.background='rgba(6, 182, 212, 0.15)'"
+                           onmouseleave="this.style.background='rgba(6, 182, 212, 0.08)'">
+                            <i class="bi bi-clock-history" style="font-size:0.8rem;"></i> History
+                        </a>
+                    </div>
                     <!-- Actions -->
-                    <div class="d-flex gap-2 justify-content-end border-top pt-3" style="border-top-color: rgba(255,255,255,0.06) !important;">
-                        <a href="{% url 'account-edit' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5">
-                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                    <div class="d-flex gap-2 justify-content-between border-top pt-2.5" style="border-top-color: rgba(255,255,255,0.06) !important;">
+                        <a href="{% url 'account-detail' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-2.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
+                            <i class="fa-solid fa-circle-info"></i> Details
                         </a>
-                        <a href="{% url 'account-delete' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 text-danger border-danger-hover">
-                            <i class="fa-solid fa-trash"></i> Delete
-                        </a>
+                        <div class="d-flex gap-1.5">
+                            <a href="{% url 'account-edit' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-2 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                            </a>
+                            <a href="{% url 'account-delete' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-2 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 text-danger border-danger-hover" style="font-size: 0.78rem;">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </a>
+                        </div>
                     </div>
                 </div>
 

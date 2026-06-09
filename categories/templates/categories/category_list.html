@@ -32,11 +32,11 @@
             <input type="hidden" name="date_filter" value="custom">
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-dark-custom border-glass text-muted-custom">From</span>
-                <input type="date" name="date_from" value="{{ start_date|date:'Y-m-d' }}" class="form-control bg-dark-custom text-white border-glass" required>
+                <input type="date" name="date_from" value="{{ start_date|date:'Y-m-d'|default:start_date }}" class="form-control bg-dark-custom text-white border-glass" required>
             </div>
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-dark-custom border-glass text-muted-custom">To</span>
-                <input type="date" name="date_to" value="{{ end_date|date:'Y-m-d' }}" class="form-control bg-dark-custom text-white border-glass" required>
+                <input type="date" name="date_to" value="{{ end_date|date:'Y-m-d'|default:end_date }}" class="form-control bg-dark-custom text-white border-glass" required>
             </div>
             <button type="submit" class="btn btn-primary-gradient btn-sm rounded-pill px-3">Apply</button>
         </form>
@@ -70,7 +70,7 @@
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold">Highest Spending</p>
                         {% if highest_category %}
-                        <h5 class="fw-bold mb-0 font-outfit text-truncate" style="max-width: 140px;" title="{{ highest_category.name }}">&#8377;{{ highest_category.total_spent|floatformat:0 }} ({{ highest_category.name }})</h5>
+                        <h5 class="fw-bold mb-0 font-outfit text-truncate" style="max-width: 140px;" title="{{ highest_category.name }}">{{ currency_symbol }}{{ highest_category.total_spent|floatformat:0 }} ({{ highest_category.name }})</h5>
                         {% else %}
                         <h5 class="fw-bold mb-0 font-outfit text-muted-custom">None</h5>
                         {% endif %}
@@ -89,7 +89,7 @@
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold">Lowest Spending</p>
                         {% if lowest_category %}
-                        <h5 class="fw-bold mb-0 font-outfit text-truncate" style="max-width: 140px;" title="{{ lowest_category.name }}">&#8377;{{ lowest_category.total_spent|floatformat:0 }} ({{ lowest_category.name }})</h5>
+                        <h5 class="fw-bold mb-0 font-outfit text-truncate" style="max-width: 140px;" title="{{ lowest_category.name }}">{{ currency_symbol }}{{ lowest_category.total_spent|floatformat:0 }} ({{ lowest_category.name }})</h5>
                         {% else %}
                         <h5 class="fw-bold mb-0 font-outfit text-muted-custom">None</h5>
                         {% endif %}
@@ -107,7 +107,7 @@
                     </div>
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Spent</p>
-                        <h3 class="fw-bold mb-0 font-outfit text-gradient-alt">&#8377;{{ total_spent|floatformat:2 }}</h3>
+                        <h3 class="fw-bold mb-0 font-outfit text-gradient-alt">{{ currency_symbol }}{{ total_spent|floatformat:2 }}</h3>
                     </div>
                 </div>
             </div>
@@ -143,12 +143,12 @@
                         <div class="col-md-4">
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <label class="form-label text-muted-custom small fw-semibold uppercase">Min Spent (&#8377;)</label>
+                                    <label class="form-label text-muted-custom small fw-semibold uppercase">Min Spent ({{ currency_symbol }})</label>
                                     <input type="number" name="spent_min" value="{{ spent_min }}" min="0" step="1"
                                         class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="0">
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label text-muted-custom small fw-semibold uppercase">Max Spent (&#8377;)</label>
+                                    <label class="form-label text-muted-custom small fw-semibold uppercase">Max Spent ({{ currency_symbol }})</label>
                                     <input type="number" name="spent_max" value="{{ spent_max }}" min="0" step="1"
                                         class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="Any">
                                 </div>
@@ -237,7 +237,8 @@
                                 <th scope="col" class="py-3">Category Name</th>
                                 <th scope="col" class="py-3">Amount Spent</th>
                                 <th scope="col" class="py-3 text-center">Tx Count</th>
-                                <th scope="col" class="py-3 text-end">% of Total</th>
+                                <th scope="col" class="py-3 text-center">% of Total</th>
+                                <th scope="col" class="py-3 text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -249,15 +250,37 @@
                                     <small class="text-muted-custom d-block" style="font-size: 0.75rem;">{{ item.description|truncatechars:100 }}</small>
                                     {% endif %}
                                 </td>
-                                <td class="py-3 fw-bold">&#8377;{{ item.total_spent|floatformat:2 }}</td>
+                                <td class="py-3 fw-bold">{{ currency_symbol }}{{ item.total_spent|floatformat:2 }}</td>
                                 <td class="py-3 text-center fw-semibold text-muted-custom">{{ item.txn_count }}</td>
-                                <td class="py-3 text-end fw-semibold">
-                                    <div class="d-flex align-items-center justify-content-end gap-2">
+                                <td class="py-3 text-center fw-semibold">
+                                    <div class="d-flex align-items-center justify-content-center gap-2">
                                         <div class="progress d-none d-sm-flex" style="width: 120px; height: 6px; background-color: rgba(255,255,255,0.08);">
                                             <div class="progress-bar bg-accent-pink" role="progressbar" style="width: {{ item.percentage|floatformat:0 }}%; background: linear-gradient(135deg, var(--accent-indigo), var(--accent-pink));" aria-valuenow="{{ item.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
                                         </div>
                                         <span>{{ item.percentage|floatformat:1 }}%</span>
                                     </div>
+                                </td>
+                                <td class="py-3 text-end">
+                                    {% if not item.is_uncategorized %}
+                                    <div class="d-flex align-items-center justify-content-end gap-2">
+                                        <a href="{% url 'category-edit' item.id %}"
+                                           class="btn btn-sm rounded-pill px-3 py-1 fw-semibold"
+                                           style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#a5b4fc;font-size:0.75rem;transition:all 0.2s;"
+                                           title="Edit">
+                                            <i class="fa-solid fa-pen-to-square me-1"></i>Edit
+                                        </a>
+                                        <button type="button"
+                                                class="btn btn-sm rounded-pill px-3 py-1 fw-semibold"
+                                                style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;font-size:0.75rem;transition:all 0.2s;"
+                                                title="Delete"
+                                                onclick="confirmDelete('{% url 'category-delete' item.id %}', 'category &quot;{{ item.name }}&quot;')"
+                                        >
+                                            <i class="fa-solid fa-trash-can me-1"></i>Delete
+                                        </button>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted-custom small">-</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -281,4 +304,41 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-glass" style="background:var(--glass-bg);backdrop-filter:blur(20px);">
+      <div class="modal-header border-0 pb-0">
+        <div class="d-flex align-items-center gap-2">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-trash-can" style="color:#fca5a5;font-size:0.9rem;"></i>
+          </div>
+          <h6 class="modal-title fw-bold font-outfit text-white mb-0" id="deleteModalLabel">Confirm Delete</h6>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-3">
+        <p class="text-muted-custom mb-0" id="deleteModalBody">Are you sure you want to delete this category? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-custom rounded-pill px-4 py-1 btn-sm fw-semibold" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm rounded-pill px-4 py-1 fw-semibold"
+                  style="background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;">
+            <i class="fa-solid fa-trash-can me-1"></i>Yes, Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function confirmDelete(url, label) {
+  document.getElementById('deleteForm').action = url;
+  document.getElementById('deleteModalBody').innerHTML =
+    'Are you sure you want to delete the <strong class="text-white">' + label + '</strong>? This action cannot be undone.';
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
 {% endblock %}

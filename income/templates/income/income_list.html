@@ -32,11 +32,11 @@
             <input type="hidden" name="date_filter" value="custom">
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-dark-custom border-glass text-muted-custom">From</span>
-                <input type="date" name="date_from" value="{{ date_from }}" class="form-control bg-dark-custom text-white border-glass" required>
+                <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d'|default:date_from }}" class="form-control bg-dark-custom text-white border-glass" required>
             </div>
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-dark-custom border-glass text-muted-custom">To</span>
-                <input type="date" name="date_to" value="{{ date_to }}" class="form-control bg-dark-custom text-white border-glass" required>
+                <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d'|default:date_to }}" class="form-control bg-dark-custom text-white border-glass" required>
             </div>
             <button type="submit" class="btn btn-primary-gradient btn-sm rounded-pill px-3">Apply</button>
         </form>
@@ -52,7 +52,7 @@
                     <div class="feature-icon mb-0 color-1 me-3"><i class="fa-solid fa-wallet"></i></div>
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Income (Range)</p>
-                        <h3 class="fw-bold mb-0 font-outfit text-gradient">&#8377;{{ total_income|floatformat:2 }}</h3>
+                        <h3 class="fw-bold mb-0 font-outfit text-gradient">{{ currency_symbol }}{{ total_income|floatformat:2 }}</h3>
                     </div>
                 </div>
             </div>
@@ -79,7 +79,7 @@
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold">Largest Source</p>
                         {% if largest_source %}
-                        <h4 class="fw-bold mb-0 font-outfit text-gradient-alt text-truncate" style="max-width: 180px;" title="{{ largest_source.source }}">&#8377;{{ largest_source.total|floatformat:0 }} ({{ largest_source.source }})</h4>
+                        <h4 class="fw-bold mb-0 font-outfit text-gradient-alt text-truncate" style="max-width: 180px;" title="{{ largest_source.source }}">{{ currency_symbol }}{{ largest_source.total|floatformat:0 }} ({{ largest_source.source }})</h4>
                         {% else %}
                         <h4 class="fw-bold mb-0 font-outfit text-muted-custom">None</h4>
                         {% endif %}
@@ -127,12 +127,12 @@
 
                         <!-- Amount range -->
                         <div class="col-md-6">
-                            <label class="form-label text-muted-custom small fw-semibold uppercase">Min Amount (&#8377;)</label>
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Min Amount ({{ currency_symbol }})</label>
                             <input type="number" name="amount_min" value="{{ amount_min }}" min="0" step="1"
                                 class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="0">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label text-muted-custom small fw-semibold uppercase">Max Amount (&#8377;)</label>
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Max Amount ({{ currency_symbol }})</label>
                             <input type="number" name="amount_max" value="{{ amount_max }}" min="0" step="1"
                                 class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="Any">
                         </div>
@@ -230,7 +230,7 @@
                                         {{ income.source }}
                                     </span>
                                 </td>
-                                <td class="py-3 fw-bold text-gradient">&#8377;{{ income.amount|floatformat:2 }}</td>
+                                <td class="py-3 fw-bold text-gradient">{{ currency_symbol }}{{ income.amount|floatformat:2 }}</td>
                                 <td class="py-3 text-muted-custom small">{{ income.description|default:"-"|truncatechars:40 }}</td>
                                 <td class="py-3 text-end">
                                     <div class="d-flex align-items-center justify-content-end gap-2">
@@ -244,7 +244,7 @@
                                                 class="btn btn-sm rounded-pill px-3 py-1 fw-semibold"
                                                 style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;font-size:0.75rem;transition:all 0.2s;"
                                                 title="Delete"
-                                                onclick="confirmDelete('{% url 'income-delete' income.pk %}', 'income record of ₹{{ income.amount|floatformat:2 }} on {{ income.date|date:"M d, Y" }}')"
+                                                onclick="confirmDelete('{% url 'income-delete' income.pk %}', 'income record of {{ currency_symbol }}{{ income.amount|floatformat:2 }} on {{ income.date|date:"M d, Y" }}')"
                                         >
                                             <i class="fa-solid fa-trash-can me-1"></i>Delete
                                         </button>

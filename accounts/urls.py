@@ -1,6 +1,6 @@
 from django.urls import include, path
 from .views import (
-    SignUpView, ProfileView, AccountListView, AccountCreateView, 
+    SignUpView, ProfileView, SettingsView, AccountListView, AccountCreateView, 
     AccountUpdateView, AccountDeleteView, AccountDetailView, 
     AccountTransferCreateView, TransferListView, TransferDetailView
 )
@@ -8,6 +8,7 @@ from .views import (
 urlpatterns = [
     path('signup/', SignUpView.as_view(), name='signup'),
     path('profile/', ProfileView.as_view(), name='profile'),
+    path('settings/', SettingsView.as_view(), name='settings'),
     path('manage/', AccountListView.as_view(), name='account-list'),
     path('manage/add/', AccountCreateView.as_view(), name='account-add'),
     path('manage/transfer/', AccountTransferCreateView.as_view(), name='account-transfer'),

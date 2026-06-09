@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'dashboard.apps.DashboardConfig',
     'reports.apps.ReportsConfig',
     'transactions.apps.TransactionsConfig',
+    'budgets.apps.BudgetsConfig',
 ]
 
 MIDDLEWARE = [
@@ -68,6 +69,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'accounts.context_processors.user_settings',
+                'budgets.context_processors.budget_alerts_processor',
+                'accounts.context_processors.global_forms',
             ],
         },
     },

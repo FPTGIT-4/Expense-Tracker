@@ -19,7 +19,7 @@ class IncomeForm(forms.ModelForm):
             'source': forms.Select(attrs={
                 'class': 'form-select bg-dark-custom text-white border-glass',
             }),
-            'date': forms.DateInput(attrs={
+            'date': forms.DateInput(format='%Y-%m-%d', attrs={
                 'class': 'form-control bg-dark-custom text-white border-glass',
                 'type': 'date',
             }),
@@ -33,6 +33,9 @@ class IncomeForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            from django.utils import timezone
+            self.fields['date'].initial = timezone.localdate()
         if user:
             from decimal import Decimal
             if not Account.objects.filter(user=user).exists():

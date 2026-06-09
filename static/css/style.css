@@ -596,3 +596,180 @@ h6,
 .txn-row {
   animation: rowEntrance .2s ease-out;
 }
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE COLLAPSIBLE SIDEBAR LAYOUT
+   ═══════════════════════════════════════════════ */
+
+.top-header {
+    height: 70px;
+    z-index: 1050;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.app-layout-container {
+    position: relative;
+    display: flex;
+    width: 100%;
+    flex-grow: 1;
+}
+
+.app-sidebar {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    z-index: 1040;
+    border-right: 1px solid var(--glass-border);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    overflow-y: auto;
+}
+
+/* Sidebar collapsed state */
+.app-sidebar.collapsed {
+    transform: translateX(-100%);
+}
+
+.main-content-wrapper {
+    margin-left: 260px;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: calc(100% - 260px);
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 70px);
+}
+
+.app-sidebar.collapsed ~ .main-content-wrapper {
+    margin-left: 0;
+    width: 100%;
+}
+
+/* Sidebar links */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.8rem 1.25rem;
+    color: var(--text-main);
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.sidebar-link i {
+    font-size: 1.15rem;
+    width: 22px;
+    text-align: center;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+}
+
+.sidebar-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+.sidebar-link:hover i {
+    color: var(--accent-indigo);
+}
+
+.sidebar-link.active {
+    background: rgba(99, 102, 241, 0.15);
+    color: #fff;
+    font-weight: 600;
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
+}
+
+.sidebar-link.active i {
+    color: var(--accent-indigo);
+}
+
+/* Sidebar Branding Section */
+.sidebar-brand-section {
+    padding-top: 0.5rem;
+}
+
+/* Responsive Rules */
+@media (max-width: 991.98px) {
+    .app-sidebar {
+        top: 70px;
+        transform: translateX(-100%);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+    
+    .app-sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .main-content-wrapper {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .app-sidebar.collapsed ~ .main-content-wrapper {
+        margin-left: 0;
+    }
+    
+    /* Backdrop for mobile when sidebar is open */
+    .sidebar-backdrop {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(11, 15, 25, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 1030;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar-backdrop.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+/* Sidebar Logout Styles */
+.sidebar-link.text-danger:hover {
+    background: rgba(239, 68, 68, 0.08) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+    color: #fca5a5 !important;
+}
+
+.sidebar-link.text-danger i {
+    color: #fca5a5;
+    transition: color 0.2s ease;
+}
+
+.sidebar-link.text-danger:hover i {
+    color: #ef4444;
+}
+
+/* Notification Dropdown Customizations */
+.notification-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.notification-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}

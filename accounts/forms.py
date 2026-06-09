@@ -1,5 +1,6 @@
 from django import forms
-from .models import Account, AccountTransfer
+from .models import Account, AccountTransfer, UserSettings
+
 
 class AccountForm(forms.ModelForm):
     class Meta:
@@ -34,6 +35,30 @@ class AccountForm(forms.ModelForm):
             }),
         }
 
+    def clean_minimum_balance(self):
+        from decimal import Decimal
+        minimum_balance = self.cleaned_data.get('minimum_balance')
+        if minimum_balance is None:
+            return Decimal('0.00')
+        if minimum_balance < 0:
+            raise forms.ValidationError("Low balance threshold cannot be negative.")
+        return minimum_balance
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self.instance._explicit_threshold_edit = True
+        minimum_balance = cleaned_data.get('minimum_balance')
+        initial_balance = cleaned_data.get('initial_balance')
+        
+        if minimum_balance is not None and initial_balance is not None:
+            if minimum_balance > initial_balance:
+                self.add_error('minimum_balance', "Low balance threshold cannot be greater than the opening balance.")
+        return cleaned_data
+
+    def save(self, commit=True):
+        self.instance._explicit_threshold_edit = True
+        return super().save(commit=commit)
+
 class TransferForm(forms.ModelForm):
     class Meta:
         model = AccountTransfer
@@ -51,7 +76,7 @@ class TransferForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0.01',
             }),
-            'transfer_date': forms.DateInput(attrs={
+            'transfer_date': forms.DateInput(format='%Y-%m-%d', attrs={
                 'class': 'form-control bg-dark-custom text-white border-glass',
                 'type': 'date',
             }),
@@ -64,7 +89,11 @@ class TransferForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
+        self.user = user
         super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            from django.utils import timezone
+            self.fields['transfer_date'].initial = timezone.localdate()
         if user:
             self.fields['from_account'].queryset = Account.objects.filter(user=user).exclude(status='CLOSED')
             self.fields['to_account'].queryset = Account.objects.filter(user=user).exclude(status='CLOSED')
@@ -77,6 +106,69 @@ class TransferForm(forms.ModelForm):
         # Insufficient funds check
         if from_account and amount is not None and amount > 0:
             if from_account.current_balance < amount:
-                self.add_error('amount', f"Insufficient funds in {from_account.name}. Current balance: ₹{from_account.current_balance:.2f}")
+                try:
+                    currency_symbol = self.user.settings.currency if self.user else '₹'
+                except Exception:
+                    currency_symbol = '₹'
+                self.add_error('amount', f"Insufficient funds in {from_account.name}. Current balance: {currency_symbol}{from_account.current_balance:.2f}")
 
         return cleaned_data
+
+
+class UserSettingsForm(forms.ModelForm):
+    class Meta:
+        model = UserSettings
+        fields = [
+            'currency',
+            'budget_threshold',
+            'enable_budget_alerts',
+            # Low-balance alert settings
+            'low_balance_alerts',
+            'low_balance_show_navbar_badge',
+            'low_balance_show_dashboard_banner',
+            'low_balance_show_dashboard_panel',
+            'low_balance_alert_scope',
+            'low_balance_default_minimum',
+        ]
+        widgets = {
+            'currency': forms.Select(attrs={
+                'class': 'form-select bg-dark-custom text-white border-glass',
+            }),
+            'budget_threshold': forms.NumberInput(attrs={
+                'class': 'form-control bg-dark-custom text-white border-glass',
+                'min': '1',
+                'max': '100',
+                'step': '1',
+                'placeholder': '80',
+            }),
+            'enable_budget_alerts': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'role': 'switch',
+            }),
+            'low_balance_alerts': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'role': 'switch',
+            }),
+            'low_balance_show_navbar_badge': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'role': 'switch',
+            }),
+            'low_balance_show_dashboard_banner': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'role': 'switch',
+            }),
+            'low_balance_show_dashboard_panel': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'role': 'switch',
+            }),
+            'low_balance_alert_scope': forms.Select(attrs={
+                'class': 'form-select bg-dark-custom text-white border-glass',
+            }),
+            'low_balance_default_minimum': forms.NumberInput(attrs={
+                'class': 'form-control bg-dark-custom text-white border-glass',
+                'placeholder': '0.00 (0 = disabled)',
+                'step': '0.01',
+                'min': '0',
+            }),
+        }
+

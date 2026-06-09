@@ -36,7 +36,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         accounts = Account.objects.filter(user=user).order_by('name')
         total_balance = sum(acc.current_balance for acc in accounts)
         total_categories = Category.objects.filter(user=user).count()
-        accounts_below_minimum = [acc for acc in accounts if acc.is_below_minimum]
+        # accounts_below_minimum is provided by the context processor (global_accounts_below_minimum)
+        # expose it as accounts_below_minimum for template backward-compat
 
         # --- Account Intelligence ---
         active_accounts = [acc for acc in accounts if acc.status != 'CLOSED']
@@ -96,7 +97,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'income': float(inc_total),
                 'expense': float(exp_total),
                 'savings': float(inc_total - exp_total),
-                'count': inc_qs.count() + exp_qs.count()
+                'count': inc_qs.count() + exp_qs.count(),
+                'start_date': start_date.strftime('%Y-%m-%d'),
+                'end_date': today.strftime('%Y-%m-%d')
             }
 
         start_of_week = today - timedelta(days=today.weekday())
@@ -160,7 +163,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'recent_expenses': recent_expenses,
             'source_choices': Income.SOURCE_CHOICES,
             'categories': Category.objects.filter(user=user).order_by('name'),
-            'accounts_below_minimum': accounts_below_minimum,
+            # accounts_below_minimum provided by context processor as global_accounts_below_minimum
             # Account Intelligence
             'highest_balance_account': highest_balance_account,
             'lowest_balance_account':  lowest_balance_account,

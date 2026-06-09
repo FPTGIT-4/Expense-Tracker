@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings | Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Page Header -->
+    <div class="row align-items-center mb-5">
+        <div class="col">
+            <h1 class="fw-bold font-outfit text-gradient mb-1">Preferences &amp; Settings</h1>
+            <p class="text-muted-custom mb-0">Customize your app preferences, alert behaviour, and account details</p>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'settings' %}" novalidate>
+        {% csrf_token %}
+        <div class="row g-4">
+
+            <!-- ════════════════════════════════════════════════════
+                 LEFT COLUMN
+                 ════════════════════════════════════════════════════ -->
+            <div class="col-lg-5 d-flex flex-column gap-4">
+
+                <!-- ── General Preferences Card ─────────────────── -->
+                <div class="card-hero p-4 rounded-4 text-white">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <div style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;">
+                            <i class="bi bi-sliders" style="color:#a5b4fc;font-size:0.9rem;"></i>
+                        </div>
+                        <h5 class="fw-bold font-outfit mb-0">General Preferences</h5>
+                    </div>
+                    <p class="text-muted-custom small mb-4 ps-1" style="padding-left:40px !important;">App-wide currency settings and display preferences</p>
+
+                    <!-- Currency -->
+                    <div class="mb-2">
+                        <label class="form-label text-muted-custom small fw-semibold uppercase d-flex align-items-center gap-1">
+                            <i class="fa-solid fa-coins me-1" style="color:#fbbf24;font-size:0.75rem;"></i> Primary Currency
+                        </label>
+                        {{ settings_form.currency }}
+                        {% if settings_form.currency.errors %}
+                        <div class="text-danger small mt-1">{{ settings_form.currency.errors|join:", " }}</div>
+                        {% endif %}
+                        <div class="form-text text-muted-custom small mt-1">Shown globally across dashboards, lists, and reports.</div>
+                    </div>
+                </div>
+
+                <!-- ── Budget Alert Settings Card ──────────────── -->
+                <div class="card-hero p-4 rounded-4 text-white">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <div style="width:32px;height:32px;border-radius:9px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);display:flex;align-items:center;justify-content:center;">
+                            <i class="bi bi-piggy-bank" style="color:#a5b4fc;font-size:0.9rem;"></i>
+                        </div>
+                        <h5 class="fw-bold font-outfit mb-0">Budget Alert Settings</h5>
+                    </div>
+                    <p class="text-muted-custom small mb-4" style="padding-left:40px !important;">Configure spending threshold warnings for your category budgets</p>
+
+                    <!-- Master toggle -->
+                    <div class="mb-4 p-3 rounded-3" style="background:rgba(99,102,241,0.06);border:1.5px solid rgba(99,102,241,0.25);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="fw-bold text-white mb-0" style="font-size:0.9rem;">
+                                    <i class="fa-solid fa-bell me-2" style="color:#a5b4fc;"></i>Enable Budget Alerts
+                                </p>
+                                <p class="text-muted-custom mb-0 mt-1" style="font-size:0.72rem;">Master switch — turns all category budget alerts on or off.</p>
+                            </div>
+                            <div style="transform:scale(1.25);flex-shrink:0;margin-left:1rem;">
+                                {{ settings_form.enable_budget_alerts }}
+                            </div>
+                        </div>
+                        {% if settings_form.enable_budget_alerts.errors %}
+                        <div class="text-danger small mt-2">{{ settings_form.enable_budget_alerts.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div id="budget-display-options">
+                        <!-- Budget Alert Threshold -->
+                        <div class="mb-2">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase d-flex align-items-center gap-1">
+                                <i class="fa-solid fa-sliders me-1" style="color:#a5b4fc;font-size:0.75rem;"></i>
+                                Budget Alert Threshold (%)
+                            </label>
+                            {{ settings_form.budget_threshold }}
+                            {% if settings_form.budget_threshold.errors %}
+                            <div class="text-danger small mt-1">{{ settings_form.budget_threshold.errors|join:", " }}</div>
+                            {% endif %}
+                            <div class="form-text text-muted-custom small mt-1">
+                                Notify when any budget reaches this % of usage. (1–100)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Low Balance Alert Settings Card ───────────── -->
+                <div class="card-hero p-4 rounded-4 text-white">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <div style="width:32px;height:32px;border-radius:9px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.35);display:flex;align-items:center;justify-content:center;">
+                            <i class="fa-solid fa-triangle-exclamation" style="color:#fbbf24;font-size:0.9rem;"></i>
+                        </div>
+                        <h5 class="fw-bold font-outfit mb-0">Low Balance Alert Settings</h5>
+                    </div>
+                    <p class="text-muted-custom small mb-4" style="padding-left:40px !important;">Control where and how low-balance notifications appear</p>
+
+                    <!-- Master toggle -->
+                    <div class="mb-4 p-3 rounded-3" style="background:rgba(245,158,11,0.06);border:1.5px solid rgba(245,158,11,0.25);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="fw-bold text-white mb-0" style="font-size:0.9rem;">
+                                    <i class="fa-solid fa-bell me-2" style="color:#fbbf24;"></i>Enable Low Balance Alerts
+                                </p>
+                                <p class="text-muted-custom mb-0 mt-1" style="font-size:0.72rem;">Master switch — turns all low-balance notifications on or off.</p>
+                            </div>
+                            <div style="transform:scale(1.25);flex-shrink:0;margin-left:1rem;">
+                                {{ settings_form.low_balance_alerts }}
+                            </div>
+                        </div>
+                        {% if settings_form.low_balance_alerts.errors %}
+                        <div class="text-danger small mt-2">{{ settings_form.low_balance_alerts.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Appearance sub-options -->
+                    <p class="text-muted-custom small fw-semibold uppercase mb-2" style="font-size:0.68rem;letter-spacing:0.06em;">
+                        <i class="fa-solid fa-eye me-1"></i>Where to Show Alerts
+                    </p>
+
+                    <div class="d-flex flex-column gap-2 mb-4" id="lba-display-options">
+
+                        <!-- Navbar badge -->
+                        <div class="d-flex align-items-center justify-content-between px-3 py-2 rounded-3" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-bell-slash" style="color:#94a3b8;width:16px;text-align:center;"></i>
+                                <div>
+                                    <p class="fw-semibold text-white mb-0" style="font-size:0.82rem;">Navbar Badge</p>
+                                    <p class="text-muted-custom mb-0" style="font-size:0.68rem;">Show alert count icon in the top navigation bar.</p>
+                                </div>
+                            </div>
+                            <div style="transform:scale(1.1);flex-shrink:0;margin-left:0.75rem;">
+                                {{ settings_form.low_balance_show_navbar_badge }}
+                            </div>
+                        </div>
+                        {% if settings_form.low_balance_show_navbar_badge.errors %}
+                        <div class="text-danger small">{{ settings_form.low_balance_show_navbar_badge.errors|join:", " }}</div>
+                        {% endif %}
+
+                        <!-- Dashboard top banner -->
+                        <div class="d-flex align-items-center justify-content-between px-3 py-2 rounded-3" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-rectangle-ad" style="color:#94a3b8;width:16px;text-align:center;"></i>
+                                <div>
+                                    <p class="fw-semibold text-white mb-0" style="font-size:0.82rem;">Dashboard Alert Banner</p>
+                                    <p class="text-muted-custom mb-0" style="font-size:0.68rem;">Show detailed alert cards at the top of the dashboard.</p>
+                                </div>
+                            </div>
+                            <div style="transform:scale(1.1);flex-shrink:0;margin-left:0.75rem;">
+                                {{ settings_form.low_balance_show_dashboard_banner }}
+                            </div>
+                        </div>
+                        {% if settings_form.low_balance_show_dashboard_banner.errors %}
+                        <div class="text-danger small">{{ settings_form.low_balance_show_dashboard_banner.errors|join:", " }}</div>
+                        {% endif %}
+
+                        <!-- Dashboard side panel -->
+                        <div class="d-flex align-items-center justify-content-between px-3 py-2 rounded-3" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-table-columns" style="color:#94a3b8;width:16px;text-align:center;"></i>
+                                <div>
+                                    <p class="fw-semibold text-white mb-0" style="font-size:0.82rem;">Dashboard Side Panel</p>
+                                    <p class="text-muted-custom mb-0" style="font-size:0.68rem;">Show the Low Balance panel in Account Intelligence section.</p>
+                                </div>
+                            </div>
+                            <div style="transform:scale(1.1);flex-shrink:0;margin-left:0.75rem;">
+                                {{ settings_form.low_balance_show_dashboard_panel }}
+                            </div>
+                        </div>
+                        {% if settings_form.low_balance_show_dashboard_panel.errors %}
+                        <div class="text-danger small">{{ settings_form.low_balance_show_dashboard_panel.errors|join:", " }}</div>
+                        {% endif %}
+
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="mb-4" style="border-top:1px solid rgba(255,255,255,0.06);"></div>
+
+                    <!-- Alert Scope -->
+                    <div class="mb-4">
+                        <label class="form-label text-muted-custom small fw-semibold uppercase d-flex align-items-center gap-1">
+                            <i class="fa-solid fa-filter me-1" style="color:#a5b4fc;font-size:0.75rem;"></i> Alert Scope
+                        </label>
+                        {{ settings_form.low_balance_alert_scope }}
+                        {% if settings_form.low_balance_alert_scope.errors %}
+                        <div class="text-danger small mt-1">{{ settings_form.low_balance_alert_scope.errors|join:", " }}</div>
+                        {% endif %}
+                        <div class="form-text text-muted-custom small mt-1">Which accounts to monitor for low balance alerts.</div>
+                    </div>
+
+                    <!-- Default Minimum Balance -->
+                    <div class="mb-2">
+                        <label class="form-label text-muted-custom small fw-semibold uppercase d-flex align-items-center gap-1">
+                            <i class="fa-solid fa-sliders me-1" style="color:#a5b4fc;font-size:0.75rem;"></i>
+                            Default Minimum Balance ({{ currency_symbol }})
+                        </label>
+                        {{ settings_form.low_balance_default_minimum }}
+                        {% if settings_form.low_balance_default_minimum.errors %}
+                        <div class="text-danger small mt-1">{{ settings_form.low_balance_default_minimum.errors|join:", " }}</div>
+                        {% endif %}
+                        <div class="form-text text-muted-custom small mt-1">
+                            Pre-filled value when creating a new account's minimum balance field. Set to <strong class="text-white">0</strong> to leave it blank by default.
+                        </div>
+                    </div>
+
+                    <!-- Info box -->
+                    <div class="mt-4 p-3 rounded-3 d-flex gap-2" style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);">
+                        <i class="fa-solid fa-circle-info mt-0.5 flex-shrink-0" style="color:#a5b4fc;font-size:0.85rem;"></i>
+                        <p class="text-muted-custom mb-0" style="font-size:0.72rem;line-height:1.5;">
+                            Each account's individual minimum balance threshold is set inside
+                            <a href="{% url 'account-list' %}" class="text-decoration-none fw-semibold" style="color:#a5b4fc;">Finance → Accounts → Edit</a>.
+                            The settings above control <em>how</em> and <em>where</em> alerts are displayed.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ════════════════════════════════════════════════════
+                 RIGHT COLUMN — Account Profile
+                 ════════════════════════════════════════════════════ -->
+            <div class="col-lg-7">
+                <div class="card-hero p-4 rounded-4 text-white h-100" style="display:flex;flex-direction:column;">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <div style="width:32px;height:32px;border-radius:9px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;">
+                            <i class="bi bi-person-gear" style="color:#c4b5fd;font-size:0.9rem;"></i>
+                        </div>
+                        <h5 class="fw-bold font-outfit mb-0">Account Profile</h5>
+                    </div>
+                    <p class="text-muted-custom small mb-4" style="padding-left:40px !important;">Update your display name and contact email</p>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">First Name</label>
+                            {{ profile_form.first_name }}
+                            {% if profile_form.first_name.errors %}
+                            <div class="text-danger small mt-1">{{ profile_form.first_name.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Last Name</label>
+                            {{ profile_form.last_name }}
+                            {% if profile_form.last_name.errors %}
+                            <div class="text-danger small mt-1">{{ profile_form.last_name.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-muted-custom small fw-semibold uppercase">Email Address</label>
+                        {{ profile_form.email }}
+                        {% if profile_form.email.errors %}
+                        <div class="text-danger small mt-1">{{ profile_form.email.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Read-only info -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Username <span class="text-muted-custom">(cannot change)</span></label>
+                            <input type="text" class="form-control bg-dark-custom text-muted-custom border-glass" value="{{ user.username }}" disabled>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label text-muted-custom small fw-semibold uppercase">Date Joined</label>
+                            <input type="text" class="form-control bg-dark-custom text-muted-custom border-glass" value="{{ user.date_joined|date:'F d, Y' }}" disabled>
+                        </div>
+                    </div>
+
+                    <!-- Quick stats -->
+                    <div class="row g-3 mb-5">
+                        <div class="col-4">
+                            <div class="rounded-3 p-3 text-center" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);">
+                                <p class="text-muted-custom mb-1" style="font-size:0.65rem;letter-spacing:0.05em;text-transform:uppercase;">Alert Scope</p>
+                                <p class="fw-bold text-white font-outfit mb-0" style="font-size:0.82rem;">
+                                    {% if user_settings.low_balance_alert_scope == 'all' %}All Accounts
+                                    {% elif user_settings.low_balance_alert_scope == 'active' %}Active Only
+                                    {% else %}With Txns
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="rounded-3 p-3 text-center" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);">
+                                <p class="text-muted-custom mb-1" style="font-size:0.65rem;letter-spacing:0.05em;text-transform:uppercase;">LB Alerts</p>
+                                <p class="fw-bold mb-0 font-outfit" style="font-size:0.82rem;color:{% if user_settings.low_balance_alerts %}#34d399{% else %}#f87171{% endif %};">
+                                    {% if user_settings.low_balance_alerts %}ON{% else %}OFF{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="rounded-3 p-3 text-center" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);">
+                                <p class="text-muted-custom mb-1" style="font-size:0.65rem;letter-spacing:0.05em;text-transform:uppercase;">Budget Alerts</p>
+                                <p class="fw-bold mb-0 font-outfit" style="font-size:0.82rem;color:{% if user_settings.enable_budget_alerts %}#34d399{% else %}#f87171{% endif %};">
+                                    {% if user_settings.enable_budget_alerts %}ON{% else %}OFF{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spacer to push button to bottom -->
+                    <div class="flex-grow-1"></div>
+
+                    <div class="d-flex gap-3 pt-3" style="border-top:1px solid rgba(255,255,255,0.06);">
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-5 py-2 fw-semibold shadow-lg">
+                            <i class="fa-solid fa-floppy-disk me-2"></i>Save All Settings
+                        </button>
+                        <a href="{% url 'home' %}" class="btn btn-outline-custom rounded-pill px-4 py-2 fw-semibold">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<style>
+/* Disable sub-options visually when master toggle is off */
+#lba-display-options, #budget-display-options {
+    transition: opacity 0.25s ease;
+}
+#lba-display-options.disabled-section, #budget-display-options.disabled-section {
+    opacity: 0.38;
+    pointer-events: none;
+}
+.cursor-pointer { cursor: pointer; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Low Balance Alert toggle
+    var masterToggle = document.getElementById('id_low_balance_alerts');
+    var subSection   = document.getElementById('lba-display-options');
+
+    function syncState() {
+        if (!masterToggle.checked) {
+            subSection.classList.add('disabled-section');
+        } else {
+            subSection.classList.remove('disabled-section');
+        }
+    }
+
+    if (masterToggle) {
+        syncState();
+        masterToggle.addEventListener('change', syncState);
+    }
+
+    // Budget Alert toggle
+    var budgetToggle = document.getElementById('id_enable_budget_alerts');
+    var budgetSection   = document.getElementById('budget-display-options');
+
+    function syncBudgetState() {
+        if (!budgetToggle.checked) {
+            budgetSection.classList.add('disabled-section');
+        } else {
+            budgetSection.classList.remove('disabled-section');
+        }
+    }
+
+    if (budgetToggle) {
+        syncBudgetState();
+        budgetToggle.addEventListener('change', syncBudgetState);
+    }
+});
+</script>
+{% endblock %}

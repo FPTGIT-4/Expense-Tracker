@@ -31,10 +31,9 @@ def get_analytics_date_range(request):
             try:
                 start = datetime.datetime.strptime(date_from, '%Y-%m-%d').date()
             except ValueError:
-                # Fallback if parsing fails
-                start = today.replace(day=1)
+                start = today
         else:
-            start = datetime.date(2000, 1, 1)
+            start = today
             
         if date_to:
             try:

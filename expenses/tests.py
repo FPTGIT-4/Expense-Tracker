@@ -63,6 +63,11 @@ class ExpenseFormTest(TestCase):
         self.assertNotIn(self.cat1, categories_queryset2)
         self.assertIn(self.cat2, categories_queryset2)
 
+    def test_form_date_defaults_to_today(self):
+        from django.utils import timezone
+        form = ExpenseForm(user=self.user1)
+        self.assertEqual(form.fields['date'].initial, timezone.localdate())
+
 class ExpenseViewsTest(TestCase):
     def setUp(self):
         self.user1 = User.objects.create_user(username='user1', password='password123')
@@ -146,3 +151,27 @@ class ExpenseViewsTest(TestCase):
         response = self.client.post(reverse('expense-delete', kwargs={'pk': self.expense1.pk}))
         self.assertEqual(response.status_code, 404)
         self.assertTrue(Expense.objects.filter(pk=self.expense1.pk).exists())
+
+
+class ExpenseCreateViewTests(TestCase):
+    def setUp(self):
+        from accounts.models import Account
+        self.user = User.objects.create_user(username='expenseuser', password='password123')
+        self.account = Account.objects.create(user=self.user, name='Cash', account_type='Cash')
+        self.category = Category.objects.create(user=self.user, name='Food')
+
+    def test_expense_create_view_post(self):
+        from django.urls import reverse
+        from django.utils import timezone
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('expense-create'), {
+            'account': self.account.id,
+            'name': 'Lunch',
+            'amount': '25.00',
+            'date': timezone.localdate().strftime('%Y-%m-%d'),
+            'category': self.category.id,
+            'description': 'Lunch out'
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Expense.objects.filter(user=self.user, name='Lunch').exists())
+

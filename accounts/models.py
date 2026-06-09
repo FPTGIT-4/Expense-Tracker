@@ -38,7 +38,14 @@ class Account(models.Model):
         total_expense = self.expenses.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
         outgoing_transfers = self.outgoing_transfers.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
         incoming_transfers = self.incoming_transfers.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
-        return self.initial_balance + total_income - total_expense + incoming_transfers - outgoing_transfers
+        
+        return (
+            Decimal(str(self.initial_balance)) + 
+            Decimal(str(total_income)) - 
+            Decimal(str(total_expense)) + 
+            Decimal(str(incoming_transfers)) - 
+            Decimal(str(outgoing_transfers))
+        )
 
     @property
     def bootstrap_icon(self):
@@ -64,14 +71,64 @@ class Account(models.Model):
 
     @property
     def is_below_minimum(self):
-        """Returns True if current balance is below the minimum balance threshold."""
-        if self.minimum_balance and self.minimum_balance > 0:
-            return self.current_balance < self.minimum_balance
+        """Returns True if current balance is below the minimum balance threshold and alerts are enabled."""
+        if self.status == 'CLOSED':
+            return False
+
+        try:
+            show_alerts = self.user.settings.low_balance_alerts
+        except Exception:
+            show_alerts = True
+            
+        if not show_alerts:
+            return False
+            
+        if self.minimum_balance is not None and self.minimum_balance > 0:
+            return self.current_balance <= self.minimum_balance
         return False
+
+    @property
+    def shortage(self):
+        """Returns the shortage amount if the balance is below the minimum."""
+        if self.minimum_balance and self.minimum_balance > 0 and self.current_balance <= self.minimum_balance:
+            return self.minimum_balance - self.current_balance
+        return Decimal('0.00')
+
+    @property
+    def coverage_percentage(self):
+        """Returns the current balance as a percentage of the minimum balance."""
+        if self.minimum_balance and self.minimum_balance > 0:
+            pct = (self.current_balance / self.minimum_balance) * 100
+            return max(0.0, float(pct))
+        return 100.0
+
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+
+        if self.minimum_balance is not None and self.minimum_balance < 0:
+            raise ValidationError({'minimum_balance': "Low balance threshold cannot be negative."})
+
+        if self.minimum_balance is not None and self.minimum_balance > self.initial_balance:
+            raise ValidationError({'minimum_balance': "Low balance threshold cannot be greater than the opening balance."})
+
+        if self.pk:
+            try:
+                old_instance = Account.objects.get(pk=self.pk)
+                if old_instance.minimum_balance != self.minimum_balance:
+                    if not getattr(self, '_explicit_threshold_edit', False):
+                        raise ValidationError({'minimum_balance': "Threshold values can only be changed when explicitly edited by the user."})
+            except Account.DoesNotExist:
+                pass
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class AccountTransfer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transfers')
@@ -106,3 +163,49 @@ class AccountTransfer(models.Model):
                 raise ValidationError({'to_account': "Cannot transfer to an inactive account."})
             elif self.to_account.status == 'CLOSED':
                 raise ValidationError({'to_account': "Cannot receive transfers into a closed account."})
+
+
+class UserSettings(models.Model):
+    CURRENCY_CHOICES = [
+        ('₹', 'INR (₹)'),
+        ('$', 'USD ($)'),
+        ('€', 'EUR (€)'),
+        ('£', 'GBP (£)'),
+        ('¥', 'JPY (¥)'),
+    ]
+
+    ALERT_SCOPE_CHOICES = [
+        ('all', 'All Accounts'),
+        ('active', 'Active Accounts Only'),
+        ('non_zero', 'Accounts with Transactions Only'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='settings')
+    currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES, default='₹')
+    budget_threshold = models.IntegerField(
+        default=80,
+        validators=[MinValueValidator(1), MaxValueValidator(100)],
+        help_text='Notify when any budget reaches this % of usage. (1-100)'
+    )
+
+    # ── Budget Alert settings ──────────────────────────────────────────────
+    enable_budget_alerts = models.BooleanField(default=True)
+
+    # ── Low Balance Alert settings ─────────────────────────────────────────
+    low_balance_alerts = models.BooleanField(default=True)
+    low_balance_show_navbar_badge  = models.BooleanField(default=True)
+    low_balance_show_dashboard_banner = models.BooleanField(default=True)
+    low_balance_show_dashboard_panel  = models.BooleanField(default=True)
+    low_balance_alert_scope = models.CharField(
+        max_length=20,
+        choices=ALERT_SCOPE_CHOICES,
+        default='active',
+    )
+    low_balance_default_minimum = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        default=Decimal('0.00'), blank=True,
+        help_text='Default minimum balance applied when creating new accounts (0 = disabled).'
+    )
+
+    def __str__(self):
+        return f"{self.user.username}'s settings"

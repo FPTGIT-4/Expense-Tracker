@@ -182,7 +182,11 @@ class IncomeListView(LoginRequiredMixin, ListView):
         if date_filter != 'this_month' or context['amount_min'] or context['amount_max']:
             filters.append(f'Time filter: {date_filter.replace("_", " ").title()}')
         if context['amount_min'] or context['amount_max']:
-            amt = f'&#8377;{context["amount_min"] or "0"} – &#8377;{context["amount_max"] or "any"}'
+            try:
+                currency_symbol = user.settings.currency
+            except Exception:
+                currency_symbol = '₹'
+            amt = f'{currency_symbol}{context["amount_min"] or "0"} – {currency_symbol}{context["amount_max"] or "any"}'
             filters.append(f'Amount: {amt}')
         context['active_filters'] = filters
         context['has_filters'] = bool(filters)

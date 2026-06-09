@@ -90,7 +90,7 @@
                     </div>
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Total Income</p>
-                        <h3 class="fw-bold mb-0 font-outfit text-gradient mt-1">&#8377;{{ total_income|floatformat:2 }}</h3>
+                        <h3 class="fw-bold mb-0 font-outfit text-gradient mt-1">{{ currency_symbol }}{{ total_income|floatformat:2 }}</h3>
                     </div>
                 </div>
             </div>
@@ -105,7 +105,7 @@
                     </div>
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Total Expense</p>
-                        <h3 class="fw-bold mb-0 font-outfit text-gradient-alt mt-1">&#8377;{{ total_expense|floatformat:2 }}</h3>
+                        <h3 class="fw-bold mb-0 font-outfit text-gradient-alt mt-1">{{ currency_symbol }}{{ total_expense|floatformat:2 }}</h3>
                     </div>
                 </div>
             </div>
@@ -123,7 +123,7 @@
                     <div>
                         <p class="text-muted-custom small mb-0 uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Net Change</p>
                         <h3 class="fw-bold mb-0 font-outfit mt-1 {% if net_change >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
-                            {% if net_change > 0 %}+{% endif %}&#8377;{{ net_change|floatformat:2 }}
+                            {% if net_change > 0 %}+{% endif %}{{ currency_symbol }}{{ net_change|floatformat:2 }}
                         </h3>
                     </div>
                 </div>
@@ -170,7 +170,7 @@
                                 {% endif %}
                                 {% if row.account.is_below_minimum %}
                                 <span class="badge rounded-pill ms-1" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.65rem; padding: 0.2em 0.55em;">
-                                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 0.6rem;"></i> Below Min
+                                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 0.6rem;"></i> Low Balance Alert - Threshold {{ currency_symbol }}{{ row.account.minimum_balance|floatformat:0 }}
                                 </span>
                                 {% endif %}
                             </div>
@@ -178,22 +178,22 @@
                     </td>
                     <td class="py-3 text-end">
                         <span class="fw-semibold text-gradient" style="font-size: 0.95rem;">
-                            {% if row.income > 0 %}+{% endif %}&#8377;{{ row.income|floatformat:2 }}
+                            {% if row.income > 0 %}+{% endif %}{{ currency_symbol }}{{ row.income|floatformat:2 }}
                         </span>
                     </td>
                     <td class="py-3 text-end">
                         <span class="fw-semibold text-gradient-alt" style="font-size: 0.95rem;">
-                            {% if row.expense > 0 %}-{% endif %}&#8377;{{ row.expense|floatformat:2 }}
+                            {% if row.expense > 0 %}-{% endif %}{{ currency_symbol }}{{ row.expense|floatformat:2 }}
                         </span>
                     </td>
                     <td class="py-3 text-end">
                         <span class="fw-bold font-outfit {% if row.net >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1rem;">
-                            {% if row.net > 0 %}+{% endif %}&#8377;{{ row.net|floatformat:2 }}
+                            {% if row.net > 0 %}+{% endif %}{{ currency_symbol }}{{ row.net|floatformat:2 }}
                         </span>
                     </td>
                     <td class="py-3 text-end pe-4">
                         <span class="fw-bold font-outfit {% if row.current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1rem;">
-                            &#8377;{{ row.current_balance|floatformat:2 }}
+                            {{ currency_symbol }}{{ row.current_balance|floatformat:2 }}
                         </span>
                     </td>
                 </tr>
@@ -203,10 +203,10 @@
             <tfoot>
                 <tr style="border-top: 2px solid var(--glass-border); background: rgba(99,102,241,0.04);">
                     <td class="py-3 ps-4 fw-bold text-muted-custom small uppercase" style="letter-spacing: 0.05em;">Total</td>
-                    <td class="py-3 text-end fw-bold text-gradient">+&#8377;{{ total_income|floatformat:2 }}</td>
-                    <td class="py-3 text-end fw-bold text-gradient-alt">-&#8377;{{ total_expense|floatformat:2 }}</td>
+                    <td class="py-3 text-end fw-bold text-gradient">+{{ currency_symbol }}{{ total_income|floatformat:2 }}</td>
+                    <td class="py-3 text-end fw-bold text-gradient-alt">-{{ currency_symbol }}{{ total_expense|floatformat:2 }}</td>
                     <td class="py-3 text-end fw-bold {% if net_change >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">
-                        {% if net_change > 0 %}+{% endif %}&#8377;{{ net_change|floatformat:2 }}
+                        {% if net_change > 0 %}+{% endif %}{{ currency_symbol }}{{ net_change|floatformat:2 }}
                     </td>
                     <td class="py-3 pe-4"></td>
                 </tr>
@@ -230,31 +230,31 @@
                     <div class="d-flex gap-1 flex-wrap mt-1">
                         <span class="badge bg-glass border border-glass text-muted-custom rounded-pill" style="font-size: 0.65rem;">{{ row.account.account_type }}</span>
                         {% if row.account.is_below_minimum %}
-                        <span class="badge rounded-pill" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.65rem;">
-                            <i class="fa-solid fa-triangle-exclamation" style="font-size: 0.6rem;"></i> Below Min
+                        <span class="badge rounded-pill" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.65rem; padding: 0.25em 0.6em;">
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size: 0.6rem;"></i> Low Balance Alert - Threshold {{ currency_symbol }}{{ row.account.minimum_balance|floatformat:0 }}
                         </span>
                         {% endif %}
                     </div>
                 </div>
                 <div class="text-end">
                     <p class="text-muted-custom mb-0" style="font-size: 0.7rem; letter-spacing: 0.05em;">BALANCE</p>
-                    <p class="fw-bold font-outfit mb-0 {% if row.current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.1rem;">&#8377;{{ row.current_balance|floatformat:2 }}</p>
+                    <p class="fw-bold font-outfit mb-0 {% if row.current_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 1.1rem;">{{ currency_symbol }}{{ row.current_balance|floatformat:2 }}</p>
                 </div>
             </div>
             <!-- Stats row -->
             <div class="row g-3 text-center">
                 <div class="col-4">
                     <p class="text-muted-custom mb-1" style="font-size: 0.68rem; letter-spacing: 0.04em;">INCOME</p>
-                    <p class="fw-semibold mb-0 text-gradient" style="font-size: 0.9rem;">&#8377;{{ row.income|floatformat:2 }}</p>
+                    <p class="fw-semibold mb-0 text-gradient" style="font-size: 0.9rem;">{{ currency_symbol }}{{ row.income|floatformat:2 }}</p>
                 </div>
                 <div class="col-4">
                     <p class="text-muted-custom mb-1" style="font-size: 0.68rem; letter-spacing: 0.04em;">EXPENSE</p>
-                    <p class="fw-semibold mb-0 text-gradient-alt" style="font-size: 0.9rem;">&#8377;{{ row.expense|floatformat:2 }}</p>
+                    <p class="fw-semibold mb-0 text-gradient-alt" style="font-size: 0.9rem;">{{ currency_symbol }}{{ row.expense|floatformat:2 }}</p>
                 </div>
                 <div class="col-4">
                     <p class="text-muted-custom mb-1" style="font-size: 0.68rem; letter-spacing: 0.04em;">NET</p>
                     <p class="fw-bold mb-0 {% if row.net >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}" style="font-size: 0.9rem;">
-                        {% if row.net > 0 %}+{% endif %}&#8377;{{ row.net|floatformat:2 }}
+                        {% if row.net > 0 %}+{% endif %}{{ currency_symbol }}{{ row.net|floatformat:2 }}
                     </p>
                 </div>
             </div>

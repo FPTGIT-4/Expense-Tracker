@@ -34,6 +34,108 @@ class ProfileViewTests(TestCase):
         self.assertEqual(resolve(url).view_name, 'password_change')
 
 
+class UserSettingsViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='settingstest',
+            password='password123',
+            email='settings@example.com',
+            first_name='Alice',
+            last_name='Smith'
+        )
+
+    def test_settings_redirects_for_anonymous_user(self):
+        response = self.client.get(reverse('settings'))
+        self.assertNotEqual(response.status_code, 200)
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('settings')}")
+
+    def test_settings_renders_for_logged_in_user(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('settings'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'accounts/settings.html')
+        
+        # Verify details in output
+        self.assertContains(response, 'settingstest')
+        self.assertContains(response, 'Alice')
+        self.assertContains(response, 'settings@example.com')
+
+    def test_settings_saves_preferences_and_profile(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('settings'), {
+            'first_name': 'Bob',
+            'last_name': 'Smith',
+            'email': 'bob@example.com',
+            'currency': '$',
+            'budget_threshold': 90,
+            'enable_budget_alerts': True,
+            'low_balance_alerts': True,
+            'low_balance_show_navbar_badge': True,
+            'low_balance_show_dashboard_banner': True,
+            'low_balance_show_dashboard_panel': True,
+            'low_balance_alert_scope': 'active',
+            'low_balance_default_minimum': '0.00',
+        })
+        self.assertRedirects(response, reverse('settings'))
+        
+        # Check user settings and profile details updated
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Bob')
+        self.assertEqual(self.user.email, 'bob@example.com')
+        self.assertEqual(self.user.settings.currency, '$')
+        self.assertEqual(self.user.settings.budget_threshold, 90)
+
+    def test_settings_low_balance_alert_suppression(self):
+        from accounts.models import UserSettings, Account
+        from decimal import Decimal
+        
+        self.client.force_login(self.user)
+        settings, _ = UserSettings.objects.get_or_create(user=self.user)
+        account = Account.objects.create(
+            user=self.user,
+            name='Test Account',
+            account_type='Cash',
+            initial_balance=Decimal('50.00'),
+            minimum_balance=Decimal('50.00')
+        )
+        
+        # Verify account is below minimum initially (alerts enabled)
+        self.assertTrue(account.is_below_minimum)
+        
+        # Disable alerts in settings
+        settings.low_balance_alerts = False
+        settings.save()
+        
+        # Re-fetch account and verify is_below_minimum is False now
+        account.refresh_from_db()
+        self.assertFalse(account.is_below_minimum)
+
+    def test_settings_low_balance_alert_boundary(self):
+        from accounts.models import Account
+        from income.models import Income
+        import datetime
+        from decimal import Decimal
+        account = Account.objects.create(
+            user=self.user,
+            name='Boundary Account',
+            account_type='Cash',
+            initial_balance=Decimal('50.00'),
+            minimum_balance=Decimal('50.00')
+        )
+        self.assertTrue(account.is_below_minimum)
+        
+        # Balance goes above threshold by 1 cent
+        Income.objects.create(
+            user=self.user,
+            account=account,
+            amount=Decimal('0.01'),
+            source='Salary',
+            date=datetime.date.today()
+        )
+        self.assertFalse(account.is_below_minimum)
+
+
+
 from accounts.models import Account
 
 class AccountDetailViewTests(TestCase):
@@ -233,9 +335,14 @@ class AccountTransferTests(TestCase):
 
 import datetime
 from django.utils import timezone
+from unittest.mock import patch
 
 class TransferHistoryTests(TestCase):
     def setUp(self):
+        self.localdate_patcher = patch('django.utils.timezone.localdate')
+        self.mock_localdate = self.localdate_patcher.start()
+        self.mock_localdate.return_value = datetime.date(2026, 6, 10)
+
         self.user = User.objects.create_user(
             username='historyuser',
             password='password123',
@@ -390,6 +497,9 @@ class TransferHistoryTests(TestCase):
         # Try to access other user's transfer detail (should fail with 404)
         response = self.client.get(reverse('transfer-detail', args=[self.other_t.pk]))
         self.assertEqual(response.status_code, 404)
+
+    def tearDown(self):
+        self.localdate_patcher.stop()
 
 
 from income.forms import IncomeForm
@@ -610,4 +720,113 @@ class AccountIconTests(TestCase):
         response = self.client.get(reverse('account-detail', args=[acc.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'bi-bank')
+
+
+class TransferFormTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='transferuser', password='password123')
+
+    def test_transfer_form_date_defaults_to_today(self):
+        from accounts.forms import TransferForm
+        from django.utils import timezone
+        form = TransferForm(user=self.user)
+        self.assertEqual(form.fields['transfer_date'].initial, timezone.localdate())
+
+
+class LowBalanceThresholdTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='thresholduser', password='password123')
+
+    def test_threshold_cannot_exceed_initial_balance(self):
+        from accounts.models import Account
+        from django.core.exceptions import ValidationError
+        from decimal import Decimal
+
+        with self.assertRaises(ValidationError):
+            acc = Account(
+                user=self.user,
+                name='Invalid Threshold Account',
+                account_type='Cash',
+                initial_balance=Decimal('100.00'),
+                minimum_balance=Decimal('150.00')
+            )
+            acc.full_clean()
+
+    def test_threshold_cannot_be_negative(self):
+        from accounts.models import Account
+        from django.core.exceptions import ValidationError
+        from decimal import Decimal
+
+        with self.assertRaises(ValidationError):
+            acc = Account(
+                user=self.user,
+                name='Negative Threshold Account',
+                account_type='Cash',
+                initial_balance=Decimal('100.00'),
+                minimum_balance=Decimal('-10.00')
+            )
+            acc.full_clean()
+
+    def test_threshold_change_requires_explicit_edit_flag(self):
+        from accounts.models import Account
+        from django.core.exceptions import ValidationError
+        from decimal import Decimal
+
+        acc = Account.objects.create(
+            user=self.user,
+            name='Test Explicit Edit Account',
+            account_type='Cash',
+            initial_balance=Decimal('100.00'),
+            minimum_balance=Decimal('50.00')
+        )
+
+        # Try to modify minimum_balance directly without form or setting _explicit_threshold_edit
+        acc.minimum_balance = Decimal('60.00')
+        with self.assertRaises(ValidationError):
+            acc.save()
+
+        # Set the flag and save should work
+        acc._explicit_threshold_edit = True
+        acc.save()
+        acc.refresh_from_db()
+        self.assertEqual(acc.minimum_balance, Decimal('60.00'))
+
+
+class GlobalFormsContextProcessorTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='globalformstest',
+            password='password123',
+            email='globalformstest@example.com'
+        )
+
+    def test_anonymous_user_has_no_global_forms(self):
+        from django.test import RequestFactory
+        from accounts.context_processors import global_forms
+        from django.contrib.auth.models import AnonymousUser
+        
+        request = RequestFactory().get('/')
+        request.user = AnonymousUser()
+        context = global_forms(request)
+        self.assertIsNone(context['global_income_form'])
+        self.assertIsNone(context['global_expense_form'])
+        self.assertIsNone(context['global_transfer_form'])
+        self.assertIsNone(context['global_account_form'])
+        self.assertIsNone(context['global_budget_form'])
+
+    def test_authenticated_user_has_global_forms(self):
+        from django.test import RequestFactory
+        from accounts.context_processors import global_forms
+        
+        request = RequestFactory().get('/')
+        request.user = self.user
+        context = global_forms(request)
+        
+        self.assertIsNotNone(context['global_income_form'])
+        self.assertIsNotNone(context['global_expense_form'])
+        self.assertIsNotNone(context['global_transfer_form'])
+        self.assertIsNotNone(context['global_account_form'])
+        self.assertIsNotNone(context['global_budget_form'])
+
+
 

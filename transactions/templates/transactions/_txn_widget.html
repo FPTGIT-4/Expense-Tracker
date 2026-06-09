@@ -26,7 +26,7 @@
   <div class="txn-date-bar d-flex flex-wrap align-items-center gap-3">
     <div class="d-flex align-items-center gap-2">
       <label class="mb-0 text-nowrap"><i class="fa-solid fa-calendar-days me-1"></i> DATE</label>
-      <input type="date" class="txn-date-input" value="{{ today|date:'Y-m-d' }}">
+      <input type="date" class="txn-date-input" value="{{ today|date:'Y-m-d'|default:today }}">
     </div>
     
     <div class="d-flex align-items-center gap-2 ms-sm-3">
@@ -54,7 +54,7 @@
           <thead>
             <tr>
               <th class="col-account">ACCOUNT</th>
-              <th class="col-amount">AMOUNT (₹)</th>
+              <th class="col-amount">AMOUNT ({{ currency_symbol }})</th>
               <th class="col-source">SOURCE</th>
               <th>DESCRIPTION (OPTIONAL)</th>
               <th class="col-remove"></th>
@@ -72,7 +72,7 @@
           <thead>
             <tr>
               <th class="col-account">ACCOUNT</th>
-              <th class="col-amount">AMOUNT (₹)</th>
+              <th class="col-amount">AMOUNT ({{ currency_symbol }})</th>
               <th class="col-category">CATEGORY</th>
               <th>DESCRIPTION (OPTIONAL)</th>
               <th class="col-remove"></th>
@@ -92,7 +92,7 @@
         <div>
           <div class="txn-running-total-label">RUNNING TOTAL</div>
           <div class="txn-running-total-amount">
-            <span class="txn-total-value total-income-color">₹0.00</span>
+            <span class="txn-total-value total-income-color">{{ currency_symbol }}0.00</span>
           </div>
         </div>
       </div>
@@ -317,7 +317,7 @@
         if (!isNaN(v) && v > 0) total += v;
       });
       $('.txn-total-value').textContent =
-        '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        '{{ currency_symbol }}' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     // Call updateTotal on initialization to ensure correct symbol is displayed

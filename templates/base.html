@@ -20,7 +20,7 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.0.4">
     <style>
         /* Hide number input spinners globally */
         input::-webkit-outer-spin-button,
@@ -56,135 +56,409 @@
             background: var(--accent-indigo) !important;
             color: #fff !important;
         }
+        .modal-content-glass {
+            background: rgba(24, 24, 48, 0.9) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) !important;
+        }
+        .modal-header, .modal-footer {
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 
 <body class="d-flex flex-column min-vh-100">
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-glass sticky-top">
-        <div class="container">
+    <!-- Header -->
+    <header class="top-header bg-glass sticky-top d-flex align-items-center justify-content-between px-3 px-lg-4">
+        <div class="d-flex align-items-center">
+            {% if user.is_authenticated %}
+            <button class="btn btn-link text-white p-0 me-3" id="sidebar-toggle" style="font-size: 1.3rem; text-decoration: none;" type="button">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            {% endif %}
             <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
                 <div class="brand-icon-wrapper me-2">
                     <i class="fa-solid fa-wallet text-gradient"></i>
                 </div>
                 <span class="brand-text">Expense<span class="text-gradient-alt">Tracker</span></span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/' or '/dashboard/' in request.path %}active{% endif %}"
-                            href="{% url 'home' %}"><i class="fa-solid fa-house me-1"></i> Home</a>
-                    </li>
-                    {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/incomes/' in request.path %}active{% endif %}"
-                            href="{% url 'income-list' %}"><i class="fa-solid fa-wallet me-1"></i> Incomes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/expenses/' in request.path %}active{% endif %}"
-                            href="{% url 'expense-list' %}"><i class="fa-solid fa-receipt me-1"></i> Expenses</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/categories/' in request.path %}active{% endif %}"
-                            href="{% url 'category-list' %}"><i class="fa-solid fa-tags me-1"></i> Categories</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/reports/' in request.path %}active{% endif %}"
-                            href="{% url 'reports-dashboard' %}"><i class="fa-solid fa-chart-pie me-1"></i> Reports</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/accounts/manage/' in request.path %}active{% endif %}"
-                            href="{% url 'account-list' %}"><i class="fa-solid fa-building-columns me-1"></i> Accounts</a>
-                    </li>
-                    <li class="nav-item ms-lg-2">
-                        <a class="btn btn-outline-custom nav-link px-3 py-1.5 rounded-pill border border-glass d-inline-flex align-items-center gap-1.5 fw-medium text-white shadow-sm transition-all {% if '/transactions/' in request.path %}active{% endif %}"
-                           style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.25) !important;"
-                           href="{% url 'transaction-add' %}">
-                            <i class="fa-solid fa-plus-circle text-gradient"></i> Add Transaction
+        </div>
+        
+        <div class="d-flex align-items-center gap-2 gap-md-3">
+            {% if user.is_authenticated %}
+                <!-- Notifications Dropdown -->
+                <div class="nav-item dropdown">
+                    <a class="nav-link position-relative d-inline-flex align-items-center p-2 text-white"
+                       href="#" id="navbarDropdownNotifications" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                        <i class="fa-solid fa-bell" style="font-size: 1.25rem;"></i>
+                        {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
+                        {% if total_alerts > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                              style="font-size: 0.6rem; padding: 0.25em 0.5em; min-width: 16px; line-height: 1; border: 1.5px solid rgba(15,15,35,0.8); margin-top: 5px; margin-left: -2px;">
+                            {{ total_alerts }}
+                        </span>
+                        {% endif %}
+                        {% endwith %}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end bg-dark-custom border-glass shadow-lg py-2" aria-labelledby="navbarDropdownNotifications" style="width: 320px;">
+                        <li class="px-3 py-2 border-bottom border-glass d-flex justify-content-between align-items-center">
+                            <span class="fw-bold font-outfit text-white">Notifications</span>
+                            {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
+                            {% if total_alerts > 0 %}
+                            <span class="badge rounded-pill" style="font-size: 0.7rem; background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3);">
+                                {{ total_alerts }} New
+                            </span>
+                            {% endif %}
+                            {% endwith %}
+                        </li>
+                        <div class="notification-list" style="max-height: 280px; overflow-y: auto;">
+                            {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
+                            {% if total_alerts == 0 %}
+                            <li class="text-center py-4 text-muted-custom">
+                                <i class="fa-regular fa-bell-slash d-block mb-2 fs-4"></i>
+                                <span class="small">No new notifications</span>
+                            </li>
+                            {% else %}
+                                {% if lba_show_navbar and global_low_balance_count > 0 %}
+                                    {% for acc in global_accounts_below_minimum %}
+                                    <li>
+                                        <a class="dropdown-item px-3 py-2.5 border-bottom border-glass d-flex align-items-start gap-2.5" href="{% url 'account-list' %}" style="white-space: normal;">
+                                            <span class="text-warning mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                                            <div class="small text-white">
+                                                Account <strong>{{ acc.name }}</strong> is below minimum balance.
+                                                <div class="text-muted-custom mt-1" style="font-size: 0.75rem;">Shortage: {{ currency_symbol }}{{ acc.shortage }}</div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                {% endif %}
+                                {% if budget_alert_count > 0 %}
+                                    {% for alert in budget_alerts %}
+                                    <li>
+                                        <a class="dropdown-item px-3 py-2.5 border-bottom border-glass d-flex align-items-start gap-2.5" href="{% url 'budget-list' %}" style="white-space: normal;">
+                                            <span class="{% if alert.type == 'exceeded' %}text-danger{% else %}text-warning{% endif %} mt-0.5">
+                                                {% if alert.type == 'exceeded' %}<i class="fa-solid fa-circle-exclamation"></i>{% else %}<i class="fa-solid fa-triangle-exclamation"></i>{% endif %}
+                                            </span>
+                                            <div class="small text-white">
+                                                {{ alert.message }}
+                                                <div class="text-muted-custom mt-1" style="font-size: 0.75rem;">Usage: {{ alert.usage_percentage|floatformat:0 }}%</div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </ul>
+                </div>
+
+                <!-- Settings Option -->
+                <div class="nav-item">
+                    <a href="{% url 'settings' %}" class="nav-link p-2 text-white" title="Settings">
+                        <i class="fa-solid fa-gear" style="font-size: 1.25rem;"></i>
+                    </a>
+                </div>
+            {% else %}
+                <div class="nav-item">
+                    <a class="nav-link text-white px-2" href="{% url 'login' %}"><i class="fa-solid fa-right-to-bracket me-1"></i> Login</a>
+                </div>
+                <div class="nav-item">
+                    <a class="btn btn-primary-gradient btn-sm rounded-pill px-3 py-1.5 ms-2" href="{% url 'signup' %}"><i class="fa-solid fa-user-plus me-1"></i> Sign Up</a>
+                </div>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Layout Wrapper -->
+    <div class="app-layout-container">
+        {% if user.is_authenticated %}
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar bg-glass" id="app-sidebar">
+            <div class="sidebar-content py-4">
+                <div class="sidebar-brand-section px-4 mb-4 d-none d-lg-block">
+                    <span class="font-outfit fw-bold text-white small uppercase tracking-wider text-muted-custom">Navigation</span>
+                </div>
+                <ul class="sidebar-nav list-unstyled mb-0 px-3">
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'home' %}" class="sidebar-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                            <i class="fa-solid fa-house"></i> <span>Home</span>
                         </a>
                     </li>
-                    <li class="nav-item dropdown ms-lg-3">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center {% if request.path == '/accounts/profile/' %}active{% endif %}"
-                            href="#" id="navbarDropdownProfile" role="button" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <i class="bi bi-person me-1"></i> {{ user.get_full_name|default:user.username }}
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'income-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'income-list income-create income-edit income-delete' %}active{% endif %}">
+                            <i class="bi bi-wallet2"></i> <span>Incomes</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end bg-dark-custom border-glass shadow-lg"
-                            aria-labelledby="navbarDropdownProfile" style="min-width: 180px;">
-                            <li>
-                                <a class="dropdown-item text-white py-2 {% if request.path == '/accounts/profile/' %}active{% endif %}"
-                                    href="{% url 'profile' %}">
-                                    <i class="bi bi-person me-2 text-muted-custom"></i> Profile Details
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item text-white py-2" href="{% url 'password_change' %}">
-                                    <i class="bi bi-key me-2 text-muted-custom"></i> Change Password
-                                </a>
-                            </li>
-                            <li>
-                                <hr class="dropdown-divider border-glass m-1">
-                            </li>
-                            <li>
-                                <form id="logout-form" method="post" action="{% url 'logout' %}" class="d-none">
-                                    {% csrf_token %}
-                                </form>
-                                <a class="dropdown-item text-danger py-2" href="#"
-                                    onclick="document.getElementById('logout-form').submit(); return false;">
-                                    <i class="bi bi-box-arrow-right me-2"></i> Logout
-                                </a>
-                            </li>
-                        </ul>
                     </li>
-                    {% else %}
-                    <li class="nav-item ms-lg-2">
-                        <a class="nav-link" href="{% url 'login' %}"><i class="fa-solid fa-right-to-bracket me-1"></i>
-                            Login</a>
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'expense-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'expense-list expense-create expense-edit expense-delete' %}active{% endif %}">
+                            <i class="bi bi-receipt"></i> <span>Expenses</span>
+                        </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="btn btn-primary-gradient btn-sm rounded-pill px-3 py-1 ms-2"
-                            href="{% url 'signup' %}"><i class="fa-solid fa-user-plus me-1"></i> Sign Up</a>
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'category-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'category-list category-add category-edit category-delete' %}active{% endif %}">
+                            <i class="bi bi-tags"></i> <span>Categories</span>
+                        </a>
                     </li>
-                    {% endif %}
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'account-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'account-list account-add account-edit account-delete account-detail account-transfer transfer-list transfer-detail' %}active{% endif %}">
+                            <i class="bi bi-bank"></i> <span>Accounts</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'budget-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'budget-list budget-add budget-edit budget-delete budget-detail' %}active{% endif %}">
+                            <i class="bi bi-piggy-bank"></i> <span>Budgets</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'reports-dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name in 'reports-dashboard account-reports' %}active{% endif %}">
+                            <i class="bi bi-pie-chart"></i> <span>Reports</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'transaction-history' %}" class="sidebar-link {% if request.resolver_match.url_name in 'transaction-history transaction-history-detail' %}active{% endif %}">
+                            <i class="fa-solid fa-clock-rotate-left"></i> <span>History</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item mb-1 mt-4 pt-3 border-top border-glass">
+                        <form id="sidebar-logout-form" method="post" action="{% url 'logout' %}" class="d-none">
+                            {% csrf_token %}
+                        </form>
+                        <a href="#" class="sidebar-link text-danger" onclick="document.getElementById('sidebar-logout-form').submit(); return false;">
+                            <i class="bi bi-box-arrow-right"></i> <span>Logout</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="flex-grow-1 py-5">
-        <!-- Floating Notifications Container (does not push down the page layout) -->
-        {% if messages %}
-        <div class="position-fixed top-0 end-0 p-3" style="z-index: 1100; min-width: 320px; max-width: 420px; margin-top: 5rem; margin-right: 1rem;">
-            {% for message in messages %}
-            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show border-0 text-white rounded-3 shadow-lg d-flex align-items-center justify-content-between p-3 mb-2"
-                role="alert"
-                style="background: {% if message.tags == 'success' %}linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95)){% elif message.tags == 'error' or message.tags == 'danger' %}linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(185, 28, 28, 0.95)){% else %}linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(29, 78, 216, 0.95)){% endif %}; border: 1px solid rgba(255,255,255,0.1) !important;">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% elif message.tags == 'error' or message.tags == 'danger' %}fa-circle-exclamation{% else %}fa-circle-info{% endif %} fa-lg"></i>
-                    <span class="fw-semibold font-outfit" style="font-size: 0.9rem;">{{ message }}</span>
-                </div>
-                <button type="button" class="btn-close btn-close-white p-0 position-relative"
-                    data-bs-dismiss="alert" aria-label="Close" style="top: 0; right: 0; margin-left: 1rem;"></button>
-            </div>
-            {% endfor %}
-        </div>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
         {% endif %}
 
-        {% block content %}{% endblock %}
-    </main>
+        <!-- Main Content Area -->
+        <main class="main-content-wrapper flex-grow-1" id="main-content">
+            <div class="flex-grow-1">
+                <!-- Floating Notifications Container (does not push down the page layout) -->
+                {% if messages %}
+                <div class="position-fixed top-0 end-0 p-3" style="z-index: 1100; min-width: 320px; max-width: 420px; margin-top: 5rem; margin-right: 1rem;">
+                    {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show border-0 text-white rounded-3 shadow-lg d-flex align-items-center justify-content-between p-3 mb-2"
+                        role="alert"
+                        style="background: {% if message.tags == 'success' %}linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95)){% elif message.tags == 'error' or message.tags == 'danger' %}linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(185, 28, 28, 0.95)){% else %}linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(29, 78, 216, 0.95)){% endif %}; border: 1px solid rgba(255,255,255,0.1) !important;">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% elif message.tags == 'error' or message.tags == 'danger' %}fa-circle-exclamation{% else %}fa-circle-info{% endif %} fa-lg"></i>
+                            <span class="fw-semibold font-outfit" style="font-size: 0.9rem;">{{ message }}</span>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white p-0 position-relative"
+                            data-bs-dismiss="alert" aria-label="Close" style="top: 0; right: 0; margin-left: 1rem;"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
 
-    <!-- Footer -->
-    <footer class="footer mt-auto py-4 border-top">
-        <div class="container text-center">
-            <p class="mb-0 text-muted">&copy; 2026 Expense Tracker. Built with Django & Bootstrap 5.</p>
+                {% block content %}{% endblock %}
+            </div>
+
+            <!-- Footer -->
+            <footer class="footer mt-auto py-4 border-top">
+                <div class="container text-center">
+                    <p class="mb-0 text-muted">&copy; 2026 Expense Tracker. Built with Django & Bootstrap 5.</p>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+
+    {% if user.is_authenticated %}
+    <!-- Global Quick Add Modals -->
+    
+    <!-- Add Income Modal -->
+    <div class="modal fade" id="globalAddIncomeModal" tabindex="-1" aria-labelledby="globalAddIncomeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-glass text-white bg-dark-custom">
+                <div class="modal-header border-bottom border-glass py-3">
+                    <h5 class="modal-title fw-bold font-outfit" id="globalAddIncomeModalLabel">
+                        <i class="bi bi-plus-circle me-2 text-success"></i>Add Income
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{% url 'income-create' %}">
+                    <div class="modal-body p-4">
+                        {% csrf_token %}
+                        {% for field in global_income_form %}
+                            <div class="mb-3 {% if field.field.widget.input_type == 'checkbox' %}form-check d-flex align-items-center gap-2{% endif %}">
+                                {% if field.field.widget.input_type == 'checkbox' %}
+                                    {{ field }}
+                                    <label for="{{ field.id_for_label }}" class="form-check-label text-white small mb-0">{{ field.label }}</label>
+                                {% else %}
+                                    <label for="{{ field.id_for_label }}" class="form-label text-muted-custom small fw-semibold uppercase">{{ field.label }}</label>
+                                    {{ field }}
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <div class="form-text text-muted-custom small">{{ field.help_text }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer border-top border-glass p-3.5 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-custom border border-glass rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 fw-semibold shadow-lg">Save Income</button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </footer>
+    </div>
+
+    <!-- Add Expense Modal -->
+    <div class="modal fade" id="globalAddExpenseModal" tabindex="-1" aria-labelledby="globalAddExpenseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-glass text-white bg-dark-custom">
+                <div class="modal-header border-bottom border-glass py-3">
+                    <h5 class="modal-title fw-bold font-outfit" id="globalAddExpenseModalLabel">
+                        <i class="bi bi-dash-circle me-2 text-danger"></i>Add Expense
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{% url 'expense-create' %}">
+                    <div class="modal-body p-4">
+                        {% csrf_token %}
+                        {% for field in global_expense_form %}
+                            <div class="mb-3 {% if field.field.widget.input_type == 'checkbox' %}form-check d-flex align-items-center gap-2{% endif %}">
+                                {% if field.field.widget.input_type == 'checkbox' %}
+                                    {{ field }}
+                                    <label for="{{ field.id_for_label }}" class="form-check-label text-white small mb-0">{{ field.label }}</label>
+                                {% else %}
+                                    <label for="{{ field.id_for_label }}" class="form-label text-muted-custom small fw-semibold uppercase">{{ field.label }}</label>
+                                    {{ field }}
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <div class="form-text text-muted-custom small">{{ field.help_text }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer border-top border-glass p-3.5 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-custom border border-glass rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 fw-semibold shadow-lg">Save Expense</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Transfer Modal -->
+    <div class="modal fade" id="globalAddTransferModal" tabindex="-1" aria-labelledby="globalAddTransferModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-glass text-white bg-dark-custom">
+                <div class="modal-header border-bottom border-glass py-3">
+                    <h5 class="modal-title fw-bold font-outfit" id="globalAddTransferModalLabel">
+                        <i class="fa-solid fa-arrow-right-arrow-left me-2 text-primary"></i>Transfer Funds
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{% url 'account-transfer' %}">
+                    <div class="modal-body p-4">
+                        {% csrf_token %}
+                        {% for field in global_transfer_form %}
+                            <div class="mb-3 {% if field.field.widget.input_type == 'checkbox' %}form-check d-flex align-items-center gap-2{% endif %}">
+                                {% if field.field.widget.input_type == 'checkbox' %}
+                                    {{ field }}
+                                    <label for="{{ field.id_for_label }}" class="form-check-label text-white small mb-0">{{ field.label }}</label>
+                                {% else %}
+                                    <label for="{{ field.id_for_label }}" class="form-label text-muted-custom small fw-semibold uppercase">{{ field.label }}</label>
+                                    {{ field }}
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <div class="form-text text-muted-custom small">{{ field.help_text }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer border-top border-glass p-3.5 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-custom border border-glass rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 fw-semibold shadow-lg">Transfer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Account Modal -->
+    <div class="modal fade" id="globalAddAccountModal" tabindex="-1" aria-labelledby="globalAddAccountModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-glass text-white bg-dark-custom">
+                <div class="modal-header border-bottom border-glass py-3">
+                    <h5 class="modal-title fw-bold font-outfit" id="globalAddAccountModalLabel">
+                        <i class="bi bi-bank me-2 text-warning"></i>Add Account
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{% url 'account-add' %}">
+                    <div class="modal-body p-4">
+                        {% csrf_token %}
+                        {% for field in global_account_form %}
+                            <div class="mb-3 {% if field.field.widget.input_type == 'checkbox' %}form-check d-flex align-items-center gap-2{% endif %}">
+                                {% if field.field.widget.input_type == 'checkbox' %}
+                                    {{ field }}
+                                    <label for="{{ field.id_for_label }}" class="form-check-label text-white small mb-0">{{ field.label }}</label>
+                                {% else %}
+                                    <label for="{{ field.id_for_label }}" class="form-label text-muted-custom small fw-semibold uppercase">{{ field.label }}</label>
+                                    {{ field }}
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <div class="form-text text-muted-custom small">{{ field.help_text }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer border-top border-glass p-3.5 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-custom border border-glass rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 fw-semibold shadow-lg">Save Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Budget Modal -->
+    <div class="modal fade" id="globalAddBudgetModal" tabindex="-1" aria-labelledby="globalAddBudgetModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-glass text-white bg-dark-custom">
+                <div class="modal-header border-bottom border-glass py-3">
+                    <h5 class="modal-title fw-bold font-outfit" id="globalAddBudgetModalLabel">
+                        <i class="bi bi-piggy-bank me-2 text-info"></i>Add Budget
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{% url 'budget-add' %}">
+                    <div class="modal-body p-4">
+                        {% csrf_token %}
+                        {% for field in global_budget_form %}
+                            <div class="mb-3 {% if field.field.widget.input_type == 'checkbox' %}form-check d-flex align-items-center gap-2{% endif %}">
+                                {% if field.field.widget.input_type == 'checkbox' %}
+                                    {{ field }}
+                                    <label for="{{ field.id_for_label }}" class="form-check-label text-white small mb-0">{{ field.label }}</label>
+                                {% else %}
+                                    <label for="{{ field.id_for_label }}" class="form-label text-muted-custom small fw-semibold uppercase">{{ field.label }}</label>
+                                    {{ field }}
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <div class="form-text text-muted-custom small">{{ field.help_text }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer border-top border-glass p-3.5 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-custom border border-glass rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 fw-semibold shadow-lg">Save Budget</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Bootstrap Bundle with Popper JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
@@ -192,6 +466,7 @@
         crossorigin="anonymous"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Dismiss alert messages automatically after 5 seconds
             const dismissibleAlerts = document.querySelectorAll('.alert-dismissible');
             dismissibleAlerts.forEach(function(alert) {
                 setTimeout(function() {
@@ -201,6 +476,100 @@
                     }
                 }, 5000);
             });
+
+            // Global Quick Add Modal pre-filling event listeners
+            const modalIds = ['globalAddIncomeModal', 'globalAddExpenseModal', 'globalAddTransferModal', 'globalAddBudgetModal'];
+            modalIds.forEach(function(id) {
+                const modalEl = document.getElementById(id);
+                if (modalEl) {
+                    modalEl.addEventListener('show.bs.modal', function(event) {
+                        const button = event.relatedTarget;
+                        if (!button) return;
+
+                        // Reset form fields where appropriate to avoid caching previous triggers
+                        const form = modalEl.querySelector('form');
+                        if (form) {
+                            // Only reset if it's not a regular page form reload submission
+                            // form.reset(); // Don't reset everything because csrf_token might get affected
+                        }
+
+                        // Account pre-fill
+                        const accountId = button.getAttribute('data-account-id');
+                        if (accountId) {
+                            // Income/Expense account select
+                            const accountSelect = modalEl.querySelector('select[name="account"]');
+                            if (accountSelect) {
+                                accountSelect.value = accountId;
+                            }
+
+                            // Transfer from_account select
+                            const fromAccountSelect = modalEl.querySelector('select[name="from_account"]');
+                            if (fromAccountSelect) {
+                                fromAccountSelect.value = accountId;
+                            }
+                        }
+
+                        // Category pre-fill
+                        const categoryId = button.getAttribute('data-category-id');
+                        if (categoryId) {
+                            // Expense/Budget category select
+                            const categorySelect = modalEl.querySelector('select[name="category"]');
+                            if (categorySelect) {
+                                categorySelect.value = categoryId;
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Sidebar Toggle Logic
+            const sidebar = document.getElementById('app-sidebar');
+            const toggleBtn = document.getElementById('sidebar-toggle');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            
+            if (sidebar && toggleBtn) {
+                // Load state from localStorage on desktop
+                const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+                if (window.innerWidth >= 992) {
+                    if (isCollapsed) {
+                        sidebar.classList.add('collapsed');
+                    }
+                }
+                
+                toggleBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (window.innerWidth >= 992) {
+                        sidebar.classList.toggle('collapsed');
+                        localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
+                    } else {
+                        sidebar.classList.toggle('show');
+                        if (backdrop) backdrop.classList.toggle('show');
+                    }
+                });
+                
+                if (backdrop) {
+                    backdrop.addEventListener('click', function() {
+                        sidebar.classList.remove('show');
+                        backdrop.classList.remove('show');
+                    });
+                }
+                
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth >= 992) {
+                        sidebar.classList.remove('show');
+                        if (backdrop) backdrop.classList.remove('show');
+                        
+                        const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+                        if (isCollapsed) {
+                            sidebar.classList.add('collapsed');
+                        } else {
+                            sidebar.classList.remove('collapsed');
+                        }
+                    } else {
+                        sidebar.classList.remove('collapsed');
+                    }
+                });
+            }
         });
     </script>
     {% block extra_js %}{% endblock %}

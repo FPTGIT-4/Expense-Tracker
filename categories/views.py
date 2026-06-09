@@ -196,7 +196,11 @@ class CategoryListView(LoginRequiredMixin, ListView):
         if search:
             filters.append(f'Search: "{search}"')
         if spent_min or spent_max:
-            spent_str = f'&#8377;{spent_min or "0"} – &#8377;{spent_max or "any"}'
+            try:
+                currency_symbol = user.settings.currency
+            except Exception:
+                currency_symbol = '₹'
+            spent_str = f'{currency_symbol}{spent_min or "0"} – {currency_symbol}{spent_max or "any"}'
             filters.append(f'Spent: {spent_str}')
         if count_min or count_max:
             count_str = f'{count_min or "0"} – {count_max or "any"}'

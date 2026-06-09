@@ -7,8 +7,10 @@ from django.contrib.auth.models import User
 from django.views.generic import CreateView, TemplateView, UpdateView, ListView, DeleteView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django import forms
-from .models import Account, AccountTransfer
-from .forms import AccountForm, TransferForm
+from .models import Account, AccountTransfer, UserSettings
+from .forms import AccountForm, TransferForm, UserSettingsForm
+
+
 from decimal import Decimal
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
@@ -69,6 +71,38 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             messages.success(request, "Profile updated successfully!")
             return redirect('profile')
         return render(request, self.template_name, {'form': form})
+
+
+# ── Settings (view + edit) ──────────────────────────────────────────────────
+class SettingsView(LoginRequiredMixin, TemplateView):
+    template_name = 'accounts/settings.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        settings, created = UserSettings.objects.get_or_create(user=user)
+        context['profile_form'] = ProfileEditForm(instance=user)
+        context['settings_form'] = UserSettingsForm(instance=settings)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        settings, created = UserSettings.objects.get_or_create(user=user)
+        
+        profile_form = ProfileEditForm(request.POST, instance=user)
+        settings_form = UserSettingsForm(request.POST, instance=settings)
+        
+        if profile_form.is_valid() and settings_form.is_valid():
+            profile_form.save()
+            settings_form.save()
+            messages.success(request, "Settings updated successfully!")
+            return redirect('settings')
+            
+        return render(request, self.template_name, {
+            'profile_form': profile_form,
+            'settings_form': settings_form,
+        })
+
 
 
 # ── Financial Account Management CRUD ─────────────────────────────────────────

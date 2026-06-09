@@ -31,8 +31,9 @@ class AddTransactionView(LoginRequiredMixin, View):
                 initial_balance=Decimal('0.00')
             )
 
+        from django.utils import timezone
         context = {
-            'today': datetime.date.today().isoformat(),
+            'today': timezone.localdate(),
             'source_choices': Income.SOURCE_CHOICES,
             'categories': Category.objects.filter(user=request.user).order_by('name'),
             'accounts': Account.objects.filter(user=request.user).exclude(status='CLOSED').order_by('name'),
@@ -205,3 +206,83 @@ class AddTransactionView(LoginRequiredMixin, View):
             'count': created_count,
             'redirect': redirect_url
         })
+
+
+from django.views.generic import ListView, DetailView
+from django.db.models import Q
+from .models import TransactionHistory
+from accounts.models import Account
+
+class TransactionHistoryListView(LoginRequiredMixin, ListView):
+    model = TransactionHistory
+    template_name = 'transactions/transaction_history.html'
+    context_object_name = 'history_list'
+    paginate_by = 25
+
+    def get_queryset(self):
+        qs = TransactionHistory.objects.filter(user=self.request.user).select_related('account', 'to_account')
+
+        # Apply search query
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(
+                Q(category_name__icontains=q) |
+                Q(description__icontains=q) |
+                Q(amount__icontains=q) |
+                Q(activity_type__icontains=q) |
+                Q(expense__name__icontains=q)
+            )
+
+        # Apply date filters
+        date_from = self.request.GET.get('date_from', '').strip()
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+
+        date_to = self.request.GET.get('date_to', '').strip()
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
+
+        # Apply Account filter
+        account_id = self.request.GET.get('account', '').strip()
+        if account_id and account_id != 'all':
+            qs = qs.filter(account_id=account_id)
+
+        # Apply Transaction Type filter
+        activity_type = self.request.GET.get('type', '').strip()
+        if activity_type and activity_type != 'all':
+            qs = qs.filter(activity_type=activity_type)
+
+        # Apply Category name filter
+        category = self.request.GET.get('category', '').strip()
+        if category and category != 'all':
+            qs = qs.filter(category_name__iexact=category)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Expose accounts for dropdown filter
+        context['accounts'] = Account.objects.filter(user=self.request.user)
+        # Expose unique category names for dropdown filter
+        categories = list(TransactionHistory.objects.filter(user=self.request.user)\
+            .values_list('category_name', flat=True).distinct().order_by('category_name'))
+        # Filter out empty or duplicate category names
+        context['categories'] = [c for c in categories if c]
+        # Expose activity choices
+        context['activity_types'] = TransactionHistory.ACTIVITY_CHOICES
+        
+        # Maintain query params in pagination links
+        query_params = self.request.GET.copy()
+        if 'page' in query_params:
+            del query_params['page']
+        context['query_string'] = query_params.urlencode()
+        
+        return context
+
+class TransactionHistoryDetailView(LoginRequiredMixin, DetailView):
+    model = TransactionHistory
+    template_name = 'transactions/transaction_history_detail.html'
+    context_object_name = 'event'
+
+    def get_queryset(self):
+        return TransactionHistory.objects.filter(user=self.request.user)

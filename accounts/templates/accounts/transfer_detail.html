@@ -47,7 +47,7 @@
                     <div class="text-center py-4 rounded-4 mb-5" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04);">
                         <span class="text-muted-custom small uppercase fw-semibold d-block mb-1">Transfer Amount</span>
                         <h1 class="fw-bold font-outfit text-gradient mb-0" style="font-size: 3rem;">
-                            &#8377;{{ transfer.amount|floatformat:2 }}
+                            {{ currency_symbol }}{{ transfer.amount|floatformat:2 }}
                         </h1>
                     </div>
 

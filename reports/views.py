@@ -37,18 +37,19 @@ class ReportsDashboardView(LoginRequiredMixin, TemplateView):
         elif filter_type == 'custom':
             start_str = self.request.GET.get('start_date')
             end_str = self.request.GET.get('end_date')
-            if start_str and end_str:
-                try:
+            try:
+                if start_str:
                     start_date = datetime.datetime.strptime(start_str, '%Y-%m-%d').date()
+                else:
+                    start_date = today
+                
+                if end_str:
                     end_date = datetime.datetime.strptime(end_str, '%Y-%m-%d').date()
-                except ValueError:
-                    start_date = today.replace(day=1)
+                else:
                     end_date = today
-                    filter_type = 'this_month'
-            else:
-                start_date = today.replace(day=1)
+            except ValueError:
+                start_date = today
                 end_date = today
-                filter_type = 'this_month'
         else:
             start_date = today.replace(day=1)
             end_date = today
@@ -88,17 +89,18 @@ def _resolve_date_range(request, today):
     elif filter_type == 'custom':
         start_str = request.GET.get('start_date')
         end_str = request.GET.get('end_date')
-        if start_str and end_str:
-            try:
+        try:
+            if start_str:
                 start_date = datetime.datetime.strptime(start_str, '%Y-%m-%d').date()
+            else:
+                start_date = today
+            
+            if end_str:
                 end_date = datetime.datetime.strptime(end_str, '%Y-%m-%d').date()
-            except ValueError:
-                filter_type = 'this_month'
-                start_date = today.replace(day=1)
+            else:
                 end_date = today
-        else:
-            filter_type = 'this_month'
-            start_date = today.replace(day=1)
+        except ValueError:
+            start_date = today
             end_date = today
     else:
         filter_type = 'this_month'
