@@ -118,16 +118,23 @@ if DATABASE_URL:
         "default": dj_database_url.parse(
             DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True,
+            ssl_require=True
         )
     }
 else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+    # Keep SQLite only for local development if DEBUG=True and DATABASE_URL is not set.
+    # Otherwise, raise an Exception in production.
+    if DEBUG and 'VERCEL' not in os.environ and 'VERCEL_ENV' not in os.environ:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": BASE_DIR / "db.sqlite3",
+            }
         }
-    }
+    else:
+        raise Exception(
+            "DATABASE_URL environment variable is missing. Production deployment cannot use SQLite."
+        )
 
 
 # Password validation
