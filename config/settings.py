@@ -111,30 +111,29 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+import shutil
 
-if DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=True
-        )
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
     }
+}
+
+# Vercel filesystem is read-only. To use SQLite on Vercel, the database file must
+# reside in the writable '/tmp' directory.
+if 'VERCEL' in os.environ or 'VERCEL_ENV' in os.environ:
+    db_path = '/tmp/db.sqlite3'
+    # Copy the initial repository database to /tmp if not already initialized
+    src_db = BASE_DIR / 'db.sqlite3'
+    if os.path.exists(src_db) and not os.path.exists(db_path):
+        try:
+            shutil.copy2(src_db, db_path)
+        except Exception:
+            pass
+    DATABASES['default']['NAME'] = db_path
 else:
-    # Keep SQLite only for local development if DEBUG=True and DATABASE_URL is not set.
-    # Otherwise, raise an Exception in production.
-    if DEBUG and 'VERCEL' not in os.environ and 'VERCEL_ENV' not in os.environ:
-        DATABASES = {
-            "default": {
-                "ENGINE": "django.db.backends.sqlite3",
-                "NAME": BASE_DIR / "db.sqlite3",
-            }
-        }
-    else:
-        raise Exception(
-            "DATABASE_URL environment variable is missing. Production deployment cannot use SQLite."
-        )
+    # Standard local development path
+    DATABASES['default']['NAME'] = BASE_DIR / 'db.sqlite3'
 
 
 # Password validation

@@ -3,8 +3,6 @@ asgiref
 sqlparse
 djangorestframework
 django-filter
-psycopg2-binary>=2.9.0
-dj-database-url>=2.0.0
 whitenoise>=6.0.0
 gunicorn==26.0.0
 contourpy==1.3.1
