@@ -13,6 +13,10 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 import dj_database_url
+from dotenv import load_dotenv
+
+# Load environment variables from .env file if it exists
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,6 +44,7 @@ else:
     if vercel_url:
         ALLOWED_HOSTS.append(vercel_url)
     ALLOWED_HOSTS.append('.vercel.app')
+    ALLOWED_HOSTS.append('.onrender.com')
     
     # Custom hosts via environment variable
     env_hosts = os.environ.get('ALLOWED_HOSTS')
@@ -114,26 +119,26 @@ WSGI_APPLICATION = 'config.wsgi.application'
 import shutil
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
+DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
-# Vercel filesystem is read-only. To use SQLite on Vercel, the database file must
-# reside in the writable '/tmp' directory.
-if 'VERCEL' in os.environ or 'VERCEL_ENV' in os.environ:
-    db_path = '/tmp/db.sqlite3'
-    # Copy the initial repository database to /tmp if not already initialized
-    src_db = BASE_DIR / 'db.sqlite3'
-    if os.path.exists(src_db) and not os.path.exists(db_path):
-        try:
-            shutil.copy2(src_db, db_path)
-        except Exception:
-            pass
-    DATABASES['default']['NAME'] = db_path
-else:
-    # Standard local development path
-    DATABASES['default']['NAME'] = BASE_DIR / 'db.sqlite3'
+# If using SQLite (default fallback) and running on Vercel, use /tmp/db.sqlite3
+if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+    if 'VERCEL' in os.environ or 'VERCEL_ENV' in os.environ:
+        db_path = '/tmp/db.sqlite3'
+        # Copy the initial repository database to /tmp if not already initialized
+        src_db = BASE_DIR / 'db.sqlite3'
+        if os.path.exists(src_db) and not os.path.exists(db_path):
+            try:
+                shutil.copy2(src_db, db_path)
+            except Exception:
+                pass
+        DATABASES['default']['NAME'] = db_path
 
 
 # Password validation

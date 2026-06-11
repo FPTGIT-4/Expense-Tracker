@@ -33,7 +33,11 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 initial_balance=Decimal('0.00')
             )
         
-        accounts = Account.objects.filter(user=user).order_by('name')
+        from accounts.models import annotate_balance
+        accounts = list(annotate_balance(Account.objects.filter(user=user).order_by('name')))
+        for acc in accounts:
+            acc.user = user
+            
         total_balance = sum(acc.current_balance for acc in accounts)
         total_categories = Category.objects.filter(user=user).count()
         # accounts_below_minimum is provided by the context processor (global_accounts_below_minimum)

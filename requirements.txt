@@ -23,3 +23,6 @@ pytz==2025.1
 six==1.17.0
 tk==0.1.0
 tzdata==2025.1
+psycopg2-binary>=2.9.0
+dj-database-url>=2.0.0
+python-dotenv>=1.0.0

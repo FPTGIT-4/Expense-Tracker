@@ -95,8 +95,14 @@ class TransferForm(forms.ModelForm):
             from django.utils import timezone
             self.fields['transfer_date'].initial = timezone.localdate()
         if user:
+            from accounts.context_processors import prefill_user_caches
+            prefill_user_caches(user)
+            
             self.fields['from_account'].queryset = Account.objects.filter(user=user).exclude(status='CLOSED')
+            self.fields['from_account'].choices = [(a.pk, str(a)) for a in user._active_accounts_cache]
+            
             self.fields['to_account'].queryset = Account.objects.filter(user=user).exclude(status='CLOSED')
+            self.fields['to_account'].choices = [(a.pk, str(a)) for a in user._active_accounts_cache]
 
     def clean(self):
         cleaned_data = super().clean()

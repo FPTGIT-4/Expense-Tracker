@@ -32,20 +32,39 @@ class Account(models.Model):
     def __str__(self):
         return f"{self.name} ({self.account_type})"
 
+    def invalidate_cache(self):
+        for attr in ['_current_balance_cache', '_settings_cache', '_total_income', '_total_expense', '_incoming_transfers', '_outgoing_transfers']:
+            if hasattr(self, attr):
+                delattr(self, attr)
+
     @property
     def current_balance(self):
+        if hasattr(self, '_current_balance_cache'):
+            return self._current_balance_cache
+
+        if hasattr(self, '_total_income'):
+            self._current_balance_cache = (
+                Decimal(str(self.initial_balance)) + 
+                Decimal(str(self._total_income)) - 
+                Decimal(str(self._total_expense)) + 
+                Decimal(str(self._incoming_transfers)) - 
+                Decimal(str(self._outgoing_transfers))
+            )
+            return self._current_balance_cache
+
         total_income = self.incomes.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
         total_expense = self.expenses.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
         outgoing_transfers = self.outgoing_transfers.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
         incoming_transfers = self.incoming_transfers.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
         
-        return (
+        self._current_balance_cache = (
             Decimal(str(self.initial_balance)) + 
             Decimal(str(total_income)) - 
             Decimal(str(total_expense)) + 
             Decimal(str(incoming_transfers)) - 
             Decimal(str(outgoing_transfers))
         )
+        return self._current_balance_cache
 
     @property
     def bootstrap_icon(self):
@@ -75,7 +94,14 @@ class Account(models.Model):
         threshold = self.minimum_balance
         if not threshold or threshold <= 0:
             try:
-                threshold = self.user.settings.low_balance_default_minimum
+                user = self.user
+                settings = getattr(user, '_settings_cache', None) or getattr(user, 'settings', None)
+                if settings:
+                    if not hasattr(user, '_settings_cache'):
+                        user._settings_cache = settings
+                    threshold = settings.low_balance_default_minimum
+                else:
+                    threshold = Decimal('0.00')
             except Exception:
                 threshold = Decimal('0.00')
         return threshold
@@ -87,7 +113,14 @@ class Account(models.Model):
             return False
 
         try:
-            show_alerts = self.user.settings.low_balance_alerts
+            user = self.user
+            settings = getattr(user, '_settings_cache', None) or getattr(user, 'settings', None)
+            if settings:
+                if not hasattr(user, '_settings_cache'):
+                    user._settings_cache = settings
+                show_alerts = settings.low_balance_alerts
+            else:
+                show_alerts = True
         except Exception:
             show_alerts = True
 
@@ -137,8 +170,13 @@ class Account(models.Model):
                 pass
 
     def save(self, *args, **kwargs):
+        self.invalidate_cache()
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def refresh_from_db(self, *args, **kwargs):
+        super().refresh_from_db(*args, **kwargs)
+        self.invalidate_cache()
 
 
 from django.utils import timezone
@@ -230,3 +268,23 @@ class UserSettings(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s settings"
+
+
+def annotate_balance(queryset):
+    from django.db.models import Subquery, Sum, OuterRef, DecimalField
+    from django.db.models.functions import Coalesce
+    from income.models import Income
+    from expenses.models import Expense
+    from accounts.models import AccountTransfer
+    
+    incomes_sub = Income.objects.filter(account=OuterRef('pk')).values('account').annotate(total=Sum('amount')).values('total')
+    expenses_sub = Expense.objects.filter(account=OuterRef('pk')).values('account').annotate(total=Sum('amount')).values('total')
+    outgoing_sub = AccountTransfer.objects.filter(from_account=OuterRef('pk')).values('from_account').annotate(total=Sum('amount')).values('total')
+    incoming_sub = AccountTransfer.objects.filter(to_account=OuterRef('pk')).values('to_account').annotate(total=Sum('amount')).values('total')
+    
+    return queryset.annotate(
+        _total_income=Coalesce(Subquery(incomes_sub), Decimal('0.00'), output_field=DecimalField()),
+        _total_expense=Coalesce(Subquery(expenses_sub), Decimal('0.00'), output_field=DecimalField()),
+        _incoming_transfers=Coalesce(Subquery(incoming_sub), Decimal('0.00'), output_field=DecimalField()),
+        _outgoing_transfers=Coalesce(Subquery(outgoing_sub), Decimal('0.00'), output_field=DecimalField()),
+    )

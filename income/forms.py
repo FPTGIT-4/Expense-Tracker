@@ -41,17 +41,15 @@ class IncomeForm(forms.ModelForm):
             from django.utils import timezone
             self.fields['date'].initial = timezone.localdate()
         if user:
-            from decimal import Decimal
-            if not Account.objects.filter(user=user).exists():
-                Account.objects.create(
-                    user=user,
-                    name='Cash',
-                    account_type='Cash',
-                    initial_balance=Decimal('0.00')
-                )
+            from accounts.context_processors import prefill_user_caches
+            prefill_user_caches(user)
+            
             self.fields['labels'].queryset = Label.objects.filter(user=user)
+            self.fields['labels'].choices = [(l.pk, str(l)) for l in user._labels_cache]
             self.fields['labels'].required = False
+            
             self.fields['account'].queryset = Account.objects.filter(user=user).exclude(status='CLOSED')
+            self.fields['account'].choices = [(a.pk, str(a)) for a in user._active_accounts_cache]
             self.fields['account'].empty_label = "Select an account"
             self.fields['account'].required = True
 

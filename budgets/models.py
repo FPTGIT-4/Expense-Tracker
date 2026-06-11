@@ -62,14 +62,24 @@ class Budget(models.Model):
                 )
 
     def save(self, *args, **kwargs):
+        if hasattr(self, '_total_spent'):
+            delattr(self, '_total_spent')
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def refresh_from_db(self, *args, **kwargs):
+        super().refresh_from_db(*args, **kwargs)
+        if hasattr(self, '_total_spent'):
+            delattr(self, '_total_spent')
 
     # --- Calculations Properties ---
 
     @property
     def total_spent(self):
         """Sum of all expenses in that category during the selected month/year."""
+        if hasattr(self, '_total_spent'):
+            return self._total_spent
+            
         from expenses.models import Expense
         total = Expense.objects.filter(
             user=self.user,
@@ -329,6 +339,7 @@ def get_budget_alerts(user, month=None, year=None):
     """
     Returns a list of alerts (both warnings and exceeded) as structured dictionaries.
     Each alert contains key data and a formatted message.
+    Results are request-cached on the user object.
     """
     if month is None or year is None:
         today = timezone.localdate()
@@ -337,24 +348,45 @@ def get_budget_alerts(user, month=None, year=None):
         if year is None:
             year = today.year
 
+    cache_key = f'_budget_alerts_{month}_{year}'
+    cached_alerts = getattr(user, cache_key, None)
+    if cached_alerts is not None:
+        return cached_alerts
+
     try:
-        settings = user.settings
+        settings = getattr(user, '_settings_cache', None)
+        if settings is None:
+            settings = user.settings
+            user._settings_cache = settings
         enable_alerts = settings.enable_budget_alerts
+        currency_symbol = settings.currency
     except Exception:
         enable_alerts = True
-
-    if not enable_alerts:
-        return []
-
-    try:
-        currency_symbol = user.settings.currency
-    except Exception:
         currency_symbol = '₹'
 
+    if not enable_alerts:
+        setattr(user, cache_key, [])
+        return []
+
+    # Fetch active budgets once, select_related category, annotate spent
+    active_budgets = list(annotate_spent(Budget.objects.filter(user=user, is_active=True, month=month, year=year)).select_related('category'))
+    threshold = settings.budget_threshold if hasattr(settings, 'budget_threshold') else 80
+
     alerts = []
+    exceeded = []
+    warnings = []
+
+    for b in active_budgets:
+        if not hasattr(b.user, 'settings'):
+            b.user.settings = settings
+        
+        pct = b.usage_percentage
+        if pct >= 100:
+            exceeded.append(b)
+        elif threshold <= pct < 100:
+            warnings.append(b)
 
     # 1. Exceeded Budgets (sorted first)
-    exceeded = get_exceeded_budgets(user, month, year)
     for b in exceeded:
         exceeded_amount = b.total_spent - b.budget_amount
         if exceeded_amount % 1 == 0:
@@ -376,7 +408,6 @@ def get_budget_alerts(user, month=None, year=None):
         })
 
     # 2. Warning Budgets (sorted second)
-    warnings = get_warning_budgets(user, month, year)
     for b in warnings:
         remaining_amount = b.remaining_budget
         if remaining_amount % 1 == 0:
@@ -395,6 +426,7 @@ def get_budget_alerts(user, month=None, year=None):
             'remaining_str': remaining_str,
         })
 
+    setattr(user, cache_key, alerts)
     return alerts
 
 
@@ -402,6 +434,22 @@ def get_budget_alert_count(user, month=None, year=None):
     """
     Returns the total count of warning alerts + exceeded alerts.
     """
-    warnings_count = len(get_warning_budgets(user, month, year))
-    exceeded_count = len(get_exceeded_budgets(user, month, year))
-    return warnings_count + exceeded_count
+    return len(get_budget_alerts(user, month, year))
+
+
+def annotate_spent(queryset):
+    from django.db.models import Subquery, Sum, OuterRef, DecimalField
+    from django.db.models.functions import Coalesce
+    from expenses.models import Expense
+    from decimal import Decimal
+    
+    expenses_sub = Expense.objects.filter(
+        user=OuterRef('user'),
+        category=OuterRef('category'),
+        date__month=OuterRef('month'),
+        date__year=OuterRef('year')
+    ).values('category').annotate(total=Sum('amount')).values('total')
+    
+    return queryset.annotate(
+        _total_spent=Coalesce(Subquery(expenses_sub), Decimal('0.00'), output_field=DecimalField())
+    )

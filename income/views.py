@@ -22,7 +22,7 @@ class IncomeListView(LoginRequiredMixin, ListView):
     paginate_by = 15
 
     def get_queryset(self):
-        qs = Income.objects.filter(user=self.request.user)
+        qs = Income.objects.filter(user=self.request.user).prefetch_related('labels')
         params = self.request.GET
 
         # Search by description

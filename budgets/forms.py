@@ -57,7 +57,11 @@ class BudgetForm(forms.ModelForm):
             self.fields['year'].initial = now.year
 
         if user:
+            from accounts.context_processors import prefill_user_caches
+            prefill_user_caches(user)
+            
             self.fields['category'].queryset = Category.objects.filter(user=user)
+            self.fields['category'].choices = [(c.pk, str(c)) for c in user._categories_cache]
             self.fields['category'].empty_label = "Select a category"
             self.fields['category'].required = True
 

@@ -10,6 +10,9 @@ from .models import TransactionHistory
 
 @receiver(post_save, sender=Income)
 def save_income_history(sender, instance, created, **kwargs):
+    if kwargs.get('raw'):
+        return
+    instance.account.invalidate_cache()
     amount = Decimal(str(instance.amount))
     balance_after = instance.account.current_balance
     balance_before = balance_after - amount
@@ -40,6 +43,9 @@ def save_income_history(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Expense)
 def save_expense_history(sender, instance, created, **kwargs):
+    if kwargs.get('raw'):
+        return
+    instance.account.invalidate_cache()
     amount = Decimal(str(instance.amount))
     balance_after = instance.account.current_balance
     balance_before = balance_after + amount
@@ -71,6 +77,10 @@ def save_expense_history(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=AccountTransfer)
 def save_transfer_history(sender, instance, created, **kwargs):
+    if kwargs.get('raw'):
+        return
+    instance.from_account.invalidate_cache()
+    instance.to_account.invalidate_cache()
     amount = Decimal(str(instance.amount))
     from_after = instance.from_account.current_balance
     from_before = from_after + amount
@@ -127,6 +137,8 @@ def save_transfer_history(sender, instance, created, **kwargs):
 
 @receiver(pre_save, sender=Account)
 def pre_save_account(sender, instance, **kwargs):
+    if kwargs.get('raw'):
+        return
     if instance.pk:
         try:
             old_instance = Account.objects.get(pk=instance.pk)
@@ -138,6 +150,8 @@ def pre_save_account(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Account)
 def save_account_history(sender, instance, created, **kwargs):
+    if kwargs.get('raw'):
+        return
     if created:
         TransactionHistory.objects.create(
             user=instance.user,
@@ -165,3 +179,20 @@ def save_account_history(sender, instance, created, **kwargs):
                 description=f"Initial balance changed from {old_init} to {instance.initial_balance}.",
                 date=timezone.localdate()
             )
+
+@receiver(post_delete, sender=Income)
+def delete_income_history(sender, instance, **kwargs):
+    if hasattr(instance, 'account') and instance.account:
+        instance.account.invalidate_cache()
+
+@receiver(post_delete, sender=Expense)
+def delete_expense_history(sender, instance, **kwargs):
+    if hasattr(instance, 'account') and instance.account:
+        instance.account.invalidate_cache()
+
+@receiver(post_delete, sender=AccountTransfer)
+def delete_transfer_history(sender, instance, **kwargs):
+    if hasattr(instance, 'from_account') and instance.from_account:
+        instance.from_account.invalidate_cache()
+    if hasattr(instance, 'to_account') and instance.to_account:
+        instance.to_account.invalidate_cache()

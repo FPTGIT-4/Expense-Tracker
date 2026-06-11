@@ -22,7 +22,7 @@ class ExpenseListView(LoginRequiredMixin, ListView):
     paginate_by = 15
 
     def get_queryset(self):
-        qs = Expense.objects.filter(user=self.request.user)
+        qs = Expense.objects.filter(user=self.request.user).select_related('category').prefetch_related('labels')
         params = self.request.GET
 
         # Search by name or description
