@@ -111,48 +111,51 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+import sys
+
+# Force PostgreSQL when running in production or Vercel
+is_vercel = 'VERCEL' in os.environ or 'VERCEL_ENV' in os.environ
+is_production = not DEBUG or is_vercel
+
 db_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
 
+# Startup logging to stderr (Vercel function logs)
+print("--- [STARTUP LOGGING: DATABASE CONFIGURATION] ---", file=sys.stderr)
+print(f"DEBUG status: {DEBUG}", file=sys.stderr)
+print(f"VERCEL environment detected: {is_vercel}", file=sys.stderr)
+print(f"Is Production environment: {is_production}", file=sys.stderr)
+print(f"DATABASE_URL configured: {bool(os.environ.get('DATABASE_URL'))}", file=sys.stderr)
+print(f"POSTGRES_URL configured: {bool(os.environ.get('POSTGRES_URL'))}", file=sys.stderr)
+
 if db_url:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=db_url,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
-    # Force the engine to PostgreSQL and enforce SSL in production
-    DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
-    if not DEBUG:
-        DATABASES['default']['OPTIONS'] = {
-            'sslmode': 'require',
+    try:
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=db_url,
+                conn_max_age=600,
+                conn_health_checks=True,
+            )
         }
-elif any(os.environ.get(k) for k in ['DB_NAME', 'POSTGRES_DB', 'DB_USER', 'POSTGRES_USER', 'DB_HOST', 'POSTGRES_HOST']):
-    # Support connection via individual database environment variables if URL is not provided
-    DATABASES = {
-        'default': {
-            'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
-            'NAME': os.environ.get('DB_NAME', os.environ.get('POSTGRES_DB', os.environ.get('POSTGRES_DATABASE', ''))),
-            'USER': os.environ.get('DB_USER', os.environ.get('POSTGRES_USER', '')),
-            'PASSWORD': os.environ.get('DB_PASSWORD', os.environ.get('POSTGRES_PASSWORD', '')),
-            'HOST': os.environ.get('DB_HOST', os.environ.get('POSTGRES_HOST', '')),
-            'PORT': os.environ.get('DB_PORT', os.environ.get('POSTGRES_PORT', '')),
-        }
-    }
-    if not DEBUG:
-        DATABASES['default']['OPTIONS'] = {
-            'sslmode': 'require',
-        }
-else:
-    # If running on Vercel but database parameters are missing, raise ImproperlyConfigured
-    if os.environ.get('VERCEL') == '1':
+        # Enforce PostgreSQL engine and SSL in production
+        DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
+        if not DEBUG:
+            DATABASES['default']['OPTIONS'] = {
+                'sslmode': 'require',
+            }
+    except Exception as e:
         from django.core.exceptions import ImproperlyConfigured
-        raise ImproperlyConfigured(
-            "Database connection URL is missing! You are running on Vercel, but "
-            "neither 'DATABASE_URL' nor 'POSTGRES_URL' environment variables are configured in Vercel. "
-            "Please add your PostgreSQL connection string in the Vercel Project Settings."
-        )
-    
+        print(f"DATABASE CONFIG ERROR: {e}", file=sys.stderr)
+        raise ImproperlyConfigured(f"Failed to configure PostgreSQL from DATABASE_URL: {e}")
+elif is_production:
+    from django.core.exceptions import ImproperlyConfigured
+    err_msg = (
+        "Database connection URL is missing! You are running in a production or Vercel environment, "
+        "but neither 'DATABASE_URL' nor 'POSTGRES_URL' environment variables are configured. "
+        "Please add your PostgreSQL connection string in the Vercel Project Settings."
+    )
+    print(f"DATABASE CONFIG ERROR: {err_msg}", file=sys.stderr)
+    raise ImproperlyConfigured(err_msg)
+else:
     # Fall back to SQLite for local development only
     DATABASES = {
         'default': {
@@ -160,6 +163,9 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+print(f"Active Database Engine: {DATABASES['default']['ENGINE']}", file=sys.stderr)
+print("-------------------------------------------------", file=sys.stderr)
 
 
 # Password validation
