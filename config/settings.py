@@ -111,61 +111,23 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-import sys
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# Force PostgreSQL when running in production or Vercel
-is_vercel = 'VERCEL' in os.environ or 'VERCEL_ENV' in os.environ
-is_production = not DEBUG or is_vercel
-
-db_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
-
-# Startup logging to stderr (Vercel function logs)
-print("--- [STARTUP LOGGING: DATABASE CONFIGURATION] ---", file=sys.stderr)
-print(f"DEBUG status: {DEBUG}", file=sys.stderr)
-print(f"VERCEL environment detected: {is_vercel}", file=sys.stderr)
-print(f"Is Production environment: {is_production}", file=sys.stderr)
-print(f"DATABASE_URL configured: {bool(os.environ.get('DATABASE_URL'))}", file=sys.stderr)
-print(f"POSTGRES_URL configured: {bool(os.environ.get('POSTGRES_URL'))}", file=sys.stderr)
-
-if db_url:
-    try:
-        DATABASES = {
-            'default': dj_database_url.config(
-                default=db_url,
-                conn_max_age=600,
-                conn_health_checks=True,
-            )
-        }
-        # Enforce PostgreSQL engine and SSL in production
-        DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
-        if not DEBUG:
-            DATABASES['default']['OPTIONS'] = {
-                'sslmode': 'require',
-            }
-    except Exception as e:
-        from django.core.exceptions import ImproperlyConfigured
-        print(f"DATABASE CONFIG ERROR: {e}", file=sys.stderr)
-        raise ImproperlyConfigured(f"Failed to configure PostgreSQL from DATABASE_URL: {e}")
-elif is_production:
-    from django.core.exceptions import ImproperlyConfigured
-    err_msg = (
-        "Database connection URL is missing! You are running in a production or Vercel environment, "
-        "but neither 'DATABASE_URL' nor 'POSTGRES_URL' environment variables are configured. "
-        "Please add your PostgreSQL connection string in the Vercel Project Settings."
-    )
-    print(f"DATABASE CONFIG ERROR: {err_msg}", file=sys.stderr)
-    raise ImproperlyConfigured(err_msg)
-else:
-    # Fall back to SQLite for local development only
+if DATABASE_URL:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-
-print(f"Active Database Engine: {DATABASES['default']['ENGINE']}", file=sys.stderr)
-print("-------------------------------------------------", file=sys.stderr)
 
 
 # Password validation
