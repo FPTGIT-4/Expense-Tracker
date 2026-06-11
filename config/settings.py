@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +22,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-p)+=suxatfa@r($_8-g)yoc0p_7ih-^oo7*d85lq!iy=#50v2!'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-p)+=suxatfa@r($_8-g)yoc0p_7ih-^oo7*d85lq!iy=#50v2!')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Force DEBUG=False on Vercel unless explicitly overridden to True via environment variable
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
+if os.environ.get('VERCEL') == '1':
+    DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+
+if DEBUG:
+    ALLOWED_HOSTS.append('*')
+else:
+    # Production hosts
+    vercel_url = os.environ.get('VERCEL_URL')
+    if vercel_url:
+        ALLOWED_HOSTS.append(vercel_url)
+    ALLOWED_HOSTS.append('.vercel.app')
+    
+    # Custom hosts via environment variable
+    env_hosts = os.environ.get('ALLOWED_HOSTS')
+    if env_hosts:
+        ALLOWED_HOSTS.extend([host.strip() for host in env_hosts.split(',') if host.strip()])
 
 
 # Application definition
@@ -56,6 +75,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise for static files serving
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -98,6 +118,37 @@ DATABASES = {
     }
 }
 
+# Use PostgreSQL if DATABASE_URL or POSTGRES_URL is configured (standard on Vercel)
+db_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
+if db_url:
+    DATABASES['default'] = dj_database_url.config(
+        default=db_url,
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+    # Vercel Postgres/Neon requires SSL in production
+    if not DEBUG:
+        DATABASES['default']['OPTIONS'] = {
+            'sslmode': 'require',
+        }
+elif any(os.environ.get(k) for k in ['DB_NAME', 'POSTGRES_DB', 'DB_USER', 'POSTGRES_USER', 'DB_HOST', 'POSTGRES_HOST']):
+    # Support connection via individual database environment variables if URL is not provided
+    DATABASES['default'] = {
+        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.environ.get('DB_NAME', os.environ.get('POSTGRES_DB', os.environ.get('POSTGRES_DATABASE', ''))),
+        'USER': os.environ.get('DB_USER', os.environ.get('POSTGRES_USER', '')),
+        'PASSWORD': os.environ.get('DB_PASSWORD', os.environ.get('POSTGRES_PASSWORD', '')),
+        'HOST': os.environ.get('DB_HOST', os.environ.get('POSTGRES_HOST', '')),
+        'PORT': os.environ.get('DB_PORT', os.environ.get('POSTGRES_PORT', '')),
+    }
+elif os.environ.get('VERCEL') == '1':
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured(
+        "Database connection URL is missing! You are running on Vercel, but "
+        "neither 'DATABASE_URL' nor 'POSTGRES_URL' environment variables are configured in Vercel. "
+        "Please add your PostgreSQL connection string in the Vercel Project Settings."
+    )
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -138,6 +189,18 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise storage configuration for compressed and cached static files
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+WHITENOISE_MANIFEST_STRICT = False
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
