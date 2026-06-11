@@ -111,43 +111,55 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-# Use PostgreSQL if DATABASE_URL or POSTGRES_URL is configured (standard on Vercel)
 db_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
+
 if db_url:
-    DATABASES['default'] = dj_database_url.config(
-        default=db_url,
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-    # Vercel Postgres/Neon requires SSL in production
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=db_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+    # Force the engine to PostgreSQL and enforce SSL in production
+    DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
     if not DEBUG:
         DATABASES['default']['OPTIONS'] = {
             'sslmode': 'require',
         }
 elif any(os.environ.get(k) for k in ['DB_NAME', 'POSTGRES_DB', 'DB_USER', 'POSTGRES_USER', 'DB_HOST', 'POSTGRES_HOST']):
     # Support connection via individual database environment variables if URL is not provided
-    DATABASES['default'] = {
-        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.environ.get('DB_NAME', os.environ.get('POSTGRES_DB', os.environ.get('POSTGRES_DATABASE', ''))),
-        'USER': os.environ.get('DB_USER', os.environ.get('POSTGRES_USER', '')),
-        'PASSWORD': os.environ.get('DB_PASSWORD', os.environ.get('POSTGRES_PASSWORD', '')),
-        'HOST': os.environ.get('DB_HOST', os.environ.get('POSTGRES_HOST', '')),
-        'PORT': os.environ.get('DB_PORT', os.environ.get('POSTGRES_PORT', '')),
+    DATABASES = {
+        'default': {
+            'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.environ.get('DB_NAME', os.environ.get('POSTGRES_DB', os.environ.get('POSTGRES_DATABASE', ''))),
+            'USER': os.environ.get('DB_USER', os.environ.get('POSTGRES_USER', '')),
+            'PASSWORD': os.environ.get('DB_PASSWORD', os.environ.get('POSTGRES_PASSWORD', '')),
+            'HOST': os.environ.get('DB_HOST', os.environ.get('POSTGRES_HOST', '')),
+            'PORT': os.environ.get('DB_PORT', os.environ.get('POSTGRES_PORT', '')),
+        }
     }
-elif os.environ.get('VERCEL') == '1':
-    from django.core.exceptions import ImproperlyConfigured
-    raise ImproperlyConfigured(
-        "Database connection URL is missing! You are running on Vercel, but "
-        "neither 'DATABASE_URL' nor 'POSTGRES_URL' environment variables are configured in Vercel. "
-        "Please add your PostgreSQL connection string in the Vercel Project Settings."
-    )
+    if not DEBUG:
+        DATABASES['default']['OPTIONS'] = {
+            'sslmode': 'require',
+        }
+else:
+    # If running on Vercel but database parameters are missing, raise ImproperlyConfigured
+    if os.environ.get('VERCEL') == '1':
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured(
+            "Database connection URL is missing! You are running on Vercel, but "
+            "neither 'DATABASE_URL' nor 'POSTGRES_URL' environment variables are configured in Vercel. "
+            "Please add your PostgreSQL connection string in the Vercel Project Settings."
+        )
+    
+    # Fall back to SQLite for local development only
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
