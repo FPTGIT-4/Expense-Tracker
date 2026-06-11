@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from categories.models import Label
 
 class Income(models.Model):
     SOURCE_CHOICES = [
@@ -17,6 +18,7 @@ class Income(models.Model):
     source = models.CharField(max_length=50, choices=SOURCE_CHOICES)
     date = models.DateField()
     description = models.TextField(blank=True, null=True)
+    labels = models.ManyToManyField(Label, blank=True, related_name='incomes')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

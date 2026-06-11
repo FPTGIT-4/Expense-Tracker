@@ -1,0 +1,538 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics | Expense Tracker{% endblock %}
+
+{% block page_title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Filters & Header Section -->
+    <div class="card-hero p-4 rounded-4 text-white mb-5 shadow-lg">
+        <form method="get" action="{% url 'analytics-dashboard' %}" id="analyticsFilterForm">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <h4 class="fw-bold font-outfit mb-1"><i class="fa-solid fa-chart-line me-2 text-gradient"></i>Visual Insights</h4>
+                    <p class="text-muted-custom small mb-0">Track trends, comparisons, and performance across all accounts.</p>
+                </div>
+                
+                <!-- Date Filter Presets -->
+                <div class="col-md-4">
+                    <label class="form-label text-muted-custom small fw-medium uppercase">Date Filter</label>
+                    <select name="date_filter" id="dateFilterSelect" class="form-select form-select-sm bg-dark-custom text-white border-glass" onchange="toggleCustomDates(this.value)">
+                        <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                        <option value="this_week" {% if date_filter == 'this_week' %}selected{% endif %}>This Week</option>
+                        <option value="this_month" {% if date_filter == 'this_month' %}selected{% endif %}>This Month</option>
+                        <option value="this_year" {% if date_filter == 'this_year' %}selected{% endif %}>This Year</option>
+                        <option value="custom" {% if date_filter == 'custom' %}selected{% endif %}>Custom Range</option>
+                    </select>
+                </div>
+
+                <!-- Custom Range inputs -->
+                <div class="col-md-4 d-flex gap-2" id="customDateInputs" style="{% if date_filter != 'custom' %}display: none !important;{% endif %}">
+                    <div>
+                        <label class="form-label text-muted-custom small fw-medium uppercase">Start Date</label>
+                        <input type="date" name="start_date" value="{{ start_date_val }}" class="form-control form-control-sm bg-dark-custom text-white border-glass">
+                    </div>
+                    <div>
+                        <label class="form-label text-muted-custom small fw-medium uppercase">End Date</label>
+                        <input type="date" name="end_date" value="{{ end_date_val }}" class="form-control form-control-sm bg-dark-custom text-white border-glass">
+                    </div>
+                </div>
+
+                <div class="col-md-2 ms-auto d-grid">
+                    <button type="submit" class="btn btn-primary-gradient btn-sm rounded-pill py-2 font-outfit fw-semibold shadow-lg">
+                        <i class="fa-solid fa-filter me-1"></i> Apply
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ── SUMMARY KPI CARDS ────────────────────────────────────────────── -->
+    <div class="row g-4 mb-5">
+        <!-- Total Income -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="feature-icon mb-0 color-1 me-3">
+                        <i class="fa-solid fa-circle-arrow-down"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Income</p>
+                        <h3 class="fw-bold mb-0 font-outfit text-success">{{ currency_symbol }}{{ total_income|floatformat:2 }}</h3>
+                    </div>
+                </div>
+                <div class="border-top pt-2 mt-2" style="border-top-color: rgba(255,255,255,0.06) !important;">
+                    <div class="d-flex justify-content-between small text-muted-custom">
+                        <span>Personal: <strong>{{ currency_symbol }}{{ personal_income_sum|floatformat:2 }}</strong></span>
+                        <span>Company: <strong>{{ currency_symbol }}{{ company_income_sum|floatformat:2 }}</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Expenses -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="feature-icon mb-0 color-3 me-3">
+                        <i class="fa-solid fa-circle-arrow-up"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Expenses</p>
+                        <h3 class="fw-bold mb-0 font-outfit text-danger">{{ currency_symbol }}{{ total_expenses|floatformat:2 }}</h3>
+                    </div>
+                </div>
+                <div class="border-top pt-2 mt-2" style="border-top-color: rgba(255,255,255,0.06) !important;">
+                    <div class="d-flex justify-content-between small text-muted-custom">
+                        <span>Personal: <strong>{{ currency_symbol }}{{ personal_expense_sum|floatformat:2 }}</strong></span>
+                        <span>Company: <strong>{{ currency_symbol }}{{ company_expense_sum|floatformat:2 }}</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Savings -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="feature-icon mb-0 {% if net_savings >= 0 %}color-2{% else %}color-3{% endif %} me-3">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Net Savings</p>
+                        <h3 class="fw-bold mb-0 font-outfit {% if net_savings >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ currency_symbol }}{{ net_savings|floatformat:2 }}
+                        </h3>
+                    </div>
+                </div>
+                <div class="border-top pt-2 mt-2" style="border-top-color: rgba(255,255,255,0.06) !important;">
+                    <div class="d-flex justify-content-between small text-muted-custom">
+                        <span>Personal: <strong>{{ currency_symbol }}{{ personal_net_savings|floatformat:2 }}</strong></span>
+                        <span>Company: <strong>{{ currency_symbol }}{{ company_net|floatformat:2 }}</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Usage -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="feature-icon mb-0 color-1 me-3">
+                        <i class="bi bi-piggy-bank"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Budget Utilization</p>
+                        <h3 class="fw-bold mb-0 font-outfit">{{ budget_usage_pct|floatformat:1 }}%</h3>
+                    </div>
+                </div>
+                <div class="progress mb-2" style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 4px;">
+                    <div class="progress-bar bg-primary-gradient" role="progressbar" style="width: {{ budget_usage_pct }}%;" aria-valuenow="{{ budget_usage_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="d-flex justify-content-between small text-muted-custom">
+                    <span>Spent: {{ currency_symbol }}{{ total_budget_spent|floatformat:0 }}</span>
+                    <span>Limit: {{ currency_symbol }}{{ total_budget_amount|floatformat:0 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ROW 2: GOALS, DEBTS, COMPANY SUMMARY ─────────────────────────── -->
+    <div class="row g-4 mb-5">
+        <!-- Goal Progress Card -->
+        <div class="col-lg-4">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-bullseye text-gradient me-2"></i>Goals Progress</h5>
+                <div class="d-flex justify-content-between align-items-end mb-2">
+                    <span class="text-muted-custom small">Overall Saved</span>
+                    <span class="fw-bold text-white font-outfit" style="font-size: 1.15rem;">{{ goals_progress_pct|floatformat:1 }}%</span>
+                </div>
+                <div class="progress mb-3" style="height: 10px; background: rgba(255,255,255,0.08); border-radius: 6px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ goals_progress_pct }}%; background: linear-gradient(135deg, #10b981, #059669) !important;" aria-valuenow="{{ goals_progress_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="row g-2 text-center text-md-start">
+                    <div class="col-6">
+                        <span class="text-muted-custom small d-block">Saved Amount</span>
+                        <span class="fw-semibold text-success">{{ currency_symbol }}{{ total_goals_current|floatformat:2 }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted-custom small d-block">Target Goal</span>
+                        <span class="fw-semibold text-white">{{ currency_symbol }}{{ total_goals_target|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debts Summary Card -->
+        <div class="col-lg-4">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-hand-holding-dollar text-gradient-alt me-2"></i>Active Debts</h5>
+                <div class="row g-3">
+                    <div class="col-6 text-center py-2 rounded-3" style="background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.12);">
+                        <span class="text-muted-custom small d-block">Money I Owe</span>
+                        <span class="fw-bold text-danger font-outfit" style="font-size: 1.1rem;">{{ currency_symbol }}{{ total_borrowed_remaining|floatformat:2 }}</span>
+                    </div>
+                    <div class="col-6 text-center py-2 rounded-3" style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.12);">
+                        <span class="text-muted-custom small d-block">Owed to Me</span>
+                        <span class="fw-bold text-success font-outfit" style="font-size: 1.1rem;">{{ currency_symbol }}{{ total_lent_remaining|floatformat:2 }}</span>
+                    </div>
+                </div>
+                <div class="border-top pt-3 mt-3 text-center" style="border-top-color: rgba(255,255,255,0.06) !important;">
+                    <span class="text-muted-custom small">Net Debt Exposure:</span>
+                    <strong class="font-outfit ms-2 {% if net_debt_exposure >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {% if net_debt_exposure >= 0 %}+{% endif %}{{ currency_symbol }}{{ net_debt_exposure|floatformat:2 }}
+                    </strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Account Performance Card -->
+        <div class="col-lg-4">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <h5 class="fw-bold font-outfit mb-3"><i class="bi bi-building text-gradient me-2"></i>Company Performance</h5>
+                <div class="company-perf-list" style="max-height: 120px; overflow-y: auto;">
+                    {% for co in company_perf %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 {% if not forloop.last %}border-bottom{% endif %}" style="border-bottom-color: rgba(255,255,255,0.04) !important;">
+                        <div>
+                            <span class="fw-semibold text-white small d-block">{{ co.account.name }}</span>
+                            <span class="text-muted-custom" style="font-size: 0.72rem;">Balance: {{ currency_symbol }}{{ co.current_balance|floatformat:0 }}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold font-outfit text-xs {% if co.net_in_range >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {% if co.net_in_range >= 0 %}+{% endif %}{{ currency_symbol }}{{ co.net_in_range|floatformat:2 }}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted-custom small text-center py-3 mb-0">No company accounts configured.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ROW 3: ANALYTICS CARDS (6 Insights) ────────────────────────── -->
+    <h5 class="fw-bold font-outfit text-white mb-4"><i class="fa-solid fa-lightbulb me-2 text-gradient"></i>Analytics Insights</h5>
+    <div class="row g-4 mb-5">
+        <!-- Top Spending Category -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-hero p-4 rounded-4 text-white h-100 d-flex align-items-center gap-3">
+                <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(239, 68, 68, 0.12); color: #f87171; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">
+                    <i class="fa-solid fa-fire-flame-curved"></i>
+                </div>
+                <div>
+                    <span class="text-muted-custom small d-block">Top Spending Category</span>
+                    <h5 class="fw-bold font-outfit text-white mb-0">{{ top_spending_category }}</h5>
+                    <span class="small text-danger fw-semibold">{{ currency_symbol }}{{ top_spending_amount|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Highest Expense -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-hero p-4 rounded-4 text-white h-100 d-flex align-items-center gap-3">
+                <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(236, 72, 153, 0.12); color: #f472b6; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+                <div>
+                    <span class="text-muted-custom small d-block">Highest Expense Record</span>
+                    <h5 class="fw-bold font-outfit text-white text-truncate mb-0" style="max-width: 180px;">{{ highest_expense_name }}</h5>
+                    <span class="small text-danger fw-semibold">{{ currency_symbol }}{{ highest_expense_amount|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Highest Income -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-hero p-4 rounded-4 text-white h-100 d-flex align-items-center gap-3">
+                <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(16, 185, 129, 0.12); color: #34d399; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">
+                    <i class="fa-solid fa-money-bill-trend-up"></i>
+                </div>
+                <div>
+                    <span class="text-muted-custom small d-block">Highest Income Source</span>
+                    <h5 class="fw-bold font-outfit text-white text-truncate mb-0" style="max-width: 180px;">{{ highest_income_source }}</h5>
+                    <span class="small text-success fw-semibold">{{ currency_symbol }}{{ highest_income_amount|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Best Saving Month -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-hero p-4 rounded-4 text-white h-100 d-flex align-items-center gap-3">
+                <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(99, 102, 241, 0.12); color: #818cf8; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">
+                    <i class="fa-solid fa-trophy text-gradient"></i>
+                </div>
+                <div>
+                    <span class="text-muted-custom small d-block">Best Saving Month ({{ current_year }})</span>
+                    <h5 class="fw-bold font-outfit text-white mb-0">{{ best_month_name }}</h5>
+                    <span class="small text-success fw-semibold">Net saved: {{ currency_symbol }}{{ best_month_savings|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Month Summary -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-hero p-4 rounded-4 text-white h-100 d-flex align-items-center gap-3">
+                <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(139, 92, 246, 0.12); color: #a78bfa; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div>
+                    <span class="text-muted-custom small d-block">Current Month Net</span>
+                    <h5 class="fw-bold font-outfit {% if current_month_savings >= 0 %}text-success{% else %}text-danger{% endif %} mb-0">
+                        {{ currency_symbol }}{{ current_month_savings|floatformat:2 }}
+                    </h5>
+                    <span class="small text-muted-custom" style="font-size: 0.75rem;">
+                        In: {{ currency_symbol }}{{ current_month_income|floatformat:0 }} | Out: {{ currency_symbol }}{{ current_month_expenses|floatformat:0 }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Transactions -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-hero p-4 rounded-4 text-white h-100 d-flex align-items-center gap-3">
+                <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(245, 158, 11, 0.12); color: #fbbf24; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">
+                    <i class="fa-solid fa-arrows-spin"></i>
+                </div>
+                <div>
+                    <span class="text-muted-custom small d-block">Total Transactions logged</span>
+                    <h5 class="fw-bold font-outfit text-white mb-0">{{ total_transactions_count }} Transactions</h5>
+                    <span class="small text-muted-custom" style="font-size: 0.75rem;">Within selected filter range</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── CHARTS SECTION ────────────────────────────────────────────── -->
+    <h5 class="fw-bold font-outfit text-white mb-4"><i class="fa-solid fa-chart-column me-2 text-gradient"></i>Visual Charts</h5>
+
+    <!-- Row 1 Charts -->
+    <div class="row g-4 mb-4">
+        <!-- 1. Income vs Expense Grouped Column -->
+        <div class="col-lg-6">
+            <div class="card-feature p-4 rounded-4 text-white">
+                <h6 class="fw-bold font-outfit mb-3 text-white"><i class="fa-solid fa-chart-column me-2 text-primary"></i>Income vs Expense (Personal vs Company)</h6>
+                <div id="incVsExpChart"></div>
+            </div>
+        </div>
+
+        <!-- 2. Category Distribution Doughnut -->
+        <div class="col-lg-6">
+            <div class="card-feature p-4 rounded-4 text-white">
+                <h6 class="fw-bold font-outfit mb-3 text-white"><i class="fa-solid fa-chart-pie me-2 text-danger"></i>Category Expenses Distribution</h6>
+                <div id="categoryDistChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2 Charts -->
+    <div class="row g-4 mb-4">
+        <!-- 3. Monthly Cashflow Trend (Line Area) -->
+        <div class="col-12">
+            <div class="card-feature p-4 rounded-4 text-white">
+                <h6 class="fw-bold font-outfit mb-3 text-white"><i class="fa-solid fa-chart-line me-2 text-gradient"></i>Monthly Cashflow Trend ({{ current_year }})</h6>
+                <div id="monthlyTrendChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3 Charts -->
+    <div class="row g-4">
+        <!-- 4. Budget Utilization column comparison -->
+        <div class="col-12">
+            <div class="card-feature p-4 rounded-4 text-white">
+                <h6 class="fw-bold font-outfit mb-3 text-white"><i class="bi bi-bar-chart-line me-2 text-gradient-alt"></i>Budget Allocated vs Spent (Current Month)</h6>
+                <div id="budgetUtilChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ApexCharts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script>
+    // Toggle display of custom dates range input
+    function toggleCustomDates(val) {
+        const customDiv = document.getElementById('customDateInputs');
+        if (val === 'custom') {
+            customDiv.setAttribute('style', 'display: flex !important;');
+        } else {
+            customDiv.setAttribute('style', 'display: none !important;');
+        }
+    }
+
+    // Charting Configurations
+    document.addEventListener("DOMContentLoaded", function() {
+        // Shared Theme Settings
+        const themeMode = document.documentElement.getAttribute('data-theme') || 'dark';
+        
+        // ── 1. Income vs Expense Chart ───────────────────────────────────────
+        const incVsExpData = {{ chart_inc_vs_exp|safe }};
+        const incVsExpOptions = {
+            chart: {
+                type: 'bar',
+                height: 320,
+                background: 'transparent',
+                toolbar: { show: false }
+            },
+            theme: { mode: themeMode },
+            colors: ['#10b981', '#ec4899'],
+            series: [
+                { name: 'Income', data: incVsExpData.income },
+                { name: 'Expense', data: incVsExpData.expense }
+            ],
+            xaxis: {
+                categories: incVsExpData.categories,
+                labels: { style: { colors: '#9ca3af' } }
+            },
+            yaxis: {
+                labels: {
+                    style: { colors: '#9ca3af' },
+                    formatter: function(val) { return "{{ currency_symbol }}" + val.toLocaleString(); }
+                }
+            },
+            dataLabels: { enabled: false },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '45%',
+                    borderRadius: 6
+                }
+            },
+            grid: { borderColor: 'rgba(255,255,255,0.05)' },
+            legend: { labels: { colors: '#f3f4f6' } }
+        };
+        new ApexCharts(document.querySelector("#incVsExpChart"), incVsExpOptions).render();
+
+        // ── 2. Category Distribution Doughnut ───────────────────────────────
+        const catDistData = {{ chart_category_dist|safe }};
+        const catDistOptions = {
+            chart: {
+                type: 'donut',
+                height: 320,
+                background: 'transparent'
+            },
+            theme: { mode: themeMode },
+            colors: ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#14b8a6'],
+            series: catDistData.series,
+            labels: catDistData.labels,
+            dataLabels: { enabled: false },
+            stroke: { show: false },
+            legend: {
+                position: 'bottom',
+                labels: { colors: '#f3f4f6' }
+            },
+            tooltip: {
+                y: { formatter: function(val) { return "{{ currency_symbol }}" + val.toLocaleString(); } }
+            },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '70%',
+                        background: 'transparent',
+                        labels: {
+                            show: true,
+                            name: { show: true, color: '#9ca3af' },
+                            value: {
+                                show: true,
+                                color: '#ffffff',
+                                formatter: function (val) { return "{{ currency_symbol }}" + Number(val).toLocaleString(); }
+                            },
+                            total: {
+                                show: true,
+                                color: '#ffffff',
+                                label: 'Total Spent',
+                                formatter: function (w) {
+                                    return "{{ currency_symbol }}" + w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        new ApexCharts(document.querySelector("#categoryDistChart"), catDistOptions).render();
+
+        // ── 3. Monthly Trend Chart (Area Gradient) ──────────────────────────
+        const trendData = {{ chart_monthly_trend|safe }};
+        const trendOptions = {
+            chart: {
+                type: 'area',
+                height: 350,
+                background: 'transparent',
+                toolbar: { show: false }
+            },
+            theme: { mode: themeMode },
+            colors: ['#10b981', '#ec4899'],
+            stroke: { curve: 'smooth', width: 3 },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.35,
+                    opacityTo: 0.05,
+                    stops: [0, 90, 100]
+                }
+            },
+            series: [
+                { name: 'Income', data: trendData.income },
+                { name: 'Expense', data: trendData.expense }
+            ],
+            xaxis: {
+                categories: trendData.categories,
+                labels: { style: { colors: '#9ca3af' } }
+            },
+            yaxis: {
+                labels: {
+                    style: { colors: '#9ca3af' },
+                    formatter: function(val) { return "{{ currency_symbol }}" + val.toLocaleString(); }
+                }
+            },
+            dataLabels: { enabled: false },
+            grid: { borderColor: 'rgba(255,255,255,0.05)' },
+            legend: { labels: { colors: '#f3f4f6' } }
+        };
+        new ApexCharts(document.querySelector("#monthlyTrendChart"), trendOptions).render();
+
+        // ── 4. Budget Utilization (Allocated vs Spent) ─────────────────────
+        const budgetData = {{ chart_budget_util|safe }};
+        const budgetOptions = {
+            chart: {
+                type: 'bar',
+                height: 350,
+                background: 'transparent',
+                toolbar: { show: false }
+            },
+            theme: { mode: themeMode },
+            colors: ['#6366f1', '#f59e0b'],
+            series: [
+                { name: 'Budget Limit', data: budgetData.allocated },
+                { name: 'Actual Spent', data: budgetData.spent }
+            ],
+            xaxis: {
+                categories: budgetData.categories,
+                labels: { style: { colors: '#9ca3af' } }
+            },
+            yaxis: {
+                labels: {
+                    style: { colors: '#9ca3af' },
+                    formatter: function(val) { return "{{ currency_symbol }}" + val.toLocaleString(); }
+                }
+            },
+            dataLabels: { enabled: false },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '55%',
+                    borderRadius: 4
+                }
+            },
+            grid: { borderColor: 'rgba(255,255,255,0.05)' },
+            legend: { labels: { colors: '#f3f4f6' } }
+        };
+        new ApexCharts(document.querySelector("#budgetUtilChart"), budgetOptions).render();
+    });
+</script>
+{% endblock %}

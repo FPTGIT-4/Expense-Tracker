@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}Company Reports | Expense Tracker{% endblock %}
+
+{% block page_title %}Company Reports{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8">
+            <p class="text-muted-custom mb-0">Analyze business cash flows, corporate expenses, and net profit margins.</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-2 mt-md-0">
+            <span class="badge bg-glass border border-glass text-muted-custom px-3 py-2 rounded-pill font-outfit fw-medium">
+                Active Range: {{ start_date|date:"M d, Y" }} - {{ end_date|date:"M d, Y" }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="card-hero p-4 rounded-4 text-white mb-4">
+        <form method="get" action="{% url 'company-reports' %}" id="filterForm">
+            <div class="row g-3 align-items-end">
+                <!-- Company Select -->
+                <div class="col-md-4">
+                    <label class="form-label text-muted-custom small fw-medium uppercase">Filter By Company</label>
+                    <select name="company" class="form-select bg-dark-custom text-white border-glass" onchange="this.form.submit()">
+                        <option value="all">All Companies</option>
+                        {% for comp in company_accounts %}
+                        <option value="{{ comp.pk }}" {% if active_company_id == comp.pk|stringformat:'s' %}selected{% endif %}>
+                            {{ comp.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Date Range Presets -->
+                <div class="col-md-8">
+                    <label class="form-label text-muted-custom small fw-medium uppercase">Date Filter</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="?company={{ active_company_id }}&date_filter=today" class="btn {% if date_filter == 'today' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1.5 text-sm">Today</a>
+                        <a href="?company={{ active_company_id }}&date_filter=this_week" class="btn {% if date_filter == 'this_week' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1.5 text-sm">This Week</a>
+                        <a href="?company={{ active_company_id }}&date_filter=this_month" class="btn {% if date_filter == 'this_month' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1.5 text-sm">This Month</a>
+                        <a href="?company={{ active_company_id }}&date_filter=this_year" class="btn {% if date_filter == 'this_year' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1.5 text-sm">This Year</a>
+                        <a href="?company={{ active_company_id }}&date_filter=custom" class="btn {% if date_filter == 'custom' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1.5 text-sm">Custom Range</a>
+                    </div>
+                </div>
+            </div>
+
+            {% if date_filter == 'custom' %}
+            <div class="row g-2 align-items-end mt-3 pt-3 border-top border-glass">
+                <input type="hidden" name="date_filter" value="custom">
+                <div class="col-sm-5 col-md-4">
+                    <label class="form-label text-muted-custom small fw-medium">Start Date</label>
+                    <input type="date" name="date_from" value="{{ start_date_val }}" class="form-control bg-dark-custom text-white border-glass" required>
+                </div>
+                <div class="col-sm-5 col-md-4">
+                    <label class="form-label text-muted-custom small fw-medium">End Date</label>
+                    <input type="date" name="date_to" value="{{ end_date_val }}" class="form-control bg-dark-custom text-white border-glass" required>
+                </div>
+                <div class="col-sm-2 col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary-gradient rounded-pill py-2"><i class="fa-solid fa-check"></i> Apply</button>
+                </div>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if not recent_transactions %}
+    <div class="card-hero p-5 rounded-5 text-white text-center mb-5">
+        <h3 class="fw-bold font-outfit">No Transaction Records Found</h3>
+        <p class="text-muted-custom mb-0 px-md-5 small">Start logging business incomes and corporate expenses to generate customized financial insights.</p>
+    </div>
+    {% else %}
+
+    <!-- Aggregated Metrics -->
+    <div class="row g-4 mb-5">
+        <!-- Income -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-1 me-3"><i class="fa-solid fa-circle-arrow-down"></i></div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Filtered Income</p>
+                        <h3 class="fw-bold mb-0 font-outfit text-gradient">{{ currency_symbol }}{{ total_income|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expenses -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-3 me-3"><i class="fa-solid fa-circle-arrow-up"></i></div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Filtered Expenses</p>
+                        <h3 class="fw-bold mb-0 font-outfit text-gradient-alt">{{ currency_symbol }}{{ total_expenses|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Profit Balance -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-2 me-3"><i class="fa-solid fa-wallet"></i></div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Net Statement Balance</p>
+                        <h3 class="fw-bold mb-0 font-outfit {% if net_balance >= 0 %}text-gradient{% else %}text-gradient-alt{% endif %}">{{ currency_symbol }}{{ net_balance|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Count -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-1 me-3"><i class="fa-solid fa-list-check"></i></div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Transactions Logged</p>
+                        <h3 class="fw-bold mb-0 font-outfit">{{ recent_transactions|length }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category + Income Source Reports -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-6">
+            <div class="card-hero p-4 rounded-4 text-white h-100">
+                <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-tags me-2 text-gradient-alt"></i>Expense by Category</h5>
+                {% if category_report %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent;">
+                        <thead>
+                            <tr class="text-muted-custom" style="border-bottom: 2px solid var(--glass-border);">
+                                <th class="py-3">Category</th>
+                                <th class="py-3">Amount</th>
+                                <th class="py-3">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in category_report %}
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td class="py-3 fw-medium">{{ item.name }}</td>
+                                <td class="py-3 fw-bold text-gradient-alt">{{ currency_symbol }}{{ item.amount|floatformat:2 }}</td>
+                                <td class="py-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 bg-secondary bg-opacity-25" style="height:6px;border-radius:3px;">
+                                            <div class="progress-bar" role="progressbar"
+                                                style="width:{{ item.percentage|floatformat:1 }}%;border-radius:3px;background:linear-gradient(135deg,#a855f7,#ec4899);"
+                                                aria-valuenow="{{ item.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span class="ms-2 small text-muted-custom">{{ item.percentage|floatformat:1 }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted-custom mb-0 small">No expense data in selected range.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card-hero p-4 rounded-4 text-white h-100">
+                <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-piggy-bank me-2 text-gradient"></i>Income by Source</h5>
+                {% if source_report %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent;">
+                        <thead>
+                            <tr class="text-muted-custom" style="border-bottom: 2px solid var(--glass-border);">
+                                <th class="py-3">Source</th>
+                                <th class="py-3">Total Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in source_report %}
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td class="py-3 fw-medium">{{ item.source }}</td>
+                                <td class="py-3 fw-bold text-gradient">{{ currency_symbol }}{{ item.amount|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted-custom mb-0 small">No income data in selected range.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Selected Transactions List -->
+    <div class="card-hero p-4 rounded-4 text-white mb-4">
+        <h5 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-list me-2 text-gradient"></i>Transactions Ledger in Selected Range</h5>
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent;">
+                <thead>
+                    <tr class="text-muted-custom" style="border-bottom: 2px solid var(--glass-border);">
+                        <th class="py-3">Date</th>
+                        <th class="py-3">Company</th>
+                        <th class="py-3">Type</th>
+                        <th class="py-3">Amount</th>
+                        <th class="py-3">Category/Source</th>
+                        <th class="py-3">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in recent_transactions %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td class="py-3 fw-medium">{{ tx.date|date:"M d, Y" }}</td>
+                        <td class="py-3 fw-semibold text-white">{{ tx.company_account.name }}</td>
+                        <td class="py-3">
+                            <span class="badge rounded-pill px-2.5 py-1.5 fw-semibold font-outfit uppercase"
+                                  style="font-size:0.68rem; {% if tx.type == 'Income' %}background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.25); color:#34d399;{% else %}background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); color:#fca5a5;{% endif %}">
+                                {{ tx.type }}
+                            </span>
+                        </td>
+                        <td class="py-3 fw-bold {% if tx.type == 'Income' %}text-gradient{% else %}text-gradient-alt{% endif %}">{{ currency_symbol }}{{ tx.amount|floatformat:2 }}</td>
+                        <td class="py-3 text-muted-custom fw-semibold">{{ tx.category_or_source }}</td>
+                        <td class="py-3 text-muted-custom small">{{ tx.description|default:"-"|truncatechars:50 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

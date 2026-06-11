@@ -1,12 +1,12 @@
 from django import forms
 from .models import Expense
-from categories.models import Category
+from categories.models import Category, Label
 from accounts.models import Account
 
 class ExpenseForm(forms.ModelForm):
     class Meta:
         model = Expense
-        fields = ['account', 'name', 'amount', 'date', 'category', 'description']
+        fields = ['account', 'name', 'amount', 'date', 'category', 'labels', 'description']
         widgets = {
             'account': forms.Select(attrs={
                 'class': 'form-select bg-dark-custom text-white border-glass',
@@ -27,6 +27,9 @@ class ExpenseForm(forms.ModelForm):
             }),
             'category': forms.Select(attrs={
                 'class': 'form-select bg-dark-custom text-white border-glass',
+            }),
+            'labels': forms.CheckboxSelectMultiple(attrs={
+                'class': 'form-check-input',
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-control bg-dark-custom text-white border-glass',
@@ -52,6 +55,8 @@ class ExpenseForm(forms.ModelForm):
                 )
             self.fields['category'].queryset = Category.objects.filter(user=user)
             self.fields['category'].empty_label = "Select a category (optional)"
+            self.fields['labels'].queryset = Label.objects.filter(user=user)
+            self.fields['labels'].required = False
             self.fields['account'].queryset = Account.objects.filter(user=user).exclude(status='CLOSED')
             self.fields['account'].empty_label = "Select an account"
             self.fields['account'].required = True

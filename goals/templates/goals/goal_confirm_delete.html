@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Goal | Expense Tracker{% endblock %}
+
+{% block page_title %}Delete Goal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card-hero p-5 rounded-4 text-white text-center">
+                <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #fca5a5; margin: 0 auto 1.5rem;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </div>
+                <h4 class="fw-bold font-outfit text-white mb-2">Delete Savings Goal</h4>
+                
+                <p class="text-muted-custom small mb-4">
+                    Are you sure you want to permanently delete the savings goal <strong class="text-white">"{{ object.name }}"</strong>?
+                    <br>This will remove it from your dashboard tracker and cannot be undone.
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="javascript:history.back()" class="btn btn-outline-custom rounded-pill px-4 py-2 font-outfit fw-semibold">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn rounded-pill px-4 py-2 font-outfit fw-semibold" style="background: linear-gradient(135deg, #ef4444, #dc2626); border: none; color: #fff;">
+                            Yes, Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

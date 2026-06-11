@@ -228,6 +228,16 @@
                                         style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);color:#34d399;font-size:0.75rem;">
                                         {{ income.source }}
                                     </span>
+                                    {% if income.labels.all %}
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        {% for label in income.labels.all %}
+                                        <span class="badge rounded-pill px-2 py-0.5 fw-medium"
+                                              style="background: {{ label.color }}1a; border: 1px solid {{ label.color }}4d; color: {{ label.color }}; font-size: 0.65rem;">
+                                            {{ label.name }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
                                 </td>
                                 <td class="py-3 fw-bold text-gradient">{{ currency_symbol }}{{ income.amount|floatformat:2 }}</td>
                                 <td class="py-3 text-muted-custom small">{{ income.description|default:"-"|truncatechars:40 }}</td>

@@ -20,7 +20,7 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.0.4">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.0.7">
     <style>
         /* Hide number input spinners globally */
         input::-webkit-outer-spin-button,
@@ -65,6 +65,15 @@
         }
         .modal-header, .modal-footer {
             border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        /* Hide sidebar scrollbar */
+        .app-sidebar {
+            -ms-overflow-style: none !important;  /* IE and Edge */
+            scrollbar-width: none !important;  /* Firefox */
+        }
+        .app-sidebar::-webkit-scrollbar {
+            display: none !important; /* Chrome, Safari, Opera */
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -114,9 +123,9 @@
         {% if user.is_authenticated %}
         <!-- Sidebar Navigation -->
         <aside class="app-sidebar bg-glass" id="app-sidebar">
-            <div class="sidebar-content py-4">
+            <div class="sidebar-content py-3">
                 <!-- Branding logo inside sidebar top -->
-                <a class="navbar-brand d-flex align-items-center px-4 mb-4 mt-1" href="{% url 'home' %}" style="text-decoration: none;">
+                <a class="navbar-brand d-flex align-items-center px-3.5 mb-3 mt-0" href="{% url 'home' %}" style="text-decoration: none;">
                     <div class="brand-icon-wrapper me-2">
                         <i class="fa-solid fa-wallet text-gradient"></i>
                     </div>
@@ -144,13 +153,38 @@
                         </a>
                     </li>
                     <li class="sidebar-item mb-1">
-                        <a href="{% url 'account-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'account-list account-add account-edit account-delete account-detail account-transfer transfer-list transfer-detail' %}active{% endif %}">
+                        <a href="{% url 'account-list' %}" class="sidebar-link {% if 'company' not in request.resolver_match.url_name %}{% if 'account' in request.resolver_match.url_name or 'transfer' in request.resolver_match.url_name %}active{% endif %}{% endif %}">
                             <i class="bi bi-bank"></i> <span>Accounts</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'company-account-list' %}" class="sidebar-link {% if 'company' in request.resolver_match.url_name %}active{% endif %}">
+                            <i class="bi bi-building"></i> <span>Company Accounts</span>
                         </a>
                     </li>
                     <li class="sidebar-item mb-1">
                         <a href="{% url 'budget-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'budget-list budget-add budget-edit budget-delete budget-detail' %}active{% endif %}">
                             <i class="bi bi-piggy-bank"></i> <span>Budgets</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'goal-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'goal-list goal-add goal-edit goal-delete goal-detail' %}active{% endif %}">
+                            <i class="fa-solid fa-bullseye"></i> <span>Goals</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'debt-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'debt-list debt-add debt-edit debt-delete debt-detail' %}active{% endif %}">
+                            <i class="fa-solid fa-hand-holding-dollar"></i> <span>Debts</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'recurring-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'recurring-list recurring-add recurring-edit recurring-delete recurring-detail' %}active{% endif %}">
+                            <i class="fa-solid fa-arrows-spin"></i> <span>Recurring Transactions</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'analytics-dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'analytics-dashboard' %}active{% endif %}">
+                            <i class="bi bi-graph-up-arrow"></i> <span>Analytics</span>
                         </a>
                     </li>
                     <li class="sidebar-item mb-1">
@@ -163,7 +197,7 @@
                             <i class="fa-solid fa-clock-rotate-left"></i> <span>History</span>
                         </a>
                     </li>
-                    <li class="sidebar-item mb-1 mt-4 pt-3 border-top border-glass">
+                    <li class="sidebar-item mb-1 mt-3 pt-2 border-top border-glass">
                         <form id="sidebar-logout-form" method="post" action="{% url 'logout' %}" class="d-none">
                             {% csrf_token %}
                         </form>
@@ -220,6 +254,16 @@
                                 Profile
                             {% elif request.resolver_match.url_name == 'transaction-add' %}
                                 Add Transaction
+                            {% elif request.resolver_match.url_name in 'company-account-list company-account-add company-account-edit company-account-delete company-account-detail company-dashboard company-reports company-income-add company-income-edit company-income-delete company-expense-add company-expense-edit company-expense-delete' %}
+                                Company Accounts
+                            {% elif request.resolver_match.url_name in 'goal-list goal-add goal-edit goal-delete goal-detail' %}
+                                Goals
+                            {% elif request.resolver_match.url_name in 'debt-list debt-add debt-edit debt-delete debt-detail' %}
+                                Debts
+                            {% elif request.resolver_match.url_name in 'recurring-list recurring-add recurring-edit recurring-delete recurring-detail' %}
+                                Recurring Transactions
+                            {% elif request.resolver_match.url_name == 'analytics-dashboard' %}
+                                Analytics
                             {% else %}
                                 Overview
                             {% endif %}

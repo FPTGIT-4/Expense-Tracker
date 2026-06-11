@@ -29,7 +29,11 @@ urlpatterns = [
     path('', include('reports.urls')),
     path('', include('transactions.urls')),
     path('', include('budgets.urls')),
-    path('api/v1/', include('api.urls')),
+    path('companies/', include('companies.urls')),
+    path('goals/', include('goals.urls')),
+    path('debts/', include('debts.urls')),
+    path('recurrences/', include('recurrences.urls')),
+    path('analytics/', include('analytics.urls')),
 ]
 
 if settings.DEBUG:

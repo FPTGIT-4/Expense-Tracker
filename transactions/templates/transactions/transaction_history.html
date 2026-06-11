@@ -292,6 +292,21 @@
                             {% if item.activity_type == 'EXPENSE' %}
                             <span class="history-badge font-outfit">{{ item.category_name }}</span>
                             {% endif %}
+                            {% if item.expense and item.expense.labels.all %}
+                                {% for label in item.expense.labels.all %}
+                                <span class="badge rounded-pill px-2 py-0.5 fw-medium"
+                                      style="background: {{ label.color }}1a; border: 1px solid {{ label.color }}4d; color: {{ label.color }}; font-size: 0.65rem; line-height: 1;">
+                                    {{ label.name }}
+                                </span>
+                                {% endfor %}
+                            {% elif item.income and item.income.labels.all %}
+                                {% for label in item.income.labels.all %}
+                                <span class="badge rounded-pill px-2 py-0.5 fw-medium"
+                                      style="background: {{ label.color }}1a; border: 1px solid {{ label.color }}4d; color: {{ label.color }}; font-size: 0.65rem; line-height: 1;">
+                                    {{ label.name }}
+                                </span>
+                                {% endfor %}
+                            {% endif %}
                             {% if item.to_account %}
                             <i class="fa-solid fa-arrow-right text-muted-custom" style="font-size: 0.65rem;"></i>
                             <span class="history-badge font-outfit">{{ item.to_account.name }}</span>

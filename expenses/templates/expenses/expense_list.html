@@ -232,7 +232,19 @@
                             {% for expense in expenses %}
                             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 <td class="py-3 fw-medium">{{ expense.date|date:"M d, Y" }}</td>
-                                <td class="py-3 fw-semibold">{{ expense.name }}</td>
+                                <td class="py-3">
+                                    <div class="fw-semibold">{{ expense.name }}</div>
+                                    {% if expense.labels.all %}
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        {% for label in expense.labels.all %}
+                                        <span class="badge rounded-pill px-2 py-0.5 fw-medium"
+                                              style="background: {{ label.color }}1a; border: 1px solid {{ label.color }}4d; color: {{ label.color }}; font-size: 0.65rem;">
+                                            {{ label.name }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </td>
                                 <td class="py-3">
                                     {% if expense.category %}
                                     <span class="badge rounded-pill px-3 py-1 fw-semibold"

@@ -220,7 +220,7 @@ class TransactionHistoryListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        qs = TransactionHistory.objects.filter(user=self.request.user).select_related('account', 'to_account')
+        qs = TransactionHistory.objects.filter(user=self.request.user).select_related('account', 'to_account', 'expense', 'income').prefetch_related('expense__labels', 'income__labels')
 
         # Apply search query
         q = self.request.GET.get('q', '').strip()

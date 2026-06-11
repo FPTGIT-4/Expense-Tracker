@@ -114,8 +114,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         }
 
         # Recent transactions (fetch up to 20 for each type, sorted)
-        db_incomes = Income.objects.filter(user=user).order_by('-date', '-created_at')[:20]
-        db_expenses = Expense.objects.filter(user=user).select_related('category').order_by('-date', '-created_at')[:20]
+        db_incomes = Income.objects.filter(user=user).prefetch_related('labels').order_by('-date', '-created_at')[:20]
+        db_expenses = Expense.objects.filter(user=user).select_related('category').prefetch_related('labels').order_by('-date', '-created_at')[:20]
 
         recent_incomes = []
         for inc in db_incomes:
@@ -126,6 +126,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'amount': inc.amount,
                 'category_or_source': inc.source,
                 'description': inc.description,
+                'labels': list(inc.labels.all()),
             })
 
         recent_expenses = []
@@ -137,6 +138,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'amount': exp.amount,
                 'category_or_source': exp.category.name if exp.category else 'Uncategorized',
                 'description': exp.description,
+                'labels': list(exp.labels.all()),
             })
 
         # Combined transactions

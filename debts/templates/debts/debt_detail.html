@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}Debt Details | Expense Tracker{% endblock %}
+
+{% block page_title %}Debt Details{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Block -->
+    <div class="mb-4">
+        <a href="{% url 'debt-list' %}" class="text-decoration-none text-muted-custom small mb-2 d-inline-block">
+            <i class="fa-solid fa-arrow-left me-1"></i> Back to debt dashboard
+        </a>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h2 class="fw-bold font-outfit text-white mb-1">{{ debt.person_name }}</h2>
+                <p class="text-muted-custom small mb-0">
+                    {% if debt.debt_type == 'Borrowed' %}Money I Owe (Borrowed){% else %}Money Owed to Me (Lent){% endif %}
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'debt-edit' debt.pk %}" class="btn btn-outline-custom rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size:0.85rem;">
+                    <i class="fa-solid fa-pen-to-square"></i> Edit Details
+                </a>
+                <a href="{% url 'debt-delete' debt.pk %}" class="btn btn-outline-custom rounded-pill px-3 py-1.5 fw-semibold text-danger border-danger-hover d-inline-flex align-items-center gap-1.5" style="font-size:0.85rem;">
+                    <i class="fa-solid fa-trash"></i> Delete Record
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Stats Card -->
+        <div class="col-lg-8">
+            <div class="card-hero p-4 rounded-4 text-white mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <span class="text-muted-custom small uppercase fw-bold" style="letter-spacing:0.05em;">Repayment Status</span>
+                    <div class="d-flex gap-2">
+                        {% if debt.is_overdue %}
+                        <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(239, 68, 68, 0.15) !important; border: 1px solid rgba(239, 68, 68, 0.3) !important; color: #f87171 !important; font-size: 0.72rem; letter-spacing: 0.03em; padding: 0.4em 0.8em;">
+                            Overdue
+                        </span>
+                        {% endif %}
+
+                        {% if debt.status == 'Settled' %}
+                        <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(16, 185, 129, 0.15) !important; border: 1px solid rgba(16, 185, 129, 0.3) !important; color: #34d399 !important; font-size: 0.72rem; letter-spacing: 0.03em; padding: 0.4em 0.8em;">
+                            Settled
+                        </span>
+                        {% else %}
+                        <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(59, 130, 246, 0.15) !important; border: 1px solid rgba(59, 130, 246, 0.3) !important; color: #60a5fa !important; font-size: 0.72rem; letter-spacing: 0.03em; padding: 0.4em 0.8em;">
+                            Active
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Progress Bar & Big percentage -->
+                <div class="text-center mb-5 py-3">
+                    <h1 class="fw-bold font-outfit mb-2 {% if debt.status == 'Settled' %}text-success{% else %}text-gradient{% endif %}" style="font-size: 4.2rem; line-height: 1;">
+                        {{ debt.repayment_percentage }}%
+                    </h1>
+                    <p class="text-muted-custom small uppercase">Total Settled Percentage</p>
+                    
+                    <div class="progress bg-secondary bg-opacity-25 mx-auto mt-4" style="height: 12px; border-radius: 6px; max-width: 90%;">
+                        <div class="progress-bar" role="progressbar"
+                             style="width: {{ debt.repayment_percentage }}%; border-radius: 6px; {% if debt.status == 'Settled' %}background: linear-gradient(90deg, #10b981, #34d399);{% else %}background: linear-gradient(90deg, #6366f1, #a855f7);{% endif %}"
+                             aria-valuenow="{{ debt.repayment_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+
+                <div class="row g-4 border-top pt-4" style="border-top-color: rgba(255,255,255,0.06) !important;">
+                    <div class="col-sm-4">
+                        <span class="text-muted-custom small uppercase d-block mb-1">Original Amount</span>
+                        <h3 class="fw-bold font-outfit text-white">{{ currency_symbol }}{{ debt.amount|floatformat:2 }}</h3>
+                    </div>
+                    <div class="col-sm-4">
+                        <span class="text-muted-custom small uppercase d-block mb-1">Total Paid</span>
+                        <h3 class="fw-bold font-outfit text-success">{{ currency_symbol }}{{ debt.total_paid|floatformat:2 }}</h3>
+                    </div>
+                    <div class="col-sm-4">
+                        <span class="text-muted-custom small uppercase d-block mb-1">Remaining Balance</span>
+                        <h3 class="fw-bold font-outfit {% if debt.status == 'Settled' %}text-white{% else %}text-gradient-alt{% endif %}">{{ currency_symbol }}{{ debt.remaining_balance|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History Timeline -->
+            <div class="card-hero p-4 rounded-4 text-white">
+                <h5 class="fw-bold font-outfit mb-4"><i class="fa-solid fa-clock-rotate-left me-2 text-gradient"></i>Repayment History</h5>
+                
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle text-white mb-0">
+                        <thead>
+                            <tr class="border-bottom border-glass text-muted-custom uppercase small">
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Notes</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in debt.payments.all %}
+                            <tr class="border-bottom border-glass" style="border-bottom-color: rgba(255,255,255,0.03) !important;">
+                                <td class="fw-semibold text-sm">{{ payment.date|date:"M d, Y" }}</td>
+                                <td class="fw-bold text-success">{{ currency_symbol }}{{ payment.amount|floatformat:2 }}</td>
+                                <td class="small text-muted-custom">{{ payment.notes|default:"-" }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'repayment-delete' payment.pk %}" class="btn btn-sm btn-outline-custom text-danger border-danger-hover rounded-pill px-2.5 py-1">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted-custom small">
+                                    <i class="fa-solid fa-receipt d-block fs-4 mb-2"></i>
+                                    No payment logs recorded yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side Panel -->
+        <div class="col-lg-4">
+            <!-- Debt Configurations -->
+            <div class="card-hero p-4 rounded-4 text-white mb-4">
+                <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-circle-info me-2 text-gradient"></i>Debt details</h6>
+                
+                <p class="text-muted-custom small mb-1">Start Date</p>
+                <p class="fw-semibold small text-white mb-3">{{ debt.date|date:"F d, Y" }}</p>
+
+                <p class="text-muted-custom small mb-1">Due Date</p>
+                <p class="fw-semibold small text-white mb-3">
+                    {% if debt.due_date %}
+                    <span class="{% if debt.is_overdue %}text-danger{% endif %}">{{ debt.due_date|date:"F d, Y" }}</span>
+                    {% else %}
+                    No due date set.
+                    {% endif %}
+                </p>
+
+                <p class="text-muted-custom small mb-1">Notes</p>
+                <p class="small text-white mb-0">{{ debt.notes|default:"No notes or descriptions added." }}</p>
+            </div>
+
+            <!-- Record Payment Form -->
+            {% if debt.status != 'Settled' %}
+            <div class="card-hero p-4 rounded-4 text-white">
+                <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-cash-register me-2 text-gradient"></i>Record Repayment</h6>
+                <p class="text-muted-custom small mb-3">Enter the payment amount and details to update the debt balance.</p>
+                
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.amount.id_for_label }}" class="form-label text-muted-custom small fw-semibold">Amount ({{ currency_symbol }})</label>
+                        {{ form.amount }}
+                        {% for error in form.amount.errors %}
+                        <div class="invalid-feedback d-block small mt-1 text-danger">
+                            <i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.date.id_for_label }}" class="form-label text-muted-custom small fw-semibold">Payment Date</label>
+                        {{ form.date }}
+                        {% for error in form.date.errors %}
+                        <div class="invalid-feedback d-block small mt-1 text-danger">
+                            <i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label text-muted-custom small fw-semibold">Notes</label>
+                        {{ form.notes }}
+                        {% for error in form.notes.errors %}
+                        <div class="invalid-feedback d-block small mt-1 text-danger">
+                            <i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary-gradient rounded-pill py-2 fw-semibold shadow-lg">
+                            Add Repayment
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% else %}
+            <div class="card-hero p-4 rounded-4 text-white text-center border-success alert bg-success bg-opacity-10 py-4">
+                <h5 class="fw-bold font-outfit text-success mb-1">🎉 Debt Settled</h5>
+                <p class="text-muted-custom small mb-0">This loan record is fully paid back.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.border-danger-hover:hover {
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+</style>
+{% endblock %}

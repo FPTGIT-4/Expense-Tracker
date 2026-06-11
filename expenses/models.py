@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from categories.models import Category
+from categories.models import Category, Label
 
 class Expense(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='expenses')
@@ -10,6 +10,7 @@ class Expense(models.Model):
     date = models.DateField()
     description = models.TextField(blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses')
+    labels = models.ManyToManyField(Label, blank=True, related_name='expenses')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

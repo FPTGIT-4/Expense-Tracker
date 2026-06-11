@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+
+{% block title %}Debts | Expense Tracker{% endblock %}
+
+{% block page_title %}Debt Management{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Block -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-6">
+            <p class="text-muted-custom">Track loans, borrowed money, lent amounts, and repayments.</p>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex justify-content-start justify-content-md-end gap-2 flex-wrap">
+            <a href="{% url 'debt-add' %}"
+                class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
+                <i class="fa-solid fa-plus me-2"></i> Create Debt Record
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="row g-4 mb-5">
+        <!-- Total Borrowed -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-3 me-3">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Borrowed</p>
+                        <h3 class="fw-bold mb-0 font-outfit">{{ currency_symbol }}{{ total_borrowed|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Lent -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-1 me-3">
+                        <i class="fa-solid fa-handshake-angle"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Lent</p>
+                        <h3 class="fw-bold mb-0 font-outfit text-success">{{ currency_symbol }}{{ total_lent|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Outstanding to Pay -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-2 me-3" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.25); color: #f87171;">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Remaining to Pay</p>
+                        <h3 class="fw-bold mb-0 font-outfit text-danger">{{ currency_symbol }}{{ total_to_pay|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Outstanding to Receive -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature p-4 rounded-4 text-white h-100">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-1 me-3" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.25); color: #34d399;">
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Remaining to Receive</p>
+                        <h3 class="fw-bold mb-0 font-outfit text-success">{{ currency_symbol }}{{ total_to_receive|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="card-hero p-4 rounded-4 text-white mb-4">
+        <form method="get" action="{% url 'debt-list' %}" id="filterForm">
+            <div class="row g-3 align-items-end">
+                <!-- Search Query -->
+                <div class="col-md-4">
+                    <label class="form-label text-muted-custom small fw-medium uppercase">Search Debts</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-dark-custom border-glass text-muted-custom">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" name="search" value="{{ search }}"
+                            class="form-control bg-dark-custom text-white border-glass"
+                            placeholder="Search by name or notes...">
+                    </div>
+                </div>
+
+                <!-- Debt Type Filter -->
+                <div class="col-md-3">
+                    <label class="form-label text-muted-custom small fw-medium uppercase">Debt Type</label>
+                    <div class="d-flex gap-2">
+                        <a href="?debt_type=all&status={{ status }}&search={{ search }}" class="btn {% if debt_type == 'all' or not debt_type %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">All</a>
+                        <a href="?debt_type=Borrowed&status={{ status }}&search={{ search }}" class="btn {% if debt_type == 'Borrowed' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">Borrowed</a>
+                        <a href="?debt_type=Lent&status={{ status }}&search={{ search }}" class="btn {% if debt_type == 'Lent' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">Lent</a>
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-md-3">
+                    <label class="form-label text-muted-custom small fw-medium uppercase">Status</label>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="?status=all&debt_type={{ debt_type }}&search={{ search }}" class="btn {% if status == 'all' or not status %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">All</a>
+                        <a href="?status=Active&debt_type={{ debt_type }}&search={{ search }}" class="btn {% if status == 'Active' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">Active</a>
+                        <a href="?status=Settled&debt_type={{ debt_type }}&search={{ search }}" class="btn {% if status == 'Settled' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">Settled</a>
+                        <a href="?status=Overdue&debt_type={{ debt_type }}&search={{ search }}" class="btn {% if status == 'Overdue' %}btn-primary-gradient{% else %}btn-outline-custom{% endif %} rounded-pill px-3 py-1 text-sm">Overdue</a>
+                    </div>
+                </div>
+
+                <!-- Reset -->
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary-gradient btn-sm rounded-pill py-2 font-outfit fw-semibold">Apply</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active Count Summaries -->
+    <div class="mb-4 d-flex gap-3">
+        <span class="small text-muted-custom">Active Debts: <strong class="text-white">{{ active_count }}</strong></span>
+        <span class="small text-muted-custom">Overdue Debts: <strong class="text-warning">{{ overdue_count }}</strong></span>
+        <span class="small text-muted-custom">Settled Debts: <strong class="text-success">{{ settled_count }}</strong></span>
+    </div>
+
+    <!-- Debts Grid -->
+    <div class="row g-4">
+        {% for debt in debts %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card-hero card-feature p-4 rounded-4 text-white h-100 d-flex flex-column justify-content-between position-relative" style="transition: all 0.3s ease;">
+                
+                <a href="{% url 'debt-detail' debt.pk %}" class="text-decoration-none text-white d-block">
+                    <!-- Top Info row -->
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="feature-icon mb-0 {% if debt.debt_type == 'Borrowed' %}color-3{% else %}color-1{% endif %}" 
+                             style="width: 44px; height: 44px; border-radius: 12px; font-size: 1.1rem;">
+                            <i class="fa-solid {% if debt.debt_type == 'Borrowed' %}fa-hand-holding-dollar{% else %}fa-handshake-angle{% endif %}"></i>
+                        </div>
+                        <div class="d-flex gap-1.5">
+                            <!-- Overdue badge -->
+                            {% if debt.is_overdue %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(239, 68, 68, 0.15) !important; border: 1px solid rgba(239, 68, 68, 0.3) !important; color: #f87171 !important; font-size: 0.68rem; letter-spacing: 0.03em; padding: 0.35em 0.65em;">
+                                Overdue
+                            </span>
+                            {% endif %}
+
+                            <!-- Status Badge -->
+                            {% if debt.status == 'Settled' %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(16, 185, 129, 0.15) !important; border: 1px solid rgba(16, 185, 129, 0.3) !important; color: #34d399 !important; font-size: 0.68rem; letter-spacing: 0.03em; padding: 0.35em 0.65em;">
+                                Settled
+                            </span>
+                            {% else %}
+                            <span class="badge rounded-pill font-outfit uppercase" style="background: rgba(59, 130, 246, 0.15) !important; border: 1px solid rgba(59, 130, 246, 0.3) !important; color: #60a5fa !important; font-size: 0.68rem; letter-spacing: 0.03em; padding: 0.35em 0.65em;">
+                                Active
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Name & Type -->
+                    <h4 class="fw-bold font-outfit mb-1 text-white">{{ debt.person_name }}</h4>
+                    <p class="small mb-3 {% if debt.debt_type == 'Borrowed' %}text-danger{% else %}text-success{% endif %}">
+                        {% if debt.debt_type == 'Borrowed' %}Money I Owe (Borrowed){% else %}Money Owed to Me (Lent){% endif %}
+                    </p>
+
+                    <!-- Date & Due Date -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <span class="text-muted-custom small d-block">Start Date</span>
+                            <span class="small fw-semibold">{{ debt.date|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="col-6">
+                            <span class="text-muted-custom small d-block">Due Date</span>
+                            <span class="small fw-semibold {% if debt.is_overdue %}text-danger{% endif %}">
+                                {% if debt.due_date %}{{ debt.due_date|date:"M d, Y" }}{% else %}-{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    {% if debt.notes %}
+                    <p class="text-muted-custom small mb-4 text-truncate" style="max-width: 100%;">{{ debt.notes }}</p>
+                    {% else %}
+                    <p class="text-muted-custom small mb-4 text-truncate" style="max-width: 100%; font-style: italic;">No description details.</p>
+                    {% endif %}
+
+                    <!-- Repayments progress bar -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1" style="font-size: 0.75rem;">
+                            <span class="text-muted-custom">Repayment Progress</span>
+                            {% with paid=debt.total_paid amount=debt.amount %}
+                            <span class="fw-bold {% if debt.status == 'Settled' %}text-success{% else %}text-warning{% endif %}">
+                                {{ paid|floatformat:0 }} / {{ amount|floatformat:0 }} ({{ debt.repayment_percentage }}%)
+                            </span>
+                            {% endwith %}
+                        </div>
+                        <div class="progress bg-secondary bg-opacity-25" style="height: 8px; border-radius: 4px;">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ debt.repayment_percentage }}%; border-radius: 4px; {% if debt.status == 'Settled' %}background: linear-gradient(90deg, #10b981, #34d399);{% else %}background: linear-gradient(90deg, #6366f1, #a855f7);{% endif %}"
+                                 aria-valuenow="{{ debt.repayment_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
+                    <!-- Balance breakdown -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between text-muted-custom small mb-1">
+                            <span>Paid: <strong class="text-white">{{ currency_symbol }}{{ debt.total_paid|floatformat:2 }}</strong></span>
+                            <span>Total: <strong class="text-white">{{ currency_symbol }}{{ debt.amount|floatformat:2 }}</strong></span>
+                        </div>
+                        {% if debt.status != 'Settled' %}
+                        <p class="text-muted-custom mb-0" style="font-size: 0.78rem;">Remaining: <strong class="text-gradient-alt">{{ currency_symbol }}{{ debt.remaining_balance|floatformat:2 }}</strong></p>
+                        {% else %}
+                        <p class="text-success mb-0 small"><i class="fa-solid fa-circle-check me-1"></i>Fully Settled</p>
+                        {% endif %}
+                    </div>
+                </a>
+
+                <div>
+                    <!-- Actions -->
+                    <div class="d-flex gap-2 justify-content-between border-top pt-3" style="border-top-color: rgba(255,255,255,0.06) !important;">
+                        <a href="{% url 'debt-detail' debt.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
+                            <i class="fa-solid fa-circle-info"></i> Details / Pay
+                        </a>
+                        <div class="d-flex gap-1.5">
+                            <a href="{% url 'debt-edit' debt.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-2.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                            </a>
+                            <a href="{% url 'debt-delete' debt.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-2.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 text-danger border-danger-hover" style="font-size: 0.78rem;">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="hero-icon-glow mx-auto mb-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                <i class="fa-solid fa-hand-holding-dollar"></i>
+            </div>
+            <h4 class="fw-bold font-outfit">No Debt Records Found</h4>
+            <p class="text-muted-custom mb-0 small">Create a record to track borrowed or lent money.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.border-danger-hover:hover {
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+</style>
+{% endblock %}

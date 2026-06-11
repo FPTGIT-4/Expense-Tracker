@@ -7,8 +7,8 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.db.models import Sum, Count, Q
 
-from .models import Category
-from .forms import CategoryForm
+from .models import Category, Label
+from .forms import CategoryForm, LabelForm
 from expenses.models import Expense
 from config.utils import get_analytics_date_range
 
@@ -209,11 +209,27 @@ class CategoryListView(LoginRequiredMixin, ListView):
         context['active_filters'] = filters
         context['has_filters'] = bool(filters)
 
+        # Fetch labels and annotate with expense / income count
+        annotated_labels = Label.objects.filter(user=user).annotate(
+            expense_count=Count('expenses'),
+            income_count=Count('incomes')
+        ).order_by('name')
+        
+        labels_data = []
+        for lbl in annotated_labels:
+            labels_data.append({
+                'id': lbl.pk,
+                'name': lbl.name,
+                'color': lbl.color,
+                'total_txns': lbl.expense_count + lbl.income_count
+            })
+
         # Pass variables to template context
         context.update({
             'total_categories': total_categories,
             'total_spent': total_spent,
             'categories_data': categories_data,
+            'labels_data': labels_data,
             'highest_category': highest_category,
             'lowest_category': lowest_category,
             'start_date': start_date,
@@ -240,6 +256,12 @@ class CategoryCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
+
+    def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url:
+            return next_url
+        return self.success_url
 
 
 class CategoryUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
@@ -269,6 +291,45 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
         messages.success(self.request, "Category deleted successfully!")
         return super().form_valid(form)
 
+
+class LabelCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Label
+    form_class = LabelForm
+    template_name = 'categories/label_form.html'
+    success_url = reverse_lazy('category-list')
+    success_message = "Label created successfully!"
+
     def form_valid(self, form):
-        messages.success(self.request, "Category deleted successfully!")
+        form.instance.user = self.request.user
         return super().form_valid(form)
+
+    def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url:
+            return next_url
+        return self.success_url
+
+
+class LabelUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Label
+    form_class = LabelForm
+    template_name = 'categories/label_form.html'
+    success_url = reverse_lazy('category-list')
+    success_message = "Label updated successfully!"
+
+    def get_queryset(self):
+        return Label.objects.filter(user=self.request.user)
+
+
+class LabelDeleteView(LoginRequiredMixin, DeleteView):
+    model = Label
+    template_name = 'categories/label_confirm_delete.html'
+    success_url = reverse_lazy('category-list')
+
+    def get_queryset(self):
+        return Label.objects.filter(user=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, "Label deleted successfully!")
+        return super().delete(request, *args, **kwargs)
+

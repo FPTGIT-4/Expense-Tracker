@@ -1,11 +1,12 @@
 from django import forms
 from .models import Income
 from accounts.models import Account
+from categories.models import Label
 
 class IncomeForm(forms.ModelForm):
     class Meta:
         model = Income
-        fields = ['account', 'amount', 'source', 'date', 'description']
+        fields = ['account', 'amount', 'source', 'date', 'labels', 'description']
         widgets = {
             'account': forms.Select(attrs={
                 'class': 'form-select bg-dark-custom text-white border-glass',
@@ -22,6 +23,9 @@ class IncomeForm(forms.ModelForm):
             'date': forms.DateInput(format='%Y-%m-%d', attrs={
                 'class': 'form-control bg-dark-custom text-white border-glass',
                 'type': 'date',
+            }),
+            'labels': forms.CheckboxSelectMultiple(attrs={
+                'class': 'form-check-input',
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-control bg-dark-custom text-white border-glass',
@@ -45,6 +49,8 @@ class IncomeForm(forms.ModelForm):
                     account_type='Cash',
                     initial_balance=Decimal('0.00')
                 )
+            self.fields['labels'].queryset = Label.objects.filter(user=user)
+            self.fields['labels'].required = False
             self.fields['account'].queryset = Account.objects.filter(user=user).exclude(status='CLOSED')
             self.fields['account'].empty_label = "Select an account"
             self.fields['account'].required = True

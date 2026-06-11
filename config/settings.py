@@ -47,7 +47,11 @@ INSTALLED_APPS = [
     'reports.apps.ReportsConfig',
     'transactions.apps.TransactionsConfig',
     'budgets.apps.BudgetsConfig',
-    'api.apps.ApiConfig',
+    'companies.apps.CompaniesConfig',
+    'goals.apps.GoalsConfig',
+    'debts.apps.DebtsConfig',
+    'recurrences.apps.RecurrencesConfig',
+    'analytics.apps.AnalyticsConfig',
 ]
 
 MIDDLEWARE = [
@@ -58,6 +62,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'recurrences.middleware.RecurringTransactionsMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
