@@ -6,8 +6,8 @@ services:
     env: python
     buildCommand: "bash build_files.sh"
     startCommand: "gunicorn config.wsgi:application"
-    # The release command runs automatically after a successful build, before the new deploy is active
-    releaseCommand: "python manage.py migrate"
+    # The pre-deploy command runs automatically after a successful build, before the new deploy is active
+    preDeployCommand: "python manage.py migrate"
     envVars:
       - key: DATABASE_URL
         sync: false # User will set their Neon database URL in the Render Dashboard
