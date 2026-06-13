@@ -29,9 +29,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-p)+=suxatfa@r($_8-g)yoc0p_7ih-^oo7*d85lq!iy=#50v2!')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Force DEBUG=False on Vercel unless explicitly overridden to True via environment variable
+# Force DEBUG=False on Vercel or Render unless explicitly overridden to True via environment variable
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
-if os.environ.get('VERCEL') == '1':
+if os.environ.get('VERCEL') == '1' or os.environ.get('RENDER') == 'true':
     DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
@@ -218,5 +218,18 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ],
 }
+
+# --- Production Security & Proxy Settings ---
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
+    env_csrf = os.environ.get('CSRF_TRUSTED_ORIGINS')
+    if env_csrf:
+        CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in env_csrf.split(',') if origin.strip()])
+
 
 

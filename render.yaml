@@ -4,7 +4,7 @@ services:
   - type: web
     name: expense-tracker
     env: python
-    buildCommand: "./build_files.sh"
+    buildCommand: "bash build_files.sh"
     startCommand: "gunicorn config.wsgi:application"
     # The release command runs automatically after a successful build, before the new deploy is active
     releaseCommand: "python manage.py migrate"
@@ -15,3 +15,5 @@ services:
         generateValue: true # Generates a random secure secret key automatically on Render
       - key: DEBUG
         value: "False"
+      - key: PYTHON_VERSION
+        value: "3.11.9"
