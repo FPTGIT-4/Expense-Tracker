@@ -125,20 +125,16 @@ DATABASES = {
         conn_health_checks=True,
     )
 }
-DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
-
-# If using SQLite (default fallback) and running on Vercel, use /tmp/db.sqlite3
-if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
-    if 'VERCEL' in os.environ or 'VERCEL_ENV' in os.environ:
-        db_path = '/tmp/db.sqlite3'
-        # Copy the initial repository database to /tmp if not already initialized
-        src_db = BASE_DIR / 'db.sqlite3'
-        if os.path.exists(src_db) and not os.path.exists(db_path):
-            try:
-                shutil.copy2(src_db, db_path)
-            except Exception:
-                pass
-        DATABASES['default']['NAME'] = db_path
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "expense_tracker",
+        "USER": "expense_user",
+        "PASSWORD": "YourStrongPassword123",  # or Expense@123 if you changed it
+        "HOST": "localhost",
+        "PORT": "5432",
+    }
+}
 
 
 # Password validation
