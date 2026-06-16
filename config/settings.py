@@ -29,23 +29,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-p)+=suxatfa@r($_8-g)yoc0p_7ih-^oo7*d85lq!iy=#50v2!')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Force DEBUG=False on Vercel or Render unless explicitly overridden to True via environment variable
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
-if os.environ.get('VERCEL') == '1' or os.environ.get('RENDER') == 'true':
-    DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 
 if DEBUG:
     ALLOWED_HOSTS.append('*')
 else:
-    # Production hosts
-    vercel_url = os.environ.get('VERCEL_URL')
-    if vercel_url:
-        ALLOWED_HOSTS.append(vercel_url)
-    ALLOWED_HOSTS.append('.vercel.app')
-    ALLOWED_HOSTS.append('.onrender.com')
-    
     # Custom hosts via environment variable
     env_hosts = os.environ.get('ALLOWED_HOSTS')
     if env_hosts:
@@ -116,21 +106,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-import shutil
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-}
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "expense_tracker",
         "USER": "expense_user",
-        "PASSWORD": "YourStrongPassword123",  # or Expense@123 if you changed it
+        "PASSWORD": "YourStrongPassword123",
         "HOST": "localhost",
         "PORT": "5432",
     }
@@ -221,8 +203,7 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    
-    CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
+    CSRF_TRUSTED_ORIGINS = []
     env_csrf = os.environ.get('CSRF_TRUSTED_ORIGINS')
     if env_csrf:
         CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in env_csrf.split(',') if origin.strip()])
