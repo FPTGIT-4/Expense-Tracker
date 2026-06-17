@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'debts.apps.DebtsConfig',
     'recurrences.apps.RecurrencesConfig',
     'analytics.apps.AnalyticsConfig',
+    'data_io.apps.DataIoConfig',
 ]
 
 MIDDLEWARE = [

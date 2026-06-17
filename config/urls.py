@@ -34,6 +34,7 @@ urlpatterns = [
     path('debts/', include('debts.urls')),
     path('recurrences/', include('recurrences.urls')),
     path('analytics/', include('analytics.urls')),
+    path('data-io/', include('data_io.urls')),
 ]
 
 if settings.DEBUG:

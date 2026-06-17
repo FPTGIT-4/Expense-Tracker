@@ -197,6 +197,11 @@
                             <i class="fa-solid fa-clock-rotate-left"></i> <span>History</span>
                         </a>
                     </li>
+                    <li class="sidebar-item mb-1">
+                        <a href="{% url 'data_io:main' %}" class="sidebar-link {% if request.resolver_match.namespace == 'data_io' or 'data-io' in request.path %}active{% endif %}">
+                            <i class="fa-solid fa-folder-open"></i> <span>Import & Export</span>
+                        </a>
+                    </li>
                     <li class="sidebar-item mb-1 mt-3 pt-2 border-top border-glass">
                         <form id="sidebar-logout-form" method="post" action="{% url 'logout' %}" class="d-none">
                             {% csrf_token %}

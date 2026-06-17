@@ -4,3 +4,4 @@ sqlparse
 tzdata
 djangorestframework
 django-filter
+openpyxl>=3.1.0
