@@ -322,6 +322,18 @@ class DownloadSampleTemplateView(LoginRequiredMixin, View):
                 'samples': [
                     [1, 1, 'Gym Membership', '2026-06-01', '', 2, '', '']
                 ]
+            },
+            'Transaction History': {
+                'headers': ['History ID', 'Activity Type', 'Account ID', 'Account Name', 'To Account ID', 'To Account Name', 'Amount', 'Balance Before', 'Balance After', 'Category Name', 'Description', 'Date', 'Timestamp'],
+                'samples': [
+                    [1, 'INCOME', 1, 'Checking Account', '', '', 3500.00, 0.00, 3500.00, 'Salary', 'Monthly software engineer salary', '2026-04-01', '2026-04-01 09:00:00']
+                ]
+            },
+            'User Settings': {
+                'headers': ['Setting ID', 'Currency', 'Budget Threshold', 'Enable Budget Alerts', 'Low Balance Alerts', 'Show Navbar Badge', 'Show Dashboard Banner', 'Show Dashboard Panel', 'Alert Scope', 'Default Minimum Balance', 'Dark Mode'],
+                'samples': [
+                    [1, '₹', 80, 'True', 'True', 'True', 'True', 'True', 'active', 0.00, 'True']
+                ]
             }
         }
 

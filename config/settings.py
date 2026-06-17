@@ -66,7 +66,6 @@ INSTALLED_APPS = [
     'debts.apps.DebtsConfig',
     'recurrences.apps.RecurrencesConfig',
     'analytics.apps.AnalyticsConfig',
-    'data_io.apps.DataIoConfig',
 ]
 
 MIDDLEWARE = [
@@ -109,11 +108,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
-    )
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "expense_tracker",
+        "USER": "expense_user",
+        "PASSWORD": "YourStrongPassword123",
+        "HOST": "localhost",
+        "PORT": "5432",
+    }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
