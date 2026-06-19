@@ -162,7 +162,7 @@ class ImportView(LoginRequiredMixin, View):
         if importer.errors:
             log_lines = []
             log_lines.append("="*60)
-            log_lines.append(f"EXPENSE TRACKER IMPORT LOG - {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            log_lines.append(f"Personal Tracker IMPORT LOG - {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}")
             log_lines.append(f"User: {request.user.username}")
             log_lines.append(f"Mode: {'Full Restore' if is_restore else 'Standard Import'}")
             log_lines.append("="*60)
