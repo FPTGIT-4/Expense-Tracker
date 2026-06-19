@@ -12,34 +12,27 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
-import dj_database_url
 from dotenv import load_dotenv
 
-# Load environment variables from .env file if it exists
-load_dotenv()
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-p)+=suxatfa@r($_8-g)yoc0p_7ih-^oo7*d85lq!iy=#50v2!')
-
+SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "").split(",") if host.strip()]
 
 if DEBUG:
-    ALLOWED_HOSTS.append('*')
-else:
-    # Custom hosts via environment variable
-    env_hosts = os.environ.get('ALLOWED_HOSTS')
-    if env_hosts:
-        ALLOWED_HOSTS.extend([host.strip() for host in env_hosts.split(',') if host.strip()])
+    ALLOWED_HOSTS.extend(["127.0.0.1", "localhost"])
+
 
 
 # Application definition
@@ -66,6 +59,7 @@ INSTALLED_APPS = [
     'debts.apps.DebtsConfig',
     'recurrences.apps.RecurrencesConfig',
     'analytics.apps.AnalyticsConfig',
+    'data_io.apps.DataIoConfig',
 ]
 
 MIDDLEWARE = [
@@ -110,13 +104,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "expense_tracker",
-        "USER": "expense_user",
-        "PASSWORD": "YourStrongPassword123",
-        "HOST": "localhost",
-        "PORT": "5432",
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
