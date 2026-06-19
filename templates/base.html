@@ -230,7 +230,7 @@
                     <h1 class="h3 mb-0 font-outfit fw-bold text-white">
                         {% block page_title %}
                             {% if request.resolver_match.url_name == 'home' %}
-                                Overview
+                                Dashboard
                             {% elif request.resolver_match.url_name in 'income-list income-create income-edit income-delete' %}
                                 Incomes
                             {% elif request.resolver_match.url_name in 'expense-list expense-create expense-edit expense-delete' %}
@@ -270,7 +270,7 @@
                             {% elif request.resolver_match.url_name == 'analytics-dashboard' %}
                                 Analytics
                             {% else %}
-                                Overview
+                                Dashboard
                             {% endif %}
                         {% endblock %}
                     </h1>
