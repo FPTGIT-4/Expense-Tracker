@@ -1,24 +1,24 @@
 from django.db import models
 from django.contrib.auth.models import User
-from categories.models import Label
+from categories.models import Category
+
 
 class Income(models.Model):
-    SOURCE_CHOICES = [
-        ('Salary', 'Salary'),
-        ('Business', 'Business'),
-        ('Freelancing', 'Freelancing'),
-        ('Interest', 'Interest'),
-        ('Gift', 'Gift'),
-        ('Other', 'Other'),
-    ]
-    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='incomes')
     account = models.ForeignKey('accounts.Account', on_delete=models.CASCADE, related_name='incomes', null=True, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    source = models.CharField(max_length=50, choices=SOURCE_CHOICES)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='incomes',
+        limit_choices_to={'category_type': 'income'},
+    )
+    # source kept nullable for backward-compat with older records
+    source = models.CharField(max_length=50, blank=True, null=True)
     date = models.DateField()
     description = models.TextField(blank=True, null=True)
-    labels = models.ManyToManyField(Label, blank=True, related_name='incomes')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -36,6 +36,15 @@ class Income(models.Model):
             )
             self.account = account
         super().save(*args, **kwargs)
+        if self.account:
+            self.account.invalidate_cache()
+
+    def delete(self, *args, **kwargs):
+        account = self.account
+        super().delete(*args, **kwargs)
+        if account:
+            account.invalidate_cache()
 
     def __str__(self):
-        return f"{self.user.username} - {self.source} (${self.amount}) on {self.date}"
+        label = self.category.name if self.category else (self.source or 'Income')
+        return f"{self.user.username} - {label} (${self.amount}) on {self.date}"

@@ -2,20 +2,17 @@
 
 {% block title %}Expenses | Personal Tracker{% endblock %}
 
+{% block page_title %}Expenses{% endblock %}
+{% block page_subtitle %}Track your spending and outlays{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'expense-create' %}" class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
+    <i class="fa-solid fa-plus me-2"></i>Add Expense
+</a>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
-
-    <!-- Header -->
-    <div class="row align-items-center mb-4">
-        <div class="col-md-6">
-            <p class="text-muted-custom mb-0">Track and monitor your outbound spending categories and trends</p>
-        </div>
-        <div class="col-md-6 text-md-end mt-3 mt-md-0">
-            <a href="{% url 'transaction-add' %}?tab=expense" class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
-                <i class="fa-solid fa-plus me-2"></i>Add Expense
-            </a>
-        </div>
-    </div>
 
     <!-- Date Filters Presets -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
@@ -23,23 +20,7 @@
             <a href="?date_filter=today" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'today' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">Today</a>
             <a href="?date_filter=this_week" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'this_week' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">This Week</a>
             <a href="?date_filter=this_month" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'this_month' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">This Month</a>
-            <a href="?date_filter=custom" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'custom' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">Custom Range</a>
         </div>
-        
-        {% if date_filter == 'custom' %}
-        <form method="get" class="d-flex align-items-center gap-2" id="customDateForm">
-            <input type="hidden" name="date_filter" value="custom">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-dark-custom border-glass text-muted-custom">From</span>
-                <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d'|default:date_from }}" class="form-control bg-dark-custom text-white border-glass" required>
-            </div>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-dark-custom border-glass text-muted-custom">To</span>
-                <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d'|default:date_to }}" class="form-control bg-dark-custom text-white border-glass" required>
-            </div>
-            <button type="submit" class="btn btn-primary-gradient btn-sm rounded-pill px-3">Apply</button>
-        </form>
-        {% endif %}
     </div>
 
     <!-- Stats Summary Cards -->
@@ -48,40 +29,10 @@
         <div class="col-md-4">
             <div class="card-feature p-4 rounded-4 text-white">
                 <div class="d-flex align-items-center">
-                    <div class="feature-icon mb-0 color-3 me-3"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                    <div class="feature-icon mb-0 color-3 me-3"><i class="fa-solid fa-circle-arrow-up"></i></div>
                     <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Expenses (Range)</p>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Expenses</p>
                         <h3 class="fw-bold mb-0 font-outfit text-gradient-alt">{{ currency_symbol }}{{ total_expense|floatformat:2 }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Card 2: Transactions Count -->
-        <div class="col-md-4">
-            <div class="card-feature p-4 rounded-4 text-white">
-                <div class="d-flex align-items-center">
-                    <div class="feature-icon mb-0 color-2 me-3"><i class="fa-solid fa-calculator"></i></div>
-                    <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Expenses Count</p>
-                        <h3 class="fw-bold mb-0 font-outfit">{{ total_count }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Card 3: Highest Expense Category -->
-        <div class="col-md-4">
-            <div class="card-feature p-4 rounded-4 text-white">
-                <div class="d-flex align-items-center">
-                    <div class="feature-icon mb-0 color-1 me-3"><i class="fa-solid fa-arrow-trend-up"></i></div>
-                    <div>
-                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Highest Spending Category</p>
-                        {% if highest_category %}
-                        <h4 class="fw-bold mb-0 font-outfit text-gradient text-truncate" style="max-width: 180px;" title="{{ highest_category.category__name|default:'Uncategorized' }}">{{ currency_symbol }}{{ highest_category.total|floatformat:0 }} ({{ highest_category.category__name|default:"Uncategorized" }})</h4>
-                        {% else %}
-                        <h4 class="fw-bold mb-0 font-outfit text-muted-custom">None</h4>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -91,127 +42,10 @@
     <!-- Main Content (Full Width) -->
     <div class="row g-4">
         <div class="col-12">
-            <!-- Filter Panel -->
-            <div class="card-hero p-4 rounded-4 text-white mb-4">
-                <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-sliders me-2 text-gradient"></i>Filters &amp; Search</h6>
-                <form method="get" action="{% url 'expense-list' %}" id="filterForm">
-                    <input type="hidden" name="date_filter" value="{{ date_filter }}">
-                    <input type="hidden" name="date_from" value="{{ date_from }}">
-                    <input type="hidden" name="date_to" value="{{ date_to }}">
-                    
-                    <div class="row g-3">
-                        <!-- Search -->
-                        <div class="col-md-6">
-                            <label class="form-label text-muted-custom small fw-semibold uppercase">Search Name / Description</label>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-dark-custom border-glass text-muted-custom">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                </span>
-                                <input type="text" name="search" value="{{ search }}"
-                                    class="form-control bg-dark-custom text-white border-glass"
-                                    placeholder="Search expenses...">
-                            </div>
-                        </div>
-
-                        <!-- Category filter -->
-                        <div class="col-md-6">
-                            <label class="form-label text-muted-custom small fw-semibold uppercase">Category</label>
-                            <select name="category" class="form-select form-select-sm bg-dark-custom text-white border-glass">
-                                <option value="">All Categories</option>
-                                <option value="__none__" {% if category_id == '__none__' %}selected{% endif %}>Uncategorized</option>
-                                {% for cat in categories %}
-                                <option value="{{ cat.pk }}" {% if category_id == cat.pk|stringformat:'s' %}selected{% endif %}>
-                                    {{ cat.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <!-- Amount range -->
-                        <div class="col-md-6">
-                            <label class="form-label text-muted-custom small fw-semibold uppercase">Min Amount ({{ currency_symbol }})</label>
-                            <input type="number" name="amount_min" value="{{ amount_min }}" min="0" step="1"
-                                class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="0">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted-custom small fw-semibold uppercase">Max Amount ({{ currency_symbol }})</label>
-                            <input type="number" name="amount_max" value="{{ amount_max }}" min="0" step="1"
-                                class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="Any">
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 py-1 fw-semibold btn-sm">
-                            <i class="fa-solid fa-filter me-1"></i>Apply Filters
-                        </button>
-                        <a href="?date_filter={{ date_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-outline-custom rounded-pill px-4 py-1 fw-semibold btn-sm">
-                            <i class="fa-solid fa-xmark me-1"></i>Clear Search
-                        </a>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Active Filter Summary -->
-            {% if has_filters %}
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <span class="text-muted-custom small fw-semibold">Active filters:</span>
-                {% for f in active_filters %}
-                <span class="badge rounded-pill px-3 py-2 fw-medium"
-                    style="background:rgba(236,72,153,0.15);border:1px solid rgba(236,72,153,0.35);color:#f9a8d4;font-size:0.75rem;">
-                    {{ f|safe }}
-                </span>
-                {% endfor %}
-                <a href="?date_filter={{ date_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-sm btn-outline-custom rounded-pill px-2 py-0 small ms-1">
-                    Clear all
-                </a>
-            </div>
-            {% endif %}
-
             <!-- Table Card -->
             <div class="card-hero p-4 rounded-4 text-white">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <h5 class="fw-bold font-outfit mb-0">Expense Records</h5>
-                    
-                    <div class="d-flex align-items-center gap-3">
-                        <!-- Sort Options Dropdown -->
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-custom dropdown-toggle rounded-pill px-3 py-1.5 small fw-semibold" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.8rem;">
-                                <i class="fa-solid fa-sort me-1"></i> Sort: 
-                                {% if sort_by == 'date_asc' %}Date (Oldest First)
-                                {% elif sort_by == 'amount_desc' %}Amount (High-Low)
-                                {% elif sort_by == 'amount_asc' %}Amount (Low-High)
-                                {% elif sort_by == 'name_asc' %}Name (A-Z)
-                                {% elif sort_by == 'name_desc' %}Name (Z-A)
-                                {% elif sort_by == 'category_asc' %}Category (A-Z)
-                                {% elif sort_by == 'category_desc' %}Category (Z-A)
-                                {% elif sort_by == 'description_asc' %}Description (A-Z)
-                                {% elif sort_by == 'description_desc' %}Description (Z-A)
-                                {% else %}Date (Newest First){% endif %}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end bg-dark-custom border-glass shadow-lg" aria-labelledby="sortDropdown" style="min-width: 170px;">
-                                <li><a class="dropdown-item py-2 {% if sort_by == 'date_desc' or not sort_by %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=date_desc"><i class="fa-solid fa-calendar-days me-2 text-muted-custom"></i>Date (Newest First)</a></li>
-                                <li><a class="dropdown-item py-2 {% if sort_by == 'date_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=date_asc"><i class="fa-solid fa-calendar-days me-2 text-muted-custom"></i>Date (Oldest First)</a></li>
-                                <li><hr class="dropdown-divider border-glass m-1"></li>
-                                <li><a class="dropdown-item py-2 {% if sort_by == 'amount_desc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=amount_desc"><i class="fa-solid fa-arrow-down-9-1 me-2 text-muted-custom"></i>Amount (High-Low)</a></li>
-                                <li><a class="dropdown-item py-2 {% if sort_by == 'amount_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=amount_asc"><i class="fa-solid fa-arrow-up-1-9 me-2 text-muted-custom"></i>Amount (Low-High)</a></li>
-                                <li><hr class="dropdown-divider border-glass m-1"></li>
-                                <li><a class="dropdown-item py-2 {% if sort_by == 'name_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=name_asc"><i class="fa-solid fa-arrow-down-a-z me-2 text-muted-custom"></i>Name (A-Z)</a></li>
-                                <li><a class="dropdown-item py-2 {% if sort_by == 'name_desc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=name_desc"><i class="fa-solid fa-arrow-up-z-a me-2 text-muted-custom"></i>Name (Z-A)</a></li>
-                                <li><hr class="dropdown-divider border-glass m-1"></li>
-                                <li><a class="dropdown-item py-2 {% if sort_by == 'category_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=category_asc"><i class="fa-solid fa-tag me-2 text-muted-custom"></i>Category (A-Z)</a></li>
-                                <li><a class="dropdown-item py-2 {% if sort_by == 'category_desc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=category_desc"><i class="fa-solid fa-tag me-2 text-muted-custom"></i>Category (Z-A)</a></li>
-                                <li><hr class="dropdown-divider border-glass m-1"></li>
-                                <li><a class="dropdown-item py-2 {% if sort_by == 'description_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=description_asc"><i class="fa-solid fa-font me-2 text-muted-custom"></i>Description (A-Z)</a></li>
-                                <li><a class="dropdown-item py-2 {% if sort_by == 'description_desc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=description_desc"><i class="fa-solid fa-font me-2 text-muted-custom"></i>Description (Z-A)</a></li>
-                            </ul>
-                        </div>
-
-                        {% if expenses %}
-                        <span class="text-muted-custom small">
-                            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ list_count }} records
-                        </span>
-                        {% endif %}
-                    </div>
                 </div>
                 
                 {% if expenses %}
@@ -221,7 +55,7 @@
                         <thead>
                             <tr class="text-muted-custom" style="border-bottom: 2px solid var(--glass-border);">
                                 <th class="py-3">Date</th>
-                                <th class="py-3">Expense Name</th>
+                                <th class="py-3">Name</th>
                                 <th class="py-3">Category</th>
                                 <th class="py-3">Amount</th>
                                 <th class="py-3">Description</th>
@@ -232,19 +66,7 @@
                             {% for expense in expenses %}
                             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 <td class="py-3 fw-medium">{{ expense.date|date:"M d, Y" }}</td>
-                                <td class="py-3">
-                                    <div class="fw-semibold">{{ expense.name }}</div>
-                                    {% if expense.labels.all %}
-                                    <div class="d-flex flex-wrap gap-1 mt-1">
-                                        {% for label in expense.labels.all %}
-                                        <span class="badge rounded-pill px-2 py-0.5 fw-medium"
-                                              style="background: {{ label.color }}1a; border: 1px solid {{ label.color }}4d; color: {{ label.color }}; font-size: 0.65rem;">
-                                            {{ label.name }}
-                                        </span>
-                                        {% endfor %}
-                                    </div>
-                                    {% endif %}
-                                </td>
+                                <td class="py-3 fw-semibold text-white">{{ expense.name }}</td>
                                 <td class="py-3">
                                     {% if expense.category %}
                                     <span class="badge rounded-pill px-3 py-1 fw-semibold"
@@ -252,7 +74,10 @@
                                         {{ expense.category.name }}
                                     </span>
                                     {% else %}
-                                    <span class="text-muted-custom small">Uncategorized</span>
+                                    <span class="badge rounded-pill px-3 py-1 fw-semibold"
+                                        style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#94a3b8;font-size:0.75rem;">
+                                        Uncategorized
+                                    </span>
                                     {% endif %}
                                 </td>
                                 <td class="py-3 fw-bold text-gradient-alt">{{ currency_symbol }}{{ expense.amount|floatformat:2 }}</td>
@@ -269,7 +94,7 @@
                                                 class="btn btn-sm rounded-pill px-3 py-1 fw-semibold"
                                                 style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;font-size:0.75rem;transition:all 0.2s;"
                                                 title="Delete"
-                                                onclick="confirmDelete('{% url 'expense-delete' expense.pk %}', 'expense &quot;{{ expense.name }}&quot; of {{ currency_symbol }}{{ expense.amount|floatformat:2 }}')"
+                                                onclick="confirmDelete('{% url 'expense-delete' expense.pk %}', 'expense record for {{ expense.name }} of {{ currency_symbol }}{{ expense.amount|floatformat:2 }} on {{ expense.date|date:"M d, Y" }}')"
                                         >
                                             <i class="fa-solid fa-trash-can me-1"></i>Delete
                                         </button>
@@ -288,7 +113,7 @@
                         {% if page_obj.has_previous %}
                         <li class="page-item">
                             <a class="page-link bg-dark-custom border-glass text-white rounded-3"
-                                href="?{{ query_string }}&page={{ page_obj.previous_page_number }}">
+                                href="?date_filter={{ date_filter }}&page={{ page_obj.previous_page_number }}">
                                 <i class="fa-solid fa-chevron-left"></i>
                             </a>
                         </li>
@@ -301,14 +126,14 @@
                             {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                             <li class="page-item">
                                 <a class="page-link bg-dark-custom border-glass text-white rounded-3"
-                                    href="?{{ query_string }}&page={{ num }}">{{ num }}</a>
+                                    href="?date_filter={{ date_filter }}&page={{ num }}">{{ num }}</a>
                             </li>
                             {% endif %}
                         {% endfor %}
                         {% if page_obj.has_next %}
                         <li class="page-item">
                             <a class="page-link bg-dark-custom border-glass text-white rounded-3"
-                                href="?{{ query_string }}&page={{ page_obj.next_page_number }}">
+                                href="?date_filter={{ date_filter }}&page={{ page_obj.next_page_number }}">
                                 <i class="fa-solid fa-chevron-right"></i>
                             </a>
                         </li>
@@ -320,13 +145,14 @@
                 {% else %}
                 <div class="text-center py-5">
                     <div class="hero-icon-glow mx-auto mb-4" style="width:60px;height:60px;font-size:1.5rem;">
-                        <i class="fa-solid fa-receipt"></i>
+                        <i class="fa-solid fa-folder-open"></i>
                     </div>
-                    <h5 class="fw-bold font-outfit">No expense records found</h5>
-                    <p class="text-muted-custom mb-0 small">No transactions match your filtering constraints for this period.</p>
+                    <h5 class="fw-bold font-outfit">No expenses found</h5>
+                    <p class="text-muted-custom mb-0 small">No transactions found for this period.</p>
                 </div>
                 {% endif %}
             </div>
+        </div>
     </div>
 </div>
 {% endblock %}

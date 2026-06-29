@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" data-theme="{% if user_dark_mode %}dark{% else %}light{% endif %}">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -20,7 +20,7 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.0.7">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.0.8">
     <style>
         /* Hide number input spinners globally */
         input::-webkit-outer-spin-button,
@@ -89,13 +89,7 @@
 </head>
 
 <body class="d-flex flex-column min-vh-100">
-    {% if user.is_authenticated %}
-    <!-- Hidden form used by JS to sync theme preference to DB via fetch() -->
-    <form id="theme-sync-form" method="post" action="{% url 'theme-toggle' %}" style="display:none;">
-        {% csrf_token %}
-        <input type="hidden" name="dark_mode" value="{% if user_dark_mode %}on{% endif %}">
-    </form>
-    {% endif %}
+
     {% if not user.is_authenticated %}
     <!-- Header for Unauthenticated Users -->
     <header class="top-header bg-glass sticky-top d-flex align-items-center justify-content-between px-3 px-lg-4">
@@ -153,55 +147,17 @@
                         </a>
                     </li>
                     <li class="sidebar-item mb-1">
-                        <a href="{% url 'account-list' %}" class="sidebar-link {% if 'company' not in request.resolver_match.url_name %}{% if 'account' in request.resolver_match.url_name or 'transfer' in request.resolver_match.url_name %}active{% endif %}{% endif %}">
+                        <a href="{% url 'account-list' %}" class="sidebar-link {% if 'company' not in request.resolver_match.url_name %}{% if 'account' in request.resolver_match.url_name %}active{% endif %}{% endif %}">
                             <i class="bi bi-bank"></i> <span>Accounts</span>
                         </a>
                     </li>
-                    <li class="sidebar-item mb-1">
-                        <a href="{% url 'company-account-list' %}" class="sidebar-link {% if 'company' in request.resolver_match.url_name %}active{% endif %}">
-                            <i class="bi bi-building"></i> <span>Company Accounts</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item mb-1">
-                        <a href="{% url 'budget-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'budget-list budget-add budget-edit budget-delete budget-detail' %}active{% endif %}">
-                            <i class="bi bi-piggy-bank"></i> <span>Budgets</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item mb-1">
-                        <a href="{% url 'goal-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'goal-list goal-add goal-edit goal-delete goal-detail' %}active{% endif %}">
-                            <i class="fa-solid fa-bullseye"></i> <span>Goals</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item mb-1">
-                        <a href="{% url 'debt-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'debt-list debt-add debt-edit debt-delete debt-detail' %}active{% endif %}">
-                            <i class="fa-solid fa-hand-holding-dollar"></i> <span>Debts</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item mb-1">
-                        <a href="{% url 'recurring-list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'recurring-list recurring-add recurring-edit recurring-delete recurring-detail' %}active{% endif %}">
-                            <i class="fa-solid fa-arrows-spin"></i> <span>Recurring Transactions</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item mb-1">
-                        <a href="{% url 'analytics-dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'analytics-dashboard' %}active{% endif %}">
-                            <i class="bi bi-graph-up-arrow"></i> <span>Analytics</span>
-                        </a>
-                    </li>
+
                     <li class="sidebar-item mb-1">
                         <a href="{% url 'reports-dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name in 'reports-dashboard account-reports' %}active{% endif %}">
                             <i class="bi bi-pie-chart"></i> <span>Reports</span>
                         </a>
                     </li>
-                    <li class="sidebar-item mb-1">
-                        <a href="{% url 'transaction-history' %}" class="sidebar-link {% if request.resolver_match.url_name in 'transaction-history transaction-history-detail' %}active{% endif %}">
-                            <i class="fa-solid fa-clock-rotate-left"></i> <span>History</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item mb-1">
-                        <a href="{% url 'data_io:main' %}" class="sidebar-link {% if request.resolver_match.namespace == 'data_io' or 'data-io' in request.path %}active{% endif %}">
-                            <i class="fa-solid fa-folder-open"></i> <span>Import & Export</span>
-                        </a>
-                    </li>
+
                     <li class="sidebar-item mb-1 mt-3 pt-2 border-top border-glass">
                         <form id="sidebar-logout-form" method="post" action="{% url 'logout' %}" class="d-none">
                             {% csrf_token %}
@@ -220,141 +176,25 @@
         <main class="main-content-wrapper flex-grow-1 {% if not user.is_authenticated %}ms-0 w-100{% endif %}" id="main-content">
             {% if user.is_authenticated %}
             <!-- Authenticated top header -->
-            <header class="d-flex align-items-center justify-content-between pt-2 pb-0 px-3 px-lg-4" style="background: transparent;">
+            <header class="d-flex align-items-center justify-content-between pt-4 pb-3 px-3 px-lg-4 border-bottom" style="border-bottom-color: rgba(255,255,255,0.06) !important; background: transparent;">
                 <div class="d-flex align-items-center gap-3">
                     <button class="btn btn-outline-custom d-lg-none p-0 rounded-circle d-flex align-items-center justify-content-center" 
                             id="sidebar-toggle" 
-                            style="width: 38px; height: 38px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);">
+                            style="width: 38px; height: 38px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); margin-top: -10px;">
                         <i class="fa-solid fa-bars text-white" style="font-size: 1.1rem;"></i>
                     </button>
-                    <h1 class="h3 mb-0 font-outfit fw-bold text-white">
-                        {% block page_title %}
-                            {% if request.resolver_match.url_name == 'home' %}
-                                Dashboard
-                            {% elif request.resolver_match.url_name in 'income-list income-create income-edit income-delete' %}
-                                Incomes
-                            {% elif request.resolver_match.url_name in 'expense-list expense-create expense-edit expense-delete' %}
-                                Expenses
-                            {% elif request.resolver_match.url_name in 'category-list category-add category-edit category-delete' %}
-                                Categories
-                            {% elif request.resolver_match.url_name in 'account-list account-add account-edit account-delete account-detail' %}
-                                Accounts
-                            {% elif request.resolver_match.url_name == 'account-transfer' %}
-                                Transfer Funds
-                            {% elif request.resolver_match.url_name in 'transfer-list transfer-detail' %}
-                                Transfer History
-                            {% elif request.resolver_match.url_name in 'budget-list budget-add budget-edit budget-delete' %}
-                                Budgets
-                            {% elif request.resolver_match.url_name == 'budget-detail' %}
-                                Budget Details
-                            {% elif request.resolver_match.url_name == 'reports-dashboard' %}
-                                Reports
-                            {% elif request.resolver_match.url_name == 'account-reports' %}
-                                Account Reports
-                            {% elif request.resolver_match.url_name in 'transaction-history transaction-history-detail' %}
-                                History
-                            {% elif request.resolver_match.url_name == 'settings' %}
-                                Settings
-                            {% elif request.resolver_match.url_name in 'profile password_change password_change_done' %}
-                                Profile
-                            {% elif request.resolver_match.url_name == 'transaction-add' %}
-                                Add Transaction
-                            {% elif request.resolver_match.url_name in 'company-account-list company-account-add company-account-edit company-account-delete company-account-detail company-dashboard company-reports company-income-add company-income-edit company-income-delete company-expense-add company-expense-edit company-expense-delete' %}
-                                Company Accounts
-                            {% elif request.resolver_match.url_name in 'goal-list goal-add goal-edit goal-delete goal-detail' %}
-                                Goals
-                            {% elif request.resolver_match.url_name in 'debt-list debt-add debt-edit debt-delete debt-detail' %}
-                                Debts
-                            {% elif request.resolver_match.url_name in 'recurring-list recurring-add recurring-edit recurring-delete recurring-detail' %}
-                                Recurring Transactions
-                            {% elif request.resolver_match.url_name == 'analytics-dashboard' %}
-                                Analytics
-                            {% else %}
-                                Dashboard
-                            {% endif %}
-                        {% endblock %}
-                    </h1>
+                    <div>
+                        <h2 class="fw-bold font-outfit text-gradient mb-1" style="font-size: 1.7rem; line-height: 1.2;">
+                            {% block page_title %}Dashboard{% endblock %}
+                        </h2>
+                        <p class="text-muted-custom small mb-0" style="font-size: 0.82rem;">
+                            {% block page_subtitle %}Welcome back, {{ user.username }}{% endblock %}
+                        </p>
+                    </div>
                 </div>
 
-                <div class="d-flex align-items-center gap-2">
-                    <!-- Notifications Dropdown -->
-                    <div class="dropdown">
-                        <a class="p-0 text-white d-flex align-items-center justify-content-center" 
-                           href="#" id="navbarDropdownNotifications" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications"
-                           style="width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); text-decoration: none; position: relative;">
-                            <i class="fa-solid fa-bell text-muted-custom" style="font-size: 1.1rem;"></i>
-                            {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
-                            {% if total_alerts > 0 %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                  style="font-size: 0.6rem; padding: 0.25em 0.5em; min-width: 16px; line-height: 1; border: 1.5px solid rgba(15,15,35,0.8); margin-top: 5px; margin-left: -5px;">
-                                {{ total_alerts }}
-                            </span>
-                            {% endif %}
-                            {% endwith %}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end bg-dark-custom border-glass shadow-lg py-2" aria-labelledby="navbarDropdownNotifications" style="width: 320px;">
-                            <li class="px-3 py-2 border-bottom border-glass d-flex justify-content-between align-items-center">
-                                <span class="fw-bold font-outfit text-white">Notifications</span>
-                                {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
-                                {% if total_alerts > 0 %}
-                                <span class="badge rounded-pill" style="font-size: 0.7rem; background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3);">
-                                    {{ total_alerts }} New
-                                </span>
-                                {% endif %}
-                                {% endwith %}
-                            </li>
-                            <div class="notification-list" style="max-height: 280px; overflow-y: auto;">
-                                {% with total_alerts=global_low_balance_count|add:budget_alert_count %}
-                                {% if total_alerts == 0 %}
-                                <li class="text-center py-4 text-muted-custom">
-                                    <i class="fa-regular fa-bell-slash d-block mb-2 fs-4"></i>
-                                    <span class="small">No new notifications</span>
-                                </li>
-                                {% else %}
-                                    {% if lba_show_navbar and global_low_balance_count > 0 %}
-                                        {% for acc in global_accounts_below_minimum %}
-                                        <li>
-                                            <a class="dropdown-item px-3 py-2.5 border-bottom border-glass d-flex align-items-start gap-2.5" href="{% url 'account-list' %}" style="white-space: normal;">
-                                                <span class="text-warning mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i></span>
-                                                <div class="small text-white">
-                                                    Account <strong>{{ acc.name }}</strong> is below minimum balance.
-                                                    <div class="text-muted-custom mt-1" style="font-size: 0.75rem;">Shortage: {{ currency_symbol }}{{ acc.shortage }}</div>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        {% endfor %}
-                                    {% endif %}
-                                    {% if budget_alert_count > 0 %}
-                                        {% for alert in budget_alerts %}
-                                        <li>
-                                            <a class="dropdown-item px-3 py-2.5 border-bottom border-glass d-flex align-items-start gap-2.5" href="{% url 'budget-list' %}" style="white-space: normal;">
-                                                <span class="{% if alert.type == 'exceeded' %}text-danger{% else %}text-warning{% endif %} mt-0.5">
-                                                    {% if alert.type == 'exceeded' %}<i class="fa-solid fa-circle-exclamation"></i>{% else %}<i class="fa-solid fa-triangle-exclamation"></i>{% endif %}
-                                                </span>
-                                                <div class="small text-white">
-                                                    {{ alert.message }}
-                                                    <div class="text-muted-custom mt-1" style="font-size: 0.75rem;">Usage: {{ alert.usage_percentage|floatformat:0 }}%</div>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        {% endfor %}
-                                    {% endif %}
-                                {% endif %}
-                                {% endwith %}
-                            </div>
-                        </ul>
-                    </div>
-
-                    <!-- Dark / Light Theme Toggle -->
-                    <button id="nav-theme-toggle"
-                            title="Toggle Dark / Light Mode"
-                            class="d-flex align-items-center justify-content-center"
-                            style="width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:pointer;flex-shrink:0;transition:background 0.2s,border-color 0.2s;">
-                        <!-- Moon shown in dark mode, sun shown in light mode -->
-                        <i id="nav-theme-icon" class="bi {% if user_dark_mode %}bi-moon-stars-fill{% else %}bi-sun-fill{% endif %}"
-                           style="font-size:1.1rem;color:{% if user_dark_mode %}#a5b4fc{% else %}#fbbf24{% endif %};"></i>
-                    </button>
-
+                <div class="d-flex align-items-center gap-3">
+                    {% block header_actions %}{% endblock %}
                     <!-- Settings Option -->
                     <a href="{% url 'settings' %}" class="text-white d-flex align-items-center justify-content-center" title="Settings"
                        style="width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); text-decoration: none;">
@@ -466,42 +306,7 @@
         </div>
     </div>
 
-    <!-- Add Transfer Modal -->
-    <div class="modal fade" id="globalAddTransferModal" tabindex="-1" aria-labelledby="globalAddTransferModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content modal-content-glass text-white bg-dark-custom">
-                <div class="modal-header border-bottom border-glass py-3">
-                    <h5 class="modal-title fw-bold font-outfit" id="globalAddTransferModalLabel">
-                        <i class="fa-solid fa-arrow-right-arrow-left me-2 text-primary"></i>Transfer Funds
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="post" action="{% url 'account-transfer' %}">
-                    <div class="modal-body p-4">
-                        {% csrf_token %}
-                        {% for field in global_transfer_form %}
-                            <div class="mb-3 {% if field.field.widget.input_type == 'checkbox' %}form-check d-flex align-items-center gap-2{% endif %}">
-                                {% if field.field.widget.input_type == 'checkbox' %}
-                                    {{ field }}
-                                    <label for="{{ field.id_for_label }}" class="form-check-label text-white small mb-0">{{ field.label }}</label>
-                                {% else %}
-                                    <label for="{{ field.id_for_label }}" class="form-label text-muted-custom small fw-semibold uppercase">{{ field.label }}</label>
-                                    {{ field }}
-                                {% endif %}
-                                {% if field.help_text %}
-                                    <div class="form-text text-muted-custom small">{{ field.help_text }}</div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <div class="modal-footer border-top border-glass p-3.5 d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-outline-custom border border-glass rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 fw-semibold shadow-lg">Transfer</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Add Account Modal -->
     <div class="modal fade" id="globalAddAccountModal" tabindex="-1" aria-labelledby="globalAddAccountModalLabel" aria-hidden="true">
@@ -531,46 +336,6 @@
                             </div>
                         {% endfor %}
                     </div>
-                    <div class="modal-footer border-top border-glass p-3.5 d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-outline-custom border border-glass rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 fw-semibold shadow-lg">Save Account</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Budget Modal -->
-    <div class="modal fade" id="globalAddBudgetModal" tabindex="-1" aria-labelledby="globalAddBudgetModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content modal-content-glass text-white bg-dark-custom">
-                <div class="modal-header border-bottom border-glass py-3">
-                    <h5 class="modal-title fw-bold font-outfit" id="globalAddBudgetModalLabel">
-                        <i class="bi bi-piggy-bank me-2 text-info"></i>Add Budget
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="post" action="{% url 'budget-add' %}">
-                    <div class="modal-body p-4">
-                        {% csrf_token %}
-                        {% for field in global_budget_form %}
-                            <div class="mb-3 {% if field.field.widget.input_type == 'checkbox' %}form-check d-flex align-items-center gap-2{% endif %}">
-                                {% if field.field.widget.input_type == 'checkbox' %}
-                                    {{ field }}
-                                    <label for="{{ field.id_for_label }}" class="form-check-label text-white small mb-0">{{ field.label }}</label>
-                                {% else %}
-                                    <label for="{{ field.id_for_label }}" class="form-label text-muted-custom small fw-semibold uppercase">{{ field.label }}</label>
-                                    {{ field }}
-                                {% endif %}
-                                {% if field.help_text %}
-                                    <div class="form-text text-muted-custom small">{{ field.help_text }}</div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <div class="modal-footer border-top border-glass p-3.5 d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-outline-custom border border-glass rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 fw-semibold shadow-lg">Save Budget</button>
                     </div>
                 </form>
             </div>
@@ -596,7 +361,7 @@
             });
 
             // Global Quick Add Modal pre-filling event listeners
-            const modalIds = ['globalAddIncomeModal', 'globalAddExpenseModal', 'globalAddTransferModal', 'globalAddBudgetModal'];
+            const modalIds = ['globalAddIncomeModal', 'globalAddExpenseModal'];
             modalIds.forEach(function(id) {
                 const modalEl = document.getElementById(id);
                 if (modalEl) {
@@ -689,56 +454,8 @@
                 });
             }
 
-            // ── Theme Toggle (nav button) ───────────────────────────────────────
-            (function () {
-                var htmlEl   = document.documentElement;
-                var toggleBtn = document.getElementById('nav-theme-toggle');
-                var icon      = document.getElementById('nav-theme-icon');
-
-                // Server-side default (from UserSettings)
-                var serverDark = {% if user_dark_mode %}true{% else %}false{% endif %};
-
-                // Prefer localStorage so the theme is remembered across pages
-                // without a server round-trip
-                var stored = localStorage.getItem('et-dark-mode');
-                var isDark = (stored !== null) ? (stored === 'true') : serverDark;
-
-                function applyTheme(dark) {
-                    isDark = dark;
-                    htmlEl.setAttribute('data-theme', dark ? 'dark' : 'light');
-                    localStorage.setItem('et-dark-mode', dark);
-                    if (icon) {
-                        icon.className = dark ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
-                        icon.style.color = dark ? '#a5b4fc' : '#fbbf24';
-                    }
-                    if (toggleBtn) {
-                        toggleBtn.style.background = dark
-                            ? 'rgba(255,255,255,0.03)'
-                            : 'rgba(99,102,241,0.10)';
-                        toggleBtn.style.borderColor = dark
-                            ? 'rgba(255,255,255,0.08)'
-                            : 'rgba(99,102,241,0.30)';
-                    }
-                    // Persist to server via hidden form POST so DB stays in sync
-                    var form = document.getElementById('theme-sync-form');
-                    if (form) {
-                        form.querySelector('[name="dark_mode"]').value = dark ? 'on' : '';
-                        // Fire-and-forget fetch so the page doesn't reload
-                        var fd = new FormData(form);
-                        fetch(form.action, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                            .catch(function(){}); // ignore network errors silently
-                    }
-                }
-
-                // Apply correct theme immediately (before paint)
-                applyTheme(isDark);
-
-                if (toggleBtn) {
-                    toggleBtn.addEventListener('click', function () {
-                        applyTheme(!isDark);
-                    });
-                }
-            })();
+            // ── Theme setting ───────────────────────────────────────
+            document.documentElement.setAttribute('data-theme', 'dark');
         });
     </script>
     {% block extra_js %}{% endblock %}

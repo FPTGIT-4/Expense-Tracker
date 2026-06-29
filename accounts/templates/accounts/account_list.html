@@ -2,32 +2,17 @@
 
 {% block title %}Accounts | Personal Tracker{% endblock %}
 
+{% block page_title %}Accounts{% endblock %}
+{% block page_subtitle %}Manage your payment methods, wallets, bank accounts, and cards{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'account-add' %}" class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
+    <i class="fa-solid fa-plus me-2"></i> Add Account
+</a>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
-    <!-- Header Block -->
-    <div class="row align-items-center mb-4">
-        <div class="col-md-6">
-            <p class="text-muted-custom">Manage your payment methods, wallets, bank accounts, and cards</p>
-        </div>
-        <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex justify-content-start justify-content-md-end gap-2 flex-wrap">
-            <a href="{% url 'account-reports' %}"
-                class="btn btn-outline-custom px-4 py-2 rounded-pill fw-semibold shadow-lg">
-                <i class="fa-solid fa-chart-column me-2"></i> Reports
-            </a>
-            <a href="{% url 'transfer-list' %}"
-                class="btn btn-outline-custom px-4 py-2 rounded-pill fw-semibold shadow-lg">
-                <i class="fa-solid fa-clock-rotate-left me-2"></i> Transfer History
-            </a>
-            <a href="{% url 'account-transfer' %}"
-                class="btn btn-outline-custom px-4 py-2 rounded-pill fw-semibold shadow-lg">
-                <i class="fa-solid fa-right-left me-2"></i> Transfer Money
-            </a>
-            <a href="{% url 'account-add' %}"
-                class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
-                <i class="fa-solid fa-plus me-2"></i> Add Account
-            </a>
-        </div>
-    </div>
 
     <!-- Analytics Summary Cards -->
     <div class="row g-4 mb-5">
@@ -63,13 +48,12 @@
     </div>
 
     <!-- Grid of Account Cards -->
-    
     <div class="row g-4">
         {% for acc in accounts %}
         <div class="col-md-6 col-lg-4">
             <div class="card-hero card-feature p-4 rounded-4 text-white h-100 d-flex flex-column justify-content-between position-relative" style="transition: all 0.3s ease;">
                 
-                <a href="{% url 'account-detail' acc.pk %}" class="text-decoration-none text-white d-block">
+                <div class="d-block text-white">
                     <!-- Top row: Icon + Type Badge -->
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="feature-icon mb-0 {{ acc.theme_color_class }}" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1.1rem;">
@@ -115,19 +99,16 @@
                         <p class="text-muted-custom mb-0 mt-1" style="font-size: 0.72rem;">Alert Threshold: {{ currency_symbol }}{{ acc.effective_minimum_balance|floatformat:2 }}</p>
                         {% endif %}
                     </div>
-                </a>
+                </div>
 
                 <div>
                     <!-- Actions -->
-                    <div class="d-flex gap-2 justify-content-between border-top pt-2.5" style="border-top-color: rgba(255,255,255,0.06) !important;">
-                        <a href="{% url 'account-detail' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-2.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
-                            <i class="fa-solid fa-circle-info"></i> Details
-                        </a>
+                    <div class="d-flex gap-2 justify-content-end border-top pt-2.5" style="border-top-color: rgba(255,255,255,0.06) !important;">
                         <div class="d-flex gap-1.5">
-                            <a href="{% url 'account-edit' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-2 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
+                            <a href="{% url 'account-edit' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem;">
                                 <i class="fa-solid fa-pen-to-square"></i> Edit
                             </a>
-                            <a href="{% url 'account-delete' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-2 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 text-danger border-danger-hover" style="font-size: 0.78rem;">
+                            <a href="{% url 'account-delete' acc.pk %}" class="btn btn-outline-custom btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 text-danger border-danger-hover" style="font-size: 0.78rem;">
                                 <i class="fa-solid fa-trash"></i> Delete
                             </a>
                         </div>

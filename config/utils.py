@@ -15,7 +15,9 @@ def get_analytics_date_range(request):
     elif date_filter == 'this_week':
         # Start from Monday of current week
         start = today - datetime.timedelta(days=today.weekday())
-        return start, today, 'this_week'
+        # End on Sunday of current week
+        end = start + datetime.timedelta(days=6)
+        return start, end, 'this_week'
         
     elif date_filter == 'this_month':
         start = today.replace(day=1)

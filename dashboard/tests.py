@@ -55,132 +55,16 @@ class DashboardViewTests(TestCase):
         # Verify Context stats
         self.assertEqual(response.context['total_income'], Decimal('5000.00'))
         self.assertEqual(response.context['total_expenses'], Decimal('150.00'))
-        self.assertEqual(response.context['current_balance'], Decimal('4850.00'))
+        self.assertEqual(response.context['total_balance'], Decimal('4850.00'))
         self.assertEqual(response.context['total_categories'], 2)
-        
-        # Verify Today's statistics
-        self.assertEqual(response.context['income_today'], Decimal('5000.00'))
-        self.assertEqual(response.context['expenses_today'], Decimal('150.00'))
 
     def test_dashboard_statistics_calculation_user2(self):
         self.client.force_login(self.user2)
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         
-        # Verify Context stats for user2 (income was yesterday, so today's stats should be 0)
+        # Verify Context stats for user2
         self.assertEqual(response.context['total_income'], Decimal('3000.00'))
         self.assertEqual(response.context['total_expenses'], Decimal('0.00'))
-        self.assertEqual(response.context['current_balance'], Decimal('3000.00'))
+        self.assertEqual(response.context['total_balance'], Decimal('3000.00'))
         self.assertEqual(response.context['total_categories'], 1)
-        self.assertEqual(response.context['income_today'], Decimal('0.00'))
-        self.assertEqual(response.context['expenses_today'], Decimal('0.00'))
-
-    def test_quick_add_income(self):
-        self.client.force_login(self.user1)
-        # Verify initial count
-        initial_count = Income.objects.filter(user=self.user1).count()
-        
-        from accounts.models import Account
-        account, _ = Account.objects.get_or_create(user=self.user1, name='Cash', account_type='Cash')
-
-        response = self.client.post(
-            reverse('transaction-add'),
-            data={
-                'type': 'income',
-                'date': str(datetime.date.today()),
-                'account': account.id,
-                'rows': [{
-                    'amount': '350.00',
-                    'source': 'Freelancing',
-                    'description': 'Quick consulting session'
-                }]
-            },
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['success'], True)
-        
-        # Verify database record creation
-        self.assertEqual(Income.objects.filter(user=self.user1).count(), initial_count + 1)
-        new_income = Income.objects.filter(user=self.user1).order_by('-created_at').first()
-        self.assertEqual(new_income.amount, Decimal('350.00'))
-        self.assertEqual(new_income.source, 'Freelancing')
-        self.assertEqual(new_income.date, datetime.date.today())
-
-    def test_quick_add_expense(self):
-        self.client.force_login(self.user1)
-        # Verify initial count
-        initial_count = Expense.objects.filter(user=self.user1).count()
-        
-        from accounts.models import Account
-        account, _ = Account.objects.get_or_create(user=self.user1, name='Cash', account_type='Cash')
-
-        response = self.client.post(
-            reverse('transaction-add'),
-            data={
-                'type': 'expense',
-                'date': str(datetime.date.today()),
-                'account': account.id,
-                'rows': [{
-                    'name': 'Internet bill',
-                    'amount': '60.00',
-                    'category': self.cat2.id,
-                    'description': 'Monthly subscription'
-                }]
-            },
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['success'], True)
-        
-        # Verify database record creation
-        self.assertEqual(Expense.objects.filter(user=self.user1).count(), initial_count + 1)
-        new_expense = Expense.objects.filter(user=self.user1).order_by('-created_at').first()
-        self.assertEqual(new_expense.name, 'Internet bill')
-        self.assertEqual(new_expense.amount, Decimal('60.00'))
-        self.assertEqual(new_expense.category, self.cat2)
-        self.assertEqual(new_expense.date, datetime.date.today())
-
-    def test_quick_add_with_row_level_accounts(self):
-        self.client.force_login(self.user1)
-        from accounts.models import Account
-        acc_cash, _ = Account.objects.get_or_create(user=self.user1, name='Cash', account_type='Cash')
-        acc_bank, _ = Account.objects.get_or_create(user=self.user1, name='Bank', account_type='Bank Account')
-
-        initial_income_count = Income.objects.filter(user=self.user1).count()
-
-        response = self.client.post(
-            reverse('transaction-add'),
-            data={
-                'type': 'income',
-                'date': str(datetime.date.today()),
-                'rows': [
-                    {
-                        'amount': '150.00',
-                        'source': 'Salary',
-                        'description': 'Cash pay',
-                        'account': acc_cash.id
-                    },
-                    {
-                        'amount': '850.00',
-                        'source': 'Freelancing',
-                        'description': 'Direct deposit',
-                        'account': acc_bank.id
-                    }
-                ]
-            },
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['success'], True)
-        self.assertEqual(response.json()['count'], 2)
-
-        # Verify both records created and associated to correct accounts
-        self.assertEqual(Income.objects.filter(user=self.user1).count(), initial_income_count + 2)
-        tx_cash = Income.objects.get(user=self.user1, description='Cash pay')
-        self.assertEqual(tx_cash.amount, Decimal('150.00'))
-        self.assertEqual(tx_cash.account, acc_cash)
-
-        tx_bank = Income.objects.get(user=self.user1, description='Direct deposit')
-        self.assertEqual(tx_bank.amount, Decimal('850.00'))
-        self.assertEqual(tx_bank.account, acc_bank)

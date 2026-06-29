@@ -33,7 +33,7 @@ class Account(models.Model):
         return f"{self.name} ({self.account_type})"
 
     def invalidate_cache(self):
-        for attr in ['_current_balance_cache', '_settings_cache', '_total_income', '_total_expense', '_incoming_transfers', '_outgoing_transfers']:
+        for attr in ['_current_balance_cache', '_settings_cache', '_total_income', '_total_expense']:
             if hasattr(self, attr):
                 delattr(self, attr)
 
@@ -46,23 +46,17 @@ class Account(models.Model):
             self._current_balance_cache = (
                 Decimal(str(self.initial_balance)) + 
                 Decimal(str(self._total_income)) - 
-                Decimal(str(self._total_expense)) + 
-                Decimal(str(self._incoming_transfers)) - 
-                Decimal(str(self._outgoing_transfers))
+                Decimal(str(self._total_expense))
             )
             return self._current_balance_cache
 
         total_income = self.incomes.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
         total_expense = self.expenses.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
-        outgoing_transfers = self.outgoing_transfers.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
-        incoming_transfers = self.incoming_transfers.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
         
         self._current_balance_cache = (
             Decimal(str(self.initial_balance)) + 
             Decimal(str(total_income)) - 
-            Decimal(str(total_expense)) + 
-            Decimal(str(incoming_transfers)) - 
-            Decimal(str(outgoing_transfers))
+            Decimal(str(total_expense))
         )
         return self._current_balance_cache
 
@@ -93,38 +87,13 @@ class Account(models.Model):
         """Returns the actual threshold balance being used for alerts (either own minimum_balance or fallback default)."""
         threshold = self.minimum_balance
         if not threshold or threshold <= 0:
-            try:
-                user = self.user
-                settings = getattr(user, '_settings_cache', None) or getattr(user, 'settings', None)
-                if settings:
-                    if not hasattr(user, '_settings_cache'):
-                        user._settings_cache = settings
-                    threshold = settings.low_balance_default_minimum
-                else:
-                    threshold = Decimal('0.00')
-            except Exception:
-                threshold = Decimal('0.00')
+            threshold = Decimal('0.00')
         return threshold
 
     @property
     def is_below_minimum(self):
-        """Returns True if current balance is at or below the minimum balance threshold and alerts are enabled."""
+        """Returns True if current balance is at or below the minimum balance threshold."""
         if self.status == 'CLOSED':
-            return False
-
-        try:
-            user = self.user
-            settings = getattr(user, '_settings_cache', None) or getattr(user, 'settings', None)
-            if settings:
-                if not hasattr(user, '_settings_cache'):
-                    user._settings_cache = settings
-                show_alerts = settings.low_balance_alerts
-            else:
-                show_alerts = True
-        except Exception:
-            show_alerts = True
-
-        if not show_alerts:
             return False
 
         threshold = self.effective_minimum_balance
@@ -179,43 +148,7 @@ class Account(models.Model):
         self.invalidate_cache()
 
 
-from django.utils import timezone
-from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, MaxValueValidator
 
-class AccountTransfer(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transfers')
-    from_account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='outgoing_transfers')
-    to_account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='incoming_transfers')
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    transfer_date = models.DateField(default=timezone.localdate)
-    note = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-transfer_date', '-created_at']
-
-    def __str__(self):
-        return f"Transfer of ₹{self.amount} from {self.from_account} to {self.to_account}"
-
-    def clean(self):
-        super().clean()
-        if self.from_account == self.to_account:
-            raise ValidationError("Source and destination accounts cannot be the same.")
-        if self.amount is not None and self.amount <= 0:
-            raise ValidationError({'amount': "Transfer amount must be a positive number."})
-
-        if self.from_account:
-            if self.from_account.status == 'INACTIVE':
-                raise ValidationError({'from_account': "Cannot transfer from an inactive account."})
-            elif self.from_account.status == 'CLOSED':
-                raise ValidationError({'from_account': "Cannot transfer from a closed account."})
-
-        if self.to_account:
-            if self.to_account.status == 'INACTIVE':
-                raise ValidationError({'to_account': "Cannot transfer to an inactive account."})
-            elif self.to_account.status == 'CLOSED':
-                raise ValidationError({'to_account': "Cannot receive transfers into a closed account."})
 
 
 class UserSettings(models.Model):
@@ -227,44 +160,8 @@ class UserSettings(models.Model):
         ('¥', 'JPY (¥)'),
     ]
 
-    ALERT_SCOPE_CHOICES = [
-        ('all', 'All Accounts'),
-        ('active', 'Active Accounts Only'),
-        ('non_zero', 'Accounts with Transactions Only'),
-    ]
-
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='settings')
     currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES, default='₹')
-    budget_threshold = models.IntegerField(
-        default=80,
-        validators=[MinValueValidator(1), MaxValueValidator(100)],
-        help_text='Notify when any budget reaches this % of usage. (1-100)'
-    )
-
-    # ── Budget Alert settings ──────────────────────────────────────────────
-    enable_budget_alerts = models.BooleanField(default=True)
-
-    # ── Low Balance Alert settings ─────────────────────────────────────────
-    low_balance_alerts = models.BooleanField(default=True)
-    low_balance_show_navbar_badge  = models.BooleanField(default=True)
-    low_balance_show_dashboard_banner = models.BooleanField(default=True)
-    low_balance_show_dashboard_panel  = models.BooleanField(default=True)
-    low_balance_alert_scope = models.CharField(
-        max_length=20,
-        choices=ALERT_SCOPE_CHOICES,
-        default='active',
-    )
-    low_balance_default_minimum = models.DecimalField(
-        max_digits=12, decimal_places=2,
-        default=Decimal('0.00'), blank=True,
-        help_text='Default minimum balance applied when creating new accounts (0 = disabled).'
-    )
-
-    # ── Appearance ─────────────────────────────────────────────────────────────
-    dark_mode = models.BooleanField(
-        default=True,
-        help_text='Use the dark theme (default). Uncheck for light mode.'
-    )
 
     def __str__(self):
         return f"{self.user.username}'s settings"
@@ -275,16 +172,11 @@ def annotate_balance(queryset):
     from django.db.models.functions import Coalesce
     from income.models import Income
     from expenses.models import Expense
-    from accounts.models import AccountTransfer
     
     incomes_sub = Income.objects.filter(account=OuterRef('pk')).values('account').annotate(total=Sum('amount')).values('total')
     expenses_sub = Expense.objects.filter(account=OuterRef('pk')).values('account').annotate(total=Sum('amount')).values('total')
-    outgoing_sub = AccountTransfer.objects.filter(from_account=OuterRef('pk')).values('from_account').annotate(total=Sum('amount')).values('total')
-    incoming_sub = AccountTransfer.objects.filter(to_account=OuterRef('pk')).values('to_account').annotate(total=Sum('amount')).values('total')
     
     return queryset.annotate(
         _total_income=Coalesce(Subquery(incomes_sub), Decimal('0.00'), output_field=DecimalField()),
         _total_expense=Coalesce(Subquery(expenses_sub), Decimal('0.00'), output_field=DecimalField()),
-        _incoming_transfers=Coalesce(Subquery(incoming_sub), Decimal('0.00'), output_field=DecimalField()),
-        _outgoing_transfers=Coalesce(Subquery(outgoing_sub), Decimal('0.00'), output_field=DecimalField()),
     )

@@ -9,8 +9,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django import forms
 from django.http import JsonResponse
 from django.views import View
-from .models import Account, AccountTransfer, UserSettings
-from .forms import AccountForm, TransferForm, UserSettingsForm
+from .models import Account, UserSettings
+from .forms import AccountForm, UserSettingsForm
 
 
 from decimal import Decimal
@@ -106,15 +106,6 @@ class SettingsView(LoginRequiredMixin, TemplateView):
         })
 
 
-# ── Theme Toggle (AJAX) ────────────────────────────────────────────────────────
-class ThemeToggleView(LoginRequiredMixin, View):
-    """Lightweight endpoint that saves dark_mode pref from the nav toggle."""
-    def post(self, request, *args, **kwargs):
-        settings, _ = UserSettings.objects.get_or_create(user=request.user)
-        # 'dark_mode' field value is 'on' (checkbox) or '' (off)
-        settings.dark_mode = (request.POST.get('dark_mode') == 'on')
-        settings.save(update_fields=['dark_mode'])
-        return JsonResponse({'ok': True, 'dark_mode': settings.dark_mode})
 
 
 # ── Financial Account Management CRUD ─────────────────────────────────────────
@@ -174,139 +165,11 @@ class AccountDeleteView(LoginRequiredMixin, DeleteView):
     def get_queryset(self):
         return Account.objects.filter(user=self.request.user)
 
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
         messages.success(self.request, "Account deleted successfully!")
-        return super().form_valid(form)
+        return super().delete(request, *args, **kwargs)
 
 
-class AccountDetailView(LoginRequiredMixin, DetailView):
-    model = Account
-    template_name = 'accounts/account_detail.html'
-    context_object_name = 'account'
-
-    def get_queryset(self):
-        return Account.objects.filter(user=self.request.user)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        account = self.get_object()
-
-        # Calculate Net Change
-        net_change = account.current_balance - account.initial_balance
-        context['net_change'] = net_change
-
-        # Fetch and combine Incomes and Expenses
-        incomes = account.incomes.all()
-        expenses = account.expenses.select_related('category')
-
-        tx_list = []
-        for inc in incomes:
-            tx_list.append({
-                'date': inc.date,
-                'created_at': inc.created_at,
-                'type': 'Income',
-                'category_or_source': inc.source,
-                'description': inc.description,
-                'amount': inc.amount,
-            })
-
-        for exp in expenses:
-            tx_list.append({
-                'date': exp.date,
-                'created_at': exp.created_at,
-                'type': 'Expense',
-                'category_or_source': exp.category.name if exp.category else 'Uncategorized',
-                'description': exp.description,
-                'amount': exp.amount,
-            })
-
-        # Sort newest first
-        tx_list.sort(key=lambda x: (x['date'], x['created_at']), reverse=True)
-
-        # Paginate (10 transactions per page)
-        paginator = Paginator(tx_list, 10)
-        page = self.request.GET.get('page')
-        try:
-            transactions = paginator.page(page)
-        except PageNotAnInteger:
-            transactions = paginator.page(1)
-        except EmptyPage:
-            transactions = paginator.page(paginator.num_pages)
-
-        context['transactions'] = transactions
-        return context
 
 
-class AccountTransferCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
-    model = AccountTransfer
-    form_class = TransferForm
-    template_name = 'accounts/account_transfer_form.html'
-    success_url = reverse_lazy('account-list')
-    success_message = "Money transferred successfully!"
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.user = self.request.user
-        return super().form_valid(form)
-
-
-class TransferListView(LoginRequiredMixin, ListView):
-    model = AccountTransfer
-    template_name = 'accounts/transfer_list.html'
-    context_object_name = 'transfers'
-    paginate_by = 10
-
-    def get_queryset(self):
-        queryset = AccountTransfer.objects.filter(user=self.request.user).select_related('from_account', 'to_account')
-
-        # Search query
-        q = self.request.GET.get('q', '').strip()
-        if q:
-            try:
-                amount_val = float(q)
-                queryset = queryset.filter(
-                    Q(note__icontains=q) |
-                    Q(from_account__name__icontains=q) |
-                    Q(to_account__name__icontains=q) |
-                    Q(amount=amount_val)
-                )
-            except ValueError:
-                queryset = queryset.filter(
-                    Q(note__icontains=q) |
-                    Q(from_account__name__icontains=q) |
-                    Q(to_account__name__icontains=q)
-                )
-
-        # Period filter
-        period = self.request.GET.get('period', '').strip()
-        today = timezone.localdate()
-        if period == 'today':
-            queryset = queryset.filter(transfer_date=today)
-        elif period == 'week':
-            start_week = today - datetime.timedelta(days=today.weekday())
-            queryset = queryset.filter(transfer_date__gte=start_week, transfer_date__lte=today)
-        elif period == 'month':
-            queryset = queryset.filter(transfer_date__year=today.year, transfer_date__month=today.month)
-        elif period == 'year':
-            queryset = queryset.filter(transfer_date__year=today.year)
-
-        return queryset
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['q'] = self.request.GET.get('q', '').strip()
-        context['period'] = self.request.GET.get('period', '').strip()
-        return context
-
-
-class TransferDetailView(LoginRequiredMixin, DetailView):
-    model = AccountTransfer
-    template_name = 'accounts/transfer_detail.html'
-    context_object_name = 'transfer'
-
-    def get_queryset(self):
-        return AccountTransfer.objects.filter(user=self.request.user)

@@ -52,14 +52,6 @@ INSTALLED_APPS = [
     'categories.apps.CategoriesConfig',
     'dashboard.apps.DashboardConfig',
     'reports.apps.ReportsConfig',
-    'transactions.apps.TransactionsConfig',
-    'budgets.apps.BudgetsConfig',
-    'companies.apps.CompaniesConfig',
-    'goals.apps.GoalsConfig',
-    'debts.apps.DebtsConfig',
-    'recurrences.apps.RecurrencesConfig',
-    'analytics.apps.AnalyticsConfig',
-    'data_io.apps.DataIoConfig',
 ]
 
 MIDDLEWARE = [
@@ -71,7 +63,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'recurrences.middleware.RecurringTransactionsMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -87,7 +78,6 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'accounts.context_processors.user_settings',
-                'budgets.context_processors.budget_alerts_processor',
                 'accounts.context_processors.global_forms',
             ],
         },
@@ -137,7 +127,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 

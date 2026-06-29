@@ -1,12 +1,13 @@
 from django import forms
 from .models import Income
 from accounts.models import Account
-from categories.models import Label
+from categories.models import Category
+
 
 class IncomeForm(forms.ModelForm):
     class Meta:
         model = Income
-        fields = ['account', 'amount', 'source', 'date', 'labels', 'description']
+        fields = ['account', 'amount', 'category', 'date', 'description']
         widgets = {
             'account': forms.Select(attrs={
                 'class': 'form-select bg-dark-custom text-white border-glass',
@@ -17,15 +18,12 @@ class IncomeForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0.01',
             }),
-            'source': forms.Select(attrs={
+            'category': forms.Select(attrs={
                 'class': 'form-select bg-dark-custom text-white border-glass',
             }),
             'date': forms.DateInput(format='%Y-%m-%d', attrs={
                 'class': 'form-control bg-dark-custom text-white border-glass',
                 'type': 'date',
-            }),
-            'labels': forms.CheckboxSelectMultiple(attrs={
-                'class': 'form-check-input',
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-control bg-dark-custom text-white border-glass',
@@ -40,18 +38,22 @@ class IncomeForm(forms.ModelForm):
         if not self.instance.pk:
             from django.utils import timezone
             self.fields['date'].initial = timezone.localdate()
+
         if user:
             from accounts.context_processors import prefill_user_caches
             prefill_user_caches(user)
-            
-            self.fields['labels'].queryset = Label.objects.filter(user=user)
-            self.fields['labels'].choices = [(l.pk, str(l)) for l in user._labels_cache]
-            self.fields['labels'].required = False
-            
+
             self.fields['account'].queryset = Account.objects.filter(user=user).exclude(status='CLOSED')
             self.fields['account'].choices = [(a.pk, str(a)) for a in user._active_accounts_cache]
             self.fields['account'].empty_label = "Select an account"
             self.fields['account'].required = True
+
+            income_cats = Category.objects.filter(user=user, category_type='income').order_by('name')
+            self.fields['category'].queryset = income_cats
+            self.fields['category'].choices = [
+                ('', '— Select category —')
+            ] + [(c.pk, c.name) for c in income_cats]
+            self.fields['category'].required = True
 
     def clean(self):
         cleaned_data = super().clean()

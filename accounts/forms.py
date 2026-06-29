@@ -1,5 +1,5 @@
 from django import forms
-from .models import Account, AccountTransfer, UserSettings
+from .models import Account, UserSettings
 
 
 class AccountForm(forms.ModelForm):
@@ -59,130 +59,13 @@ class AccountForm(forms.ModelForm):
         self.instance._explicit_threshold_edit = True
         return super().save(commit=commit)
 
-class TransferForm(forms.ModelForm):
-    class Meta:
-        model = AccountTransfer
-        fields = ['from_account', 'to_account', 'amount', 'transfer_date', 'note']
-        widgets = {
-            'from_account': forms.Select(attrs={
-                'class': 'form-select bg-dark-custom text-white border-glass',
-            }),
-            'to_account': forms.Select(attrs={
-                'class': 'form-select bg-dark-custom text-white border-glass',
-            }),
-            'amount': forms.NumberInput(attrs={
-                'class': 'form-control bg-dark-custom text-white border-glass',
-                'placeholder': '0.00',
-                'step': '0.01',
-                'min': '0.01',
-            }),
-            'transfer_date': forms.DateInput(format='%Y-%m-%d', attrs={
-                'class': 'form-control bg-dark-custom text-white border-glass',
-                'type': 'date',
-            }),
-            'note': forms.Textarea(attrs={
-                'class': 'form-control bg-dark-custom text-white border-glass',
-                'placeholder': 'Optional note...',
-                'rows': 3,
-            }),
-        }
-
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        self.user = user
-        super().__init__(*args, **kwargs)
-        if not self.instance.pk:
-            from django.utils import timezone
-            self.fields['transfer_date'].initial = timezone.localdate()
-        if user:
-            from accounts.context_processors import prefill_user_caches
-            prefill_user_caches(user)
-            
-            self.fields['from_account'].queryset = Account.objects.filter(user=user).exclude(status='CLOSED')
-            self.fields['from_account'].choices = [(a.pk, str(a)) for a in user._active_accounts_cache]
-            
-            self.fields['to_account'].queryset = Account.objects.filter(user=user).exclude(status='CLOSED')
-            self.fields['to_account'].choices = [(a.pk, str(a)) for a in user._active_accounts_cache]
-
-    def clean(self):
-        cleaned_data = super().clean()
-        from_account = cleaned_data.get('from_account')
-        amount = cleaned_data.get('amount')
-
-        # Insufficient funds check
-        if from_account and amount is not None and amount > 0:
-            if from_account.current_balance < amount:
-                try:
-                    currency_symbol = self.user.settings.currency if self.user else '₹'
-                except Exception:
-                    currency_symbol = '₹'
-                self.add_error('amount', f"Insufficient funds in {from_account.name}. Current balance: {currency_symbol}{from_account.current_balance:.2f}")
-
-        return cleaned_data
-
 
 class UserSettingsForm(forms.ModelForm):
     class Meta:
         model = UserSettings
-        fields = [
-            'currency',
-            'budget_threshold',
-            'enable_budget_alerts',
-            # Low-balance alert settings
-            'low_balance_alerts',
-            'low_balance_show_navbar_badge',
-            'low_balance_show_dashboard_banner',
-            'low_balance_show_dashboard_panel',
-            'low_balance_alert_scope',
-            'low_balance_default_minimum',
-            # Appearance
-            'dark_mode',
-        ]
+        fields = ['currency']
         widgets = {
             'currency': forms.Select(attrs={
                 'class': 'form-select bg-dark-custom text-white border-glass',
             }),
-            'budget_threshold': forms.NumberInput(attrs={
-                'class': 'form-control bg-dark-custom text-white border-glass',
-                'min': '1',
-                'max': '100',
-                'step': '1',
-                'placeholder': '80',
-            }),
-            'enable_budget_alerts': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-                'role': 'switch',
-            }),
-            'low_balance_alerts': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-                'role': 'switch',
-            }),
-            'low_balance_show_navbar_badge': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-                'role': 'switch',
-            }),
-            'low_balance_show_dashboard_banner': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-                'role': 'switch',
-            }),
-            'low_balance_show_dashboard_panel': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-                'role': 'switch',
-            }),
-            'low_balance_alert_scope': forms.Select(attrs={
-                'class': 'form-select bg-dark-custom text-white border-glass',
-            }),
-            'low_balance_default_minimum': forms.NumberInput(attrs={
-                'class': 'form-control bg-dark-custom text-white border-glass',
-                'placeholder': '0.00 (0 = disabled)',
-                'step': '0.01',
-                'min': '0',
-            }),
-            'dark_mode': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-                'role': 'switch',
-                'id': 'id_dark_mode',
-            }),
         }
-
-

@@ -43,6 +43,8 @@ class ExpenseModelTest(TestCase):
         self.assertNull = self.assertIsNone
         self.assertIsNone(expense.category)
 
+
+
 class ExpenseFormTest(TestCase):
     def setUp(self):
         self.user1 = User.objects.create_user(username='user1', password='password123')
@@ -62,6 +64,8 @@ class ExpenseFormTest(TestCase):
         categories_queryset2 = form2.fields['category'].queryset
         self.assertNotIn(self.cat1, categories_queryset2)
         self.assertIn(self.cat2, categories_queryset2)
+
+
 
     def test_form_date_defaults_to_today(self):
         from django.utils import timezone
@@ -90,28 +94,25 @@ class ExpenseViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Lunch')
         self.assertNotContains(response, 'Rent')
-        # Total expense check
-        self.assertEqual(response.context['total_expense'], Decimal('15.50'))
+        # No total_expense check since it was removed from context
 
     def test_expense_create_post(self):
         self.client.force_login(self.user1)
         from accounts.models import Account
         account, _ = Account.objects.get_or_create(user=self.user1, name='Cash', account_type='Cash')
         
-        response = self.client.post(reverse('transaction-add'), {
-            'type': 'expense',
-            'date': '2026-06-03',
+        response = self.client.post(reverse('expense-create'), {
             'account': account.id,
-            'rows': [{
-                'name': 'Groceries',
-                'amount': '45.20',
-                'category': self.cat1.id,
-                'description': 'Weekly supply'
-            }]
-        }, content_type='application/json')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['success'], True)
+            'name': 'Groceries',
+            'amount': '45.20',
+            'date': '2026-06-03',
+            'category': self.cat1.id,
+            'description': 'Weekly supply'
+        })
+        self.assertRedirects(response, reverse('expense-list'))
         self.assertTrue(Expense.objects.filter(user=self.user1, name='Groceries').exists())
+
+
 
     def test_expense_update_owner(self):
         self.client.force_login(self.user1)

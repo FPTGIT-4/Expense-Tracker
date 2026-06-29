@@ -8,7 +8,7 @@ def prefill_user_caches(user):
         return
 
     from accounts.models import UserSettings, Account, annotate_balance
-    from categories.models import Label, Category
+    from categories.models import Category
     from decimal import Decimal
 
     # 1. User Settings
@@ -36,8 +36,7 @@ def prefill_user_caches(user):
     user._all_accounts_cache = all_accounts
     user._active_accounts_cache = [acc for acc in all_accounts if acc.status != 'CLOSED']
 
-    # 3. Labels
-    user._labels_cache = list(Label.objects.filter(user=user))
+
 
     # 4. Categories
     user._categories_cache = list(Category.objects.filter(user=user))
@@ -50,47 +49,33 @@ def user_settings(request):
         prefill_user_caches(request.user)
         settings = request.user._settings_cache
 
-        # Compute low-balance alerts, respecting all new settings
+        # Compute low-balance alerts, defaulting to active accounts
         global_accounts_below_minimum = []
         global_low_balance_count = 0
 
-        if settings.low_balance_alerts:
-            scope = settings.low_balance_alert_scope
-            if scope == 'active':
-                qs = [acc for acc in request.user._all_accounts_cache if acc.status == 'ACTIVE']
-            elif scope == 'non_zero':
-                qs = [
-                    acc for acc in request.user._all_accounts_cache 
-                    if acc._total_income or acc._total_expense or acc._incoming_transfers or acc._outgoing_transfers
-                ]
-            else:
-                qs = request.user._all_accounts_cache
-
-            try:
-                global_accounts_below_minimum = [acc for acc in qs if acc.is_below_minimum]
-                global_low_balance_count = len(global_accounts_below_minimum)
-            except Exception:
-                global_accounts_below_minimum = []
-                global_low_balance_count = 0
+        qs = [acc for acc in request.user._all_accounts_cache if acc.status == 'ACTIVE']
+        try:
+            global_accounts_below_minimum = [acc for acc in qs if acc.is_below_minimum]
+            global_low_balance_count = len(global_accounts_below_minimum)
+        except Exception:
+            pass
 
         return {
             'currency_symbol': settings.currency,
-            'budget_threshold': settings.budget_threshold,
             'user_settings': settings,
             'global_accounts_below_minimum': global_accounts_below_minimum,
             'accounts_below_minimum': global_accounts_below_minimum,
             'global_low_balance_count': global_low_balance_count,
             'low_balance_count': global_low_balance_count,
-            # Granular display flags
-            'lba_show_navbar':   settings.low_balance_alerts and settings.low_balance_show_navbar_badge,
-            'lba_show_banner':   settings.low_balance_alerts and settings.low_balance_show_dashboard_banner,
-            'lba_show_panel':    settings.low_balance_alerts and settings.low_balance_show_dashboard_panel,
+            # Granular display flags (always True if alerts exist)
+            'lba_show_navbar':   True,
+            'lba_show_banner':   True,
+            'lba_show_panel':    True,
             # Appearance
-            'user_dark_mode': settings.dark_mode,
+            'user_dark_mode': True,
         }
     return {
         'currency_symbol': '₹',
-        'budget_threshold': 80,
         'user_settings': None,
         'global_accounts_below_minimum': [],
         'accounts_below_minimum': [],
@@ -108,22 +93,17 @@ def global_forms(request):
         prefill_user_caches(request.user)
         from income.forms import IncomeForm
         from expenses.forms import ExpenseForm
-        from accounts.forms import AccountForm, TransferForm
-        from budgets.forms import BudgetForm
+        from accounts.forms import AccountForm
         
         return {
             'global_income_form': IncomeForm(user=request.user),
             'global_expense_form': ExpenseForm(user=request.user),
-            'global_transfer_form': TransferForm(user=request.user),
             'global_account_form': AccountForm(),
-            'global_budget_form': BudgetForm(user=request.user),
         }
     return {
         'global_income_form': None,
         'global_expense_form': None,
-        'global_transfer_form': None,
         'global_account_form': None,
-        'global_budget_form': None,
     }
 
 

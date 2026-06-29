@@ -27,14 +27,6 @@ urlpatterns = [
     path('', include('categories.urls')),
     path('', include('dashboard.urls')),
     path('', include('reports.urls')),
-    path('', include('transactions.urls')),
-    path('', include('budgets.urls')),
-    path('companies/', include('companies.urls')),
-    path('goals/', include('goals.urls')),
-    path('debts/', include('debts.urls')),
-    path('recurrences/', include('recurrences.urls')),
-    path('analytics/', include('analytics.urls')),
-    path('data-io/', include('data_io.urls')),
 ]
 
 if settings.DEBUG:

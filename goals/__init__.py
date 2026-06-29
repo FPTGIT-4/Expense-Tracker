@@ -1,1 +1,0 @@
-# goals app init file

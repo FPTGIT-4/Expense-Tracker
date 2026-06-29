@@ -2,69 +2,573 @@
 
 {% block title %}{% if object %}Edit Expense{% else %}Add Expense{% endif %} | Personal Tracker{% endblock %}
 
+{% block page_title %}{% if object %}Edit Expense{% else %}Add Expense{% endif %}{% endblock %}
+{% block page_subtitle %}{% if object %}Update the details of this expense{% else %}Record a new expense transaction{% endif %}{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-7">
-            <div class="card-hero p-5 rounded-4 text-white">
-                <!-- Form Header -->
-                <div class="mb-4">
-                    <a href="{% url 'expense-list' %}" class="text-decoration-none text-muted-custom small mb-3 d-inline-block">
-                        <i class="fa-solid fa-arrow-left me-1"></i> Back to list
-                    </a>
-                    <h2 class="fw-bold font-outfit text-gradient mb-1">
-                        {% if object %}Modify Expense Record{% else %}Log New Expense{% endif %}
-                    </h2>
-                    <p class="text-muted-custom small">
-                        {% if object %}Update the details of your expense transaction{% else %}Add a new expense log to your profile{% endif %}
-                    </p>
-                </div>
+<style>
+    /* Styling overrides for the horizontal table form fields */
+    .txn-table td input[type="text"],
+    .txn-table td input[type="number"],
+    .txn-table td select,
+    .txn-table td textarea {
+        width: 100%;
+        background-color: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        color: #fff !important;
+        border-radius: .6rem !important;
+        padding: .5rem .75rem !important;
+        font-size: .88rem !important;
+        outline: none !important;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    
+    .txn-table td textarea {
+        height: 38px !important;
+        min-height: 38px !important;
+        resize: none !important;
+    }
+    
+    .txn-table td input:focus,
+    .txn-table td select:focus,
+    .txn-table td textarea:focus {
+        border-color: rgba(99, 102, 241, 0.5) !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+    }
 
-                <!-- Form Body -->
-                <form method="post" class="needs-validation" novalidate>
-                    {% csrf_token %}
-                    
-                    {% if form.non_field_errors %}
-                    <div class="alert alert-danger border-0 bg-danger bg-opacity-20 text-white rounded-3 small py-2 mb-4">
-                        {% for error in form.non_field_errors %}
-                        <div><i class="fa-solid fa-circle-exclamation me-2"></i> {{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
+    [data-theme="light"] .txn-table td input,
+    [data-theme="light"] .txn-table td select,
+    [data-theme="light"] .txn-table td textarea {
+        background-color: var(--bg-input) !important;
+        color: var(--text-main) !important;
+        border-color: var(--input-border) !important;
+    }
 
-                    {% for field in form %}
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label for="{{ field.id_for_label }}" class="form-label text-muted-custom small fw-medium mb-0">{{ field.label }}</label>
-                            {% if field.name == 'category' %}
-                            <a href="{% url 'category-add' %}?next={{ request.path }}" class="text-decoration-none text-gradient small fw-semibold" style="font-size: 0.8rem;"><i class="fa-solid fa-plus me-1"></i> Create Category</a>
-                            {% elif field.name == 'labels' %}
-                            <a href="{% url 'label-add' %}?next={{ request.path }}" class="text-decoration-none text-gradient small fw-semibold" style="font-size: 0.8rem;"><i class="fa-solid fa-plus me-1"></i> Create Label</a>
-                            {% endif %}
-                        </div>
-                        {{ field }}
-                        {% if field.help_text %}
-                        <div class="form-text text-muted-custom small" style="font-size: 0.75rem;">{{ field.help_text|safe }}</div>
-                        {% endif %}
-                        {% for error in field.errors %}
-                        <div class="invalid-feedback d-block small mt-1 text-danger">
-                            <i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endfor %}
+    .txn-table td select option {
+        background: #111827 !important;
+        color: #fff !important;
+    }
 
-                    <div class="mt-4 pt-2 d-grid gap-2 d-sm-flex justify-content-sm-end">
-                        <a href="{% url 'expense-list' %}" class="btn btn-outline-custom px-4 py-2 rounded-pill fw-semibold me-sm-2">
-                            Cancel
-                        </a>
-                        <button type="submit" class="btn btn-primary-gradient px-5 py-2 rounded-pill fw-semibold shadow-lg">
-                            {% if object %}Save Changes{% else %}Add Expense{% endif %}
-                        </button>
-                    </div>
-                </form>
-            </div>
+    .txn-table td {
+        vertical-align: top;
+        padding: 0.75rem 0.5rem;
+    }
+
+    /* Date and account bar styling */
+    .txn-date-bar input,
+    .txn-date-bar select {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #fff !important;
+        border-radius: .5rem !important;
+        padding: .4rem .8rem !important;
+        font-size: .9rem !important;
+        font-weight: 600 !important;
+        font-family: var(--font-heading) !important;
+        outline: none !important;
+        transition: border-color .2s;
+    }
+    
+    .txn-date-bar input:focus,
+    .txn-date-bar select:focus {
+        border-color: rgba(99, 102, 241, 0.4) !important;
+    }
+
+    [data-theme="light"] .txn-date-bar input,
+    [data-theme="light"] .txn-date-bar select {
+        background-color: var(--bg-input) !important;
+        border-color: var(--input-border) !important;
+        color: var(--text-main) !important;
+    }
+
+    /* Table footer actions */
+    .txn-table-footer {
+        padding: 0.85rem 1.25rem;
+        background: rgba(0, 0, 0, 0.1);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Custom multiselect styling */
+    .custom-multiselect-container {
+        position: relative;
+        width: 100%;
+    }
+    
+    .custom-multiselect-trigger {
+        min-height: 38px;
+        background-color: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: .6rem !important;
+        color: #fff !important;
+        padding: .5rem .75rem !important;
+        font-size: .88rem !important;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    
+    .custom-multiselect-trigger:focus, .custom-multiselect-trigger.active {
+        border-color: rgba(99, 102, 241, 0.5) !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+    }
+
+    [data-theme="light"] .custom-multiselect-trigger {
+        background-color: var(--bg-input) !important;
+        color: var(--text-main) !important;
+        border-color: var(--input-border) !important;
+    }
+
+    .custom-multiselect-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background-color: #1e293b !important; /* dark slate bg */
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: .6rem !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15) !important;
+        margin-top: 0.25rem;
+        z-index: 1050;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+
+    [data-theme="light"] .custom-multiselect-dropdown {
+        background-color: #ffffff !important;
+        border-color: rgba(0, 0, 0, 0.08) !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .custom-multiselect-search {
+        background-color: rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #fff !important;
+        border-radius: 0.375rem !important;
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    [data-theme="light"] .custom-multiselect-search {
+        background-color: rgba(0, 0, 0, 0.03) !important;
+        border-color: rgba(0, 0, 0, 0.1) !important;
+        color: var(--text-main) !important;
+    }
+
+    .custom-multiselect-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: background-color 0.15s;
+    }
+
+    .custom-multiselect-option:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    [data-theme="light"] .custom-multiselect-option:hover {
+        background-color: rgba(0, 0, 0, 0.03) !important;
+    }
+    
+    .custom-multiselect-option span.option-text {
+        color: #fff !important;
+    }
+
+    [data-theme="light"] .custom-multiselect-option span.option-text {
+        color: var(--text-main) !important;
+    }
+
+    .custom-multiselect-selected-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        align-items: center;
+    }
+
+    .hover-opacity:hover {
+        opacity: 0.7;
+    }
+
+    /* Hide scrollbars visually but allow scrolling */
+    .table-responsive::-webkit-scrollbar,
+    .custom-multiselect-dropdown::-webkit-scrollbar,
+    .custom-multiselect-options::-webkit-scrollbar,
+    .dropdown-menu::-webkit-scrollbar,
+    .modal-body::-webkit-scrollbar,
+    .txn-card::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .table-responsive,
+    .custom-multiselect-dropdown,
+    .custom-multiselect-options,
+    .dropdown-menu,
+    .modal-body,
+    .txn-card {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+    }
+
+    /* Allow absolute dropdowns inside table cells to overflow on desktop screens */
+    @media (min-width: 768px) {
+        .txn-card, 
+        .table-responsive {
+            overflow: visible !important;
+        }
+    }
+</style>
+
+<div class="container py-4" style="max-width: 1200px;">
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="fw-bold font-outfit text-gradient mb-1">
+                {% if object %}Modify Expense Record{% else %}Log New Expense{% endif %}
+            </h2>
+            <p class="text-muted-custom small mb-0">
+                {% if object %}Update the details of your expense transaction in the row below{% else %}Add a new expense log to your profile{% endif %}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'expense-list' %}" class="btn btn-outline-custom px-3 py-2 rounded-pill fw-semibold btn-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to list
+            </a>
         </div>
     </div>
+
+    <!-- Form Body -->
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger border-0 bg-danger bg-opacity-20 text-white rounded-3 small py-2 mb-4">
+            {% for error in form.non_field_errors %}
+            <div><i class="fa-solid fa-circle-exclamation me-2"></i> {{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Hidden inputs for non-tabular fields and dynamically added rows -->
+        {{ form.name.as_hidden }}
+        <input type="hidden" name="new_row_indices" id="new_row_indices" value="">
+
+        <!-- Date + Account Header Bar -->
+        <div class="txn-date-bar d-flex flex-wrap align-items-center gap-3 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <label class="mb-0 text-muted-custom small fw-bold text-nowrap">
+                    <i class="fa-solid fa-calendar-days me-1"></i> DATE
+                </label>
+                {{ form.date }}
+                {% for error in form.date.errors %}
+                <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="d-flex align-items-center gap-2 ms-sm-3">
+                <label class="mb-0 text-muted-custom small fw-bold text-nowrap">
+                    <i class="fa-solid fa-building-columns me-1"></i> ACCOUNT
+                </label>
+                {{ form.account }}
+                {% for error in form.account.errors %}
+                <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Horizontal Row Editor -->
+        <div class="txn-card mb-3">
+            <div class="table-responsive">
+                <table class="txn-table">
+                    <thead>
+                        <tr>
+
+                            <th style="width: 140px;">AMOUNT ({{ request.user.settings.currency|default:'₹' }})</th>
+                            <th style="min-width: 180px;">CATEGORY</th>
+                            <th style="min-width: 220px;">DESCRIPTION (OPTIONAL)</th>
+                            <th style="width: 50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+
+                            <td>
+                                {{ form.amount }}
+                                {% for error in form.amount.errors %}
+                                <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {{ form.category }}
+                                {% for error in form.category.errors %}
+                                <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {{ form.description }}
+                                {% for error in form.description.errors %}
+                                <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer block to allow adding more rows -->
+            <div class="txn-table-footer">
+                <button type="button" class="btn-add-row" id="btn-add-row">
+                    <i class="fa-solid fa-plus"></i> Add Row
+                </button>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-4 pt-2 d-flex justify-content-end gap-2">
+            <a href="{% url 'expense-list' %}" class="btn btn-outline-custom px-4 py-2 rounded-pill fw-semibold me-sm-2">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-primary-gradient px-5 py-2 rounded-pill fw-semibold shadow-lg">
+                {% if object %}Save Changes{% else %}Add Expense{% endif %}
+            </button>
+        </div>
+    </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Serialize Choices from Django Context
+    const CATEGORIES = [
+        {% for cat in form.fields.category.queryset %}
+        { id: "{{ cat.pk }}", name: "{{ cat.name|escapejs }}" },
+        {% endfor %}
+    ];
+    
+    const LABELS = [
+        {% for lbl in form.fields.labels.queryset %}
+        { id: "{{ lbl.pk }}", name: "{{ lbl.name|escapejs }}", color: "{{ lbl.color|default:'#6366f1' }}" },
+        {% endfor %}
+    ];
+
+    // Global registry for all multiselect widget controllers
+    const multiselectControllers = {};
+    let activeTriggeringMultiselectId = null;
+
+    // Reusable Custom Multiselect Widget
+    function initCustomMultiselect(container, options, initialSelected = [], onChange = null) {
+        const trigger = container.querySelector('.custom-multiselect-trigger');
+        const dropdown = container.querySelector('.custom-multiselect-dropdown');
+        const searchInput = container.querySelector('.custom-multiselect-search');
+        const optionsContainer = container.querySelector('.custom-multiselect-options');
+        const badgesContainer = container.querySelector('.custom-multiselect-selected-badges');
+
+        let selected = new Set(initialSelected.map(String));
+
+        trigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.querySelectorAll('.custom-multiselect-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.add('d-none');
+            });
+            dropdown.classList.toggle('d-none');
+            if (!dropdown.classList.contains('d-none')) {
+                searchInput.focus();
+            }
+        });
+
+        document.addEventListener('click', function() {
+            dropdown.classList.add('d-none');
+        });
+
+        dropdown.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        searchInput.addEventListener('input', function() {
+            renderOptions(this.value.toLowerCase());
+        });
+
+        function renderBadges() {
+            badgesContainer.innerHTML = '';
+            if (selected.size === 0) {
+                badgesContainer.innerHTML = '<span class="text-muted small">Select labels...</span>';
+                return;
+            }
+            selected.forEach(id => {
+                const opt = options.find(o => String(o.id) === String(id));
+                if (opt) {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge rounded-pill d-inline-flex align-items-center gap-1';
+                    badge.style.cssText = `
+                        background-color: ${opt.color}18;
+                        color: ${opt.color};
+                        border: 1px solid ${opt.color}40;
+                        padding: 0.25rem 0.5rem;
+                        font-size: 0.75rem;
+                        font-weight: 500;
+                    `;
+                    badge.innerHTML = `
+                        ${opt.name}
+                        <i class="fa-solid fa-xmark cursor-pointer ms-1 hover-opacity" style="font-size: 0.65rem;" data-id="${id}"></i>
+                    `;
+                    badge.querySelector('i').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        selected.delete(id);
+                        renderBadges();
+                        renderOptions(searchInput.value.toLowerCase());
+                        if (onChange) onChange(Array.from(selected));
+                    });
+                    badgesContainer.appendChild(badge);
+                }
+            });
+        }
+
+        function renderOptions(query = '') {
+            optionsContainer.innerHTML = '';
+            const filtered = options.filter(o => o.name.toLowerCase().includes(query));
+            if (filtered.length > 0) {
+                filtered.forEach(opt => {
+                    const isChecked = selected.has(String(opt.id));
+                    const div = document.createElement('div');
+                    div.className = 'custom-multiselect-option';
+                    
+                    div.innerHTML = `
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="display:inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${opt.color};"></span>
+                            <span class="option-text">${opt.name}</span>
+                        </div>
+                        <input type="checkbox" class="form-check-input ms-2" ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 14px; height: 14px;">
+                    `;
+
+                    div.addEventListener('click', function(e) {
+                        if (e.target.tagName === 'INPUT') {
+                            if (e.target.checked) selected.add(String(opt.id));
+                            else selected.delete(String(opt.id));
+                        } else {
+                            if (selected.has(String(opt.id))) {
+                                selected.delete(String(opt.id));
+                            } else {
+                                selected.add(String(opt.id));
+                            }
+                        }
+                        renderBadges();
+                        renderOptions(query);
+                        if (onChange) onChange(Array.from(selected));
+                    });
+                    optionsContainer.appendChild(div);
+                });
+            } else {
+                optionsContainer.innerHTML = '<div class="text-muted small px-3 py-2">No labels found</div>';
+            }
+
+            // Inline "+ Create Label" option at the bottom
+            const createBtnDiv = document.createElement('div');
+            createBtnDiv.className = 'border-top border-secondary border-opacity-10 p-2 text-center';
+            createBtnDiv.innerHTML = `
+                <button type="button" class="btn btn-sm btn-link text-gradient p-0 fw-semibold text-decoration-none" style="font-size: 0.75rem;">
+                    <i class="fa-solid fa-plus me-1"></i> Create Label
+                </button>
+            `;
+            createBtnDiv.querySelector('button').addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdown.classList.add('d-none');
+                openCreateLabelModal(container.id);
+            });
+            optionsContainer.appendChild(createBtnDiv);
+        }
+
+        renderBadges();
+        renderOptions();
+
+        return {
+            refresh: function() {
+                renderBadges();
+                renderOptions(searchInput.value.toLowerCase());
+            },
+            addSelected: function(id) {
+                selected.add(String(id));
+                renderBadges();
+                renderOptions(searchInput.value.toLowerCase());
+                if (onChange) onChange(Array.from(selected));
+            }
+        };
+    // Modal Helper Actions
+    window.openCreateLabelModal = function(containerId) {
+        activeTriggeringMultiselectId = containerId;
+     };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const categorySelect = document.getElementById('id_category');
+        const nameInput = document.getElementById('id_name');
+
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function () {
+                const selectedText = categorySelect.options[categorySelect.selectedIndex].text;
+                if (selectedText && selectedText !== 'Category' && selectedText !== 'Select a category (optional)' && nameInput) {
+                    nameInput.value = selectedText;
+                }
+            });
+        }
+
+
+
+        // Multi-row add logic
+        let rowCounter = 0;
+        const activeRowIndices = [];
+
+        document.getElementById('btn-add-row').addEventListener('click', function() {
+            rowCounter++;
+            activeRowIndices.push(rowCounter);
+            document.getElementById('new_row_indices').value = activeRowIndices.join(',');
+
+            const tbody = document.querySelector('.txn-table tbody');
+            const catOpts = CATEGORIES.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+            const tr = document.createElement('tr');
+            tr.id = `new-row-${rowCounter}`;
+            tr.innerHTML = `
+
+                <td>
+                    <input type="number" name="amount_new_${rowCounter}" class="form-control bg-dark-custom text-white border-glass" placeholder="0.00" step="0.01" min="0.01" required>
+                </td>
+                <td>
+                    <select name="category_new_${rowCounter}" id="category_new_${rowCounter}" class="form-select bg-dark-custom text-white border-glass">
+                        <option value="">Category</option>
+                        ${catOpts}
+                    </select>
+                </td>
+                <td>
+                    <input type="text" name="description_new_${rowCounter}" class="form-control bg-dark-custom text-white border-glass" placeholder="Optional note…">
+                </td>
+                <td class="text-center align-middle">
+                    <button type="button" class="btn-remove-row" onclick="removeNewRow(${rowCounter})">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+
+
+        });
+
+        window.removeNewRow = function(index) {
+            const row = document.getElementById(`new-row-${index}`);
+            if (row) {
+                row.remove();
+                const idx = activeRowIndices.indexOf(index);
+                if (idx > -1) {
+                    activeRowIndices.splice(idx, 1);
+                }
+                document.getElementById('new_row_indices').value = activeRowIndices.join(',');
+                delete multiselectControllers[`labels-multiselect-new-${index}`];
+            }
+        };
+    });
+</script>
+
+
 {% endblock %}

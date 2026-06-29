@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.db import transaction, IntegrityError
-from .models import Category
+from .models import Category, SubCategory
 
 class CategoryModelTest(TestCase):
     def setUp(self):
@@ -30,6 +30,10 @@ class CategoryModelTest(TestCase):
         # Different user, same name should be allowed
         category_other_user = Category.objects.create(user=self.user2, name='Food')
         self.assertEqual(category_other_user.name, 'Food')
+
+
+
+
 
 class CategoryViewsTest(TestCase):
     def setUp(self):
@@ -87,3 +91,4 @@ class CategoryViewsTest(TestCase):
         response = self.client.post(reverse('category-delete', kwargs={'pk': self.cat1.pk}))
         self.assertEqual(response.status_code, 404)
         self.assertTrue(Category.objects.filter(pk=self.cat1.pk).exists())
+

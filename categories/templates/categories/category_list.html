@@ -1,283 +1,107 @@
 {% extends 'base.html' %}
 
-{% block title %}Categories & Labels | Personal Tracker{% endblock %}
+{% block title %}Categories | Personal Tracker{% endblock %}
+
+{% block page_title %}Categories{% endblock %}
+{% block page_subtitle %}Manage categories to organize your financial transactions{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'category-add' %}" class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
+    <i class="fa-solid fa-plus me-2"></i> Add Category
+</a>
+{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <!-- Header Block -->
-    <div class="row align-items-center mb-4">
-        <div class="col-md-6">
-            <p class="text-muted-custom">Manage categories and tags to organize your financial transactions</p>
+
+    <!-- Analytics Summary Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Total -->
+        <div class="col-md-4">
+            <div class="card-feature p-4 rounded-4 text-white">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-2 me-3">
+                        <i class="fa-solid fa-tags"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Categories</p>
+                        <h3 class="fw-bold mb-0 font-outfit">{{ total_categories|default:"0" }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Expense -->
+        <div class="col-md-4">
+            <div class="card-feature p-4 rounded-4 text-white" style="border-left: 3px solid rgba(239,68,68,0.5);">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-3 me-3">
+                        <i class="fa-solid fa-circle-arrow-up"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Expense Categories</p>
+                        <h3 class="fw-bold mb-0 font-outfit text-gradient-alt">{{ expense_categories_count|default:"0" }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Income -->
+        <div class="col-md-4">
+            <div class="card-feature p-4 rounded-4 text-white" style="border-left: 3px solid rgba(16,185,129,0.5);">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon mb-0 color-1 me-3">
+                        <i class="fa-solid fa-circle-arrow-down"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted-custom small mb-0 uppercase fw-semibold">Income Categories</p>
+                        <h3 class="fw-bold mb-0 font-outfit text-gradient">{{ income_categories_count|default:"0" }}</h3>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Tabs Switcher -->
-    <div class="mb-4">
-        <ul class="nav nav-tabs border-bottom border-glass gap-2" id="categoryTabs" role="tablist" style="border-width: 2px !important;">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active rounded-top-4 border-0 px-4 py-2.5 fw-semibold font-outfit text-white" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categories-content" type="button" role="tab" aria-controls="categories-content" aria-selected="true" style="background: rgba(99,102,241,0.15); border-bottom: 3px solid var(--accent-indigo) !important;">
-                    <i class="fa-solid fa-tags me-2 text-gradient"></i>Categories
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link rounded-top-4 border-0 px-4 py-2.5 fw-semibold font-outfit text-muted-custom" id="labels-tab" data-bs-toggle="tab" data-bs-target="#labels-content" type="button" role="tab" aria-controls="labels-content" aria-selected="false" style="background: transparent;">
-                    <i class="fa-solid fa-bookmark me-2"></i>Labels (Tags)
-                </button>
-            </li>
-        </ul>
-    </div>
-
-    <div class="tab-content" id="categoryTabsContent">
-        <!-- Categories Tab Content -->
-        <div class="tab-pane fade show active" id="categories-content" role="tabpanel" aria-labelledby="categories-tab">
-            <div class="d-flex justify-content-end mb-4">
-                <a href="{% url 'category-add' %}"
-                    class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
-                    <i class="fa-solid fa-plus me-2"></i> Add Category
-                </a>
-            </div>
-
-            <!-- Date Filters Presets -->
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-                <div class="btn-group rounded-pill p-1 bg-dark-custom border-glass" role="group" aria-label="Date Filter Preset">
-                    <a href="?date_filter=today" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'today' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">Today</a>
-                    <a href="?date_filter=this_week" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'this_week' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">This Week</a>
-                    <a href="?date_filter=this_month" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'this_month' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">This Month</a>
-                    <a href="?date_filter=custom" class="btn btn-sm rounded-pill px-3 {% if date_filter == 'custom' %}btn-primary-gradient{% else %}btn-dark-custom text-muted-custom{% endif %}">Custom Range</a>
-                </div>
-                
-                {% if date_filter == 'custom' %}
-                <form method="get" class="d-flex align-items-center gap-2" id="customDateForm">
-                    <input type="hidden" name="date_filter" value="custom">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-dark-custom border-glass text-muted-custom">From</span>
-                        <input type="date" name="date_from" value="{{ start_date|date:'Y-m-d'|default:start_date }}" class="form-control bg-dark-custom text-white border-glass" required>
-                    </div>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-dark-custom border-glass text-muted-custom">To</span>
-                        <input type="date" name="date_to" value="{{ end_date|date:'Y-m-d'|default:end_date }}" class="form-control bg-dark-custom text-white border-glass" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary-gradient btn-sm rounded-pill px-3">Apply</button>
-                </form>
-                {% endif %}
-            </div>
-
-            <!-- Analytics Summary Cards -->
-            <div class="row g-4 mb-4">
-                <!-- Card 1: Total Categories -->
-                <div class="col-md-3">
-                    <div class="card-feature p-4 rounded-4 text-white">
-                        <div class="d-flex align-items-center">
-                            <div class="feature-icon mb-0 color-2 me-3">
-                                <i class="fa-solid fa-tags"></i>
-                            </div>
-                            <div>
-                                <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Categories</p>
-                                <h3 class="fw-bold mb-0 font-outfit">{{ total_categories|default:"0" }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 2: Highest Spending Category -->
-                <div class="col-md-3">
-                    <div class="card-feature p-4 rounded-4 text-white">
-                        <div class="d-flex align-items-center">
-                            <div class="feature-icon mb-0 color-3 me-3">
-                                <i class="fa-solid fa-arrow-trend-up"></i>
-                            </div>
-                            <div>
-                                <p class="text-muted-custom small mb-0 uppercase fw-semibold">Highest Spending</p>
-                                {% if highest_category %}
-                                <h5 class="fw-bold mb-0 font-outfit text-truncate" style="max-width: 140px;" title="{{ highest_category.name }}">{{ currency_symbol }}{{ highest_category.total_spent|floatformat:0 }} ({{ highest_category.name }})</h5>
-                                {% else %}
-                                <h5 class="fw-bold mb-0 font-outfit text-muted-custom">None</h5>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 3: Lowest Spending Category -->
-                <div class="col-md-3">
-                    <div class="card-feature p-4 rounded-4 text-white">
-                        <div class="d-flex align-items-center">
-                            <div class="feature-icon mb-0 color-1 me-3">
-                                <i class="fa-solid fa-arrow-trend-down"></i>
-                            </div>
-                            <div>
-                                <p class="text-muted-custom small mb-0 uppercase fw-semibold">Lowest Spending</p>
-                                {% if lowest_category %}
-                                <h5 class="fw-bold mb-0 font-outfit text-truncate" style="max-width: 140px;" title="{{ lowest_category.name }}">{{ currency_symbol }}{{ lowest_category.total_spent|floatformat:0 }} ({{ lowest_category.name }})</h5>
-                                {% else %}
-                                <h5 class="fw-bold mb-0 font-outfit text-muted-custom">None</h5>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 4: Total Spent -->
-                <div class="col-md-3">
-                    <div class="card-feature p-4 rounded-4 text-white">
-                        <div class="d-flex align-items-center">
-                            <div class="feature-icon mb-0 color-1 me-3">
-                                <i class="fa-solid fa-wallet"></i>
-                            </div>
-                            <div>
-                                <p class="text-muted-custom small mb-0 uppercase fw-semibold">Total Spent</p>
-                                <h3 class="fw-bold mb-0 font-outfit text-gradient-alt">{{ currency_symbol }}{{ total_spent|floatformat:2 }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Filter Panel -->
-            <div class="card-hero p-4 rounded-4 text-white mb-4">
-                <h6 class="fw-bold font-outfit mb-3"><i class="fa-solid fa-sliders me-2 text-gradient"></i>Filters &amp; Search</h6>
-                <form method="get" action="{% url 'category-list' %}" id="filterForm">
-                    <input type="hidden" name="date_filter" value="{{ date_filter }}">
-                    <input type="hidden" name="date_from" value="{{ start_date|date:'Y-m-d' }}">
-                    <input type="hidden" name="date_to" value="{{ end_date|date:'Y-m-d' }}">
-                    
-                    <div class="row g-3">
-                        <!-- Search -->
-                        <div class="col-md-4">
-                            <label class="form-label text-muted-custom small fw-semibold uppercase">Search Name / Description</label>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-dark-custom border-glass text-muted-custom">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                </span>
-                                <input type="text" name="search" value="{{ search }}"
-                                    class="form-control bg-dark-custom text-white border-glass"
-                                    placeholder="Search categories...">
-                            </div>
-                        </div>
-
-                        <!-- Spent range -->
-                        <div class="col-md-4">
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <label class="form-label text-muted-custom small fw-semibold uppercase">Min Spent ({{ currency_symbol }})</label>
-                                    <input type="number" name="spent_min" value="{{ spent_min }}" min="0" step="1"
-                                        class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="0">
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label text-muted-custom small fw-semibold uppercase">Max Spent ({{ currency_symbol }})</label>
-                                    <input type="number" name="spent_max" value="{{ spent_max }}" min="0" step="1"
-                                        class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="Any">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tx Count range -->
-                        <div class="col-md-4">
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <label class="form-label text-muted-custom small fw-semibold uppercase">Min Tx Count</label>
-                                    <input type="number" name="count_min" value="{{ count_min }}" min="0" step="1"
-                                        class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="0">
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label text-muted-custom small fw-semibold uppercase">Max Tx Count</label>
-                                    <input type="number" name="count_max" value="{{ count_max }}" min="0" step="1"
-                                        class="form-control form-control-sm bg-dark-custom text-white border-glass" placeholder="Any">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary-gradient rounded-pill px-4 py-1 fw-semibold btn-sm">
-                            <i class="fa-solid fa-filter me-1"></i>Apply Filters
-                        </button>
-                        <a href="?date_filter={{ date_filter }}&date_from={{ start_date|date:'Y-m-d' }}&date_to={{ end_date|date:'Y-m-d' }}" class="btn btn-outline-custom rounded-pill px-4 py-1 fw-semibold btn-sm">
-                            <i class="fa-solid fa-xmark me-1"></i>Clear Search
-                        </a>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Active Filter Summary -->
-            {% if has_filters %}
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <span class="text-muted-custom small fw-semibold">Active filters:</span>
-                {% for f in active_filters %}
-                <span class="badge rounded-pill px-3 py-2 fw-medium"
-                    style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;font-size:0.75rem;">
-                    {{ f|safe }}
-                </span>
-                {% endfor %}
-                <a href="?date_filter={{ date_filter }}&date_from={{ start_date|date:'Y-m-d' }}&date_to={{ end_date|date:'Y-m-d' }}" class="btn btn-sm btn-outline-custom rounded-pill px-2 py-0 small ms-1">
-                    Clear all
-                </a>
-            </div>
-            {% endif %}
-
-            <!-- Categories Table Card -->
+    <!-- Main Content -->
+    <div class="row g-4">
+        <div class="col-12">
             <div class="card-hero p-4 rounded-4 text-white">
                 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                    <h5 class="fw-bold font-outfit mb-0"><i class="fa-solid fa-list me-2 text-gradient"></i>Category Management &amp; Analytics</h5>
-                    
-                    <!-- Sort Options Dropdown -->
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-custom dropdown-toggle rounded-pill px-3 py-1.5 small fw-semibold" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.8rem;">
-                            <i class="fa-solid fa-sort me-1"></i> Sort: 
-                            {% if sort_by == 'name_desc' %}Name (Z-A)
-                            {% elif sort_by == 'spent_desc' %}Spent (High-Low)
-                            {% elif sort_by == 'spent_asc' %}Spent (Low-High)
-                            {% elif sort_by == 'count_desc' %}Tx Count (High-Low)
-                            {% elif sort_by == 'count_asc' %}Tx Count (Low-High)
-                            {% else %}Name (A-Z){% endif %}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end bg-dark-custom border-glass shadow-lg" aria-labelledby="sortDropdown" style="min-width: 170px;">
-                            <li><a class="dropdown-item py-2 {% if sort_by == 'name_asc' or not sort_by %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=name_asc"><i class="fa-solid fa-arrow-down-a-z me-2 text-muted-custom"></i>Name (A-Z)</a></li>
-                            <li><a class="dropdown-item py-2 {% if sort_by == 'name_desc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=name_desc"><i class="fa-solid fa-arrow-up-z-a me-2 text-muted-custom"></i>Name (Z-A)</a></li>
-                            <li><hr class="dropdown-divider border-glass m-1"></li>
-                            <li><a class="dropdown-item py-2 {% if sort_by == 'spent_desc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=spent_desc"><i class="fa-solid fa-arrow-down-9-1 me-2 text-muted-custom"></i>Spent (High-Low)</a></li>
-                            <li><a class="dropdown-item py-2 {% if sort_by == 'spent_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=spent_asc"><i class="fa-solid fa-arrow-up-1-9 me-2 text-muted-custom"></i>Spent (Low-High)</a></li>
-                            <li><hr class="dropdown-divider border-glass m-1"></li>
-                            <li><a class="dropdown-item py-2 {% if sort_by == 'count_desc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=count_desc"><i class="fa-solid fa-arrow-down-9-1 me-2 text-muted-custom"></i>Tx Count (High-Low)</a></li>
-                            <li><a class="dropdown-item py-2 {% if sort_by == 'count_asc' %}active{% endif %}" href="?{{ sort_query_string }}&sort_by=count_asc"><i class="fa-solid fa-arrow-up-1-9 me-2 text-muted-custom"></i>Tx Count (Low-High)</a></li>
-                        </ul>
-                    </div>
+                    <h5 class="fw-bold font-outfit mb-0">Category Management</h5>
                 </div>
-                
-                {% if categories_data %}
+
+                {% if categories %}
                 <div class="table-responsive">
                     <table class="table table-dark table-hover align-middle mb-0"
                         style="--bs-table-bg: transparent; --bs-table-border-color: var(--glass-border);">
                         <thead>
                             <tr class="text-muted-custom" style="border-bottom: 2px solid var(--glass-border);">
                                 <th scope="col" class="py-3">Category Name</th>
-                                <th scope="col" class="py-3">Amount Spent</th>
-                                <th scope="col" class="py-3 text-center">Tx Count</th>
-                                <th scope="col" class="py-3 text-center">% of Total</th>
+                                <th scope="col" class="py-3">Type</th>
                                 <th scope="col" class="py-3 text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for item in categories_data %}
+                            {% for item in categories %}
                             <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
                                 <td class="py-3">
-                                    <div class="fw-bold text-gradient-alt">{{ item.name }}</div>
+                                    <div class="fw-bold text-white">{{ item.name }}</div>
                                     {% if item.description %}
-                                    <small class="text-muted-custom d-block" style="font-size: 0.75rem;">{{ item.description|truncatechars:100 }}</small>
+                                    <small class="text-muted-custom d-block" style="font-size: 0.75rem;">{{ item.description|truncatechars:80 }}</small>
                                     {% endif %}
                                 </td>
-                                <td class="py-3 fw-bold">{{ currency_symbol }}{{ item.total_spent|floatformat:2 }}</td>
-                                <td class="py-3 text-center fw-semibold text-muted-custom">{{ item.txn_count }}</td>
-                                <td class="py-3 text-center fw-semibold">
-                                    <div class="d-flex align-items-center justify-content-center gap-2">
-                                        <div class="progress d-none d-sm-flex" style="width: 120px; height: 6px; background-color: rgba(255,255,255,0.08);">
-                                            <div class="progress-bar bg-accent-pink" role="progressbar" style="width: {{ item.percentage|floatformat:0 }}%; background: linear-gradient(135deg, var(--accent-indigo), var(--accent-pink));" aria-valuenow="{{ item.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                        <span>{{ item.percentage|floatformat:1 }}%</span>
-                                    </div>
+                                <td class="py-3">
+                                    {% if item.category_type == 'expense' %}
+                                    <span class="badge rounded-pill px-3 py-1 fw-semibold"
+                                          style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);color:#fca5a5;font-size:0.72rem;">
+                                        <i class="fa-solid fa-circle-arrow-up me-1"></i>Expense
+                                    </span>
+                                    {% else %}
+                                    <span class="badge rounded-pill px-3 py-1 fw-semibold"
+                                          style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35);color:#6ee7b7;font-size:0.72rem;">
+                                        <i class="fa-solid fa-circle-arrow-down me-1"></i>Income
+                                    </span>
+                                    {% endif %}
                                 </td>
                                 <td class="py-3 text-end">
-                                    {% if not item.is_uncategorized %}
                                     <div class="d-flex align-items-center justify-content-end gap-2">
                                         <a href="{% url 'category-edit' item.id %}"
                                            class="btn btn-sm rounded-pill px-3 py-1 fw-semibold"
@@ -294,9 +118,6 @@
                                             <i class="fa-solid fa-trash-can me-1"></i>Delete
                                         </button>
                                     </div>
-                                    {% else %}
-                                    <span class="text-muted-custom small">-</span>
-                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -310,82 +131,10 @@
                         <i class="fa-solid fa-tags"></i>
                     </div>
                     <h4 class="fw-bold font-outfit">No categories found</h4>
-                    <p class="text-muted-custom mb-4 small">Add some categories like Food, Utilities, or Travel to organize your expenses.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Labels Tab Content -->
-        <div class="tab-pane fade" id="labels-content" role="tabpanel" aria-labelledby="labels-tab">
-            <div class="d-flex justify-content-end mb-4">
-                <a href="{% url 'label-add' %}"
-                    class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold shadow-lg">
-                    <i class="fa-solid fa-plus me-2"></i> Add Label
-                </a>
-            </div>
-
-            <!-- Labels Table Card -->
-            <div class="card-hero p-4 rounded-4 text-white">
-                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                    <h5 class="fw-bold font-outfit mb-0"><i class="fa-solid fa-bookmark me-2 text-gradient"></i>Label Management</h5>
-                </div>
-                
-                {% if labels_data %}
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0"
-                        style="--bs-table-bg: transparent; --bs-table-border-color: var(--glass-border);">
-                        <thead>
-                            <tr class="text-muted-custom" style="border-bottom: 2px solid var(--glass-border);">
-                                <th scope="col" class="py-3">Label Name</th>
-                                <th scope="col" class="py-3">Preview</th>
-                                <th scope="col" class="py-3 text-center">Associated Txns</th>
-                                <th scope="col" class="py-3 text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in labels_data %}
-                            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                                <td class="py-3">
-                                    <div class="fw-bold text-white">{{ item.name }}</div>
-                                </td>
-                                <td class="py-3">
-                                    <span class="badge font-outfit px-3 py-1.5 rounded-pill" style="background-color: {{ item.color }} !important; color: #fff; font-size: 0.8rem; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.25);">
-                                        {{ item.name }}
-                                    </span>
-                                </td>
-                                <td class="py-3 text-center fw-semibold text-muted-custom">{{ item.total_txns }}</td>
-                                <td class="py-3 text-end">
-                                    <div class="d-flex align-items-center justify-content-end gap-2">
-                                        <a href="{% url 'label-edit' item.id %}"
-                                           class="btn btn-sm rounded-pill px-3 py-1 fw-semibold"
-                                           style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#a5b4fc;font-size:0.75rem;transition:all 0.2s;"
-                                           title="Edit">
-                                            <i class="fa-solid fa-pen-to-square me-1"></i>Edit
-                                        </a>
-                                        <button type="button"
-                                                class="btn btn-sm rounded-pill px-3 py-1 fw-semibold"
-                                                style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;font-size:0.75rem;transition:all 0.2s;"
-                                                title="Delete"
-                                                onclick="confirmDelete('{% url 'label-delete' item.id %}', 'label &quot;{{ item.name }}&quot;')"
-                                        >
-                                            <i class="fa-solid fa-trash-can me-1"></i>Delete
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <div class="hero-icon-glow mx-auto mb-4"
-                        style="width: 60px; height: 60px; font-size: 1.5rem; background: linear-gradient(135deg, var(--accent-indigo), var(--accent-violet));">
-                        <i class="fa-solid fa-bookmark"></i>
-                    </div>
-                    <h4 class="fw-bold font-outfit">No labels found</h4>
-                    <p class="text-muted-custom mb-4 small">Add some tags/labels (e.g. Reimbursement, Tax-deductible) to tag your incomes and expenses.</p>
+                    <p class="text-muted-custom mb-4 small">Add some categories to organize your expenses and incomes.</p>
+                    <a href="{% url 'category-add' %}" class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold">
+                        <i class="fa-solid fa-plus me-2"></i>Add First Category
+                    </a>
                 </div>
                 {% endif %}
             </div>
@@ -409,7 +158,7 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body pt-3">
-        <p class="text-muted-custom mb-0" id="deleteModalBody">Are you sure you want to delete this category? This action cannot be undone.</p>
+        <p class="text-muted-custom mb-0" id="deleteModalBody">Are you sure you want to delete this? This action cannot be undone.</p>
       </div>
       <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-outline-custom rounded-pill px-4 py-1 btn-sm fw-semibold" data-bs-dismiss="modal">Cancel</button>
@@ -424,6 +173,7 @@
     </div>
   </div>
 </div>
+
 <script>
 function confirmDelete(url, label) {
   document.getElementById('deleteForm').action = url;
@@ -431,28 +181,5 @@ function confirmDelete(url, label) {
     'Are you sure you want to delete the <strong class="text-white">' + label + '</strong>? This action cannot be undone.';
   new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    const triggerTabList = [].slice.call(document.querySelectorAll('#categoryTabs button'))
-    triggerTabList.forEach(function (triggerEl) {
-        const tabTrigger = new bootstrap.Tab(triggerEl)
-        triggerEl.addEventListener('click', function (event) {
-            event.preventDefault()
-            tabTrigger.show()
-            
-            // Adjust styles
-            triggerTabList.forEach(btn => {
-                btn.classList.remove('text-white', 'active');
-                btn.classList.add('text-muted-custom');
-                btn.style.background = 'transparent';
-                btn.style.borderBottom = 'none';
-            });
-            triggerEl.classList.remove('text-muted-custom');
-            triggerEl.classList.add('text-white', 'active');
-            triggerEl.style.background = 'rgba(99,102,241,0.15)';
-            triggerEl.style.borderBottom = '3px solid var(--accent-indigo)';
-        })
-    })
-});
 </script>
 {% endblock %}
